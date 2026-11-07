@@ -17,6 +17,8 @@ A multi-provider AI agent for the terminal, with a local GUI. It can read and wr
 
 ## 30-second overview
 
+> Schematic; run the app for the real UI.
+
 ![Plan → Build → Review](docs/assets/demo.svg)
 
 | CLI | GUI |

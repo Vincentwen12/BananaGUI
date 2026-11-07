@@ -15,6 +15,8 @@
 
 ## 30 秒看懂
 
+> 示意图；实际界面以运行版本为准。
+
 ![Plan → Build → Review](docs/assets/demo.svg)
 
 | CLI | GUI |
