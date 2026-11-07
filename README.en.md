@@ -19,13 +19,13 @@ A multi-provider AI agent for the terminal, with a local GUI. It can read and wr
 
 > Schematic; run the app for the real UI.
 
-![Plan → Build → Review](docs/assets/demo.svg)
+![Plan → Build → Review](docs/assets/demo.png)
 
 | CLI | GUI |
 |---|---|
-| ![CLI](docs/assets/cli.svg) | ![GUI](docs/assets/gui.svg) |
+| ![CLI](docs/assets/cli.png) | ![GUI](docs/assets/gui.png) |
 
-![Review verify tab](docs/assets/review.svg)
+![Review verify tab](docs/assets/review.png)
 
 ```text
    ____                  _

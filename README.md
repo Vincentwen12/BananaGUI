@@ -17,13 +17,13 @@
 
 > 示意图；实际界面以运行版本为准。
 
-![Plan → Build → Review](docs/assets/demo.svg)
+![Plan → Build → Review](docs/assets/demo.png)
 
 | CLI | GUI |
 |---|---|
-| ![CLI](docs/assets/cli.svg) | ![GUI](docs/assets/gui.svg) |
+| ![CLI](docs/assets/cli.png) | ![GUI](docs/assets/gui.png) |
 
-![Review 验证页签](docs/assets/review.svg)
+![Review 验证页签](docs/assets/review.png)
 
 ```text
    ____                  _

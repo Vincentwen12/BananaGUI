@@ -4,11 +4,13 @@
 
 | 文件 | 用途 |
 |---|---|
-| `demo.svg` | Plan → Build → Review 流程 |
-| `cli.svg` | CLI 示意 |
-| `gui.svg` | GUI 示意 |
-| `review.svg` | Review「验证」页签示意 |
-| `social-preview.svg` | GitHub Social preview（1280×640） |
+| `demo.svg` / `demo.png` | Plan → Build → Review 流程 |
+| `cli.svg` / `cli.png` | CLI 示意 |
+| `gui.svg` / `gui.png` | GUI 示意 |
+| `review.svg` / `review.png` | Review「验证」页签示意 |
+| `social-preview.svg` / `social-preview.png` | GitHub Social preview（1280×640） |
+
+PNG 是由 SVG 通过 Edge headless 渲染的，README 使用 PNG；SVG 保留作为可编辑源文件。
 
 ## 替换成真实截图 / GIF
 
