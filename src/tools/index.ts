@@ -3,6 +3,7 @@ import { fileTools } from './fs.ts';
 import { shellTool } from './shell.ts';
 import { todoTools } from './todo.ts';
 import { memoryTools } from './memory.ts';
+import { uiAuditTool } from './ui.ts';
 import type { PermissionMap, PermissionMode } from './types.ts';
 import { type ApprovalKind, type Tool, type ToolContext, type ToolResult, fail } from './types.ts';
 import { webSearchTool, webFetchTool } from './web.ts';
@@ -16,6 +17,7 @@ export const allTools: Tool[] = [
   webFetchTool,
   ...todoTools,
   ...memoryTools,
+  uiAuditTool,
 ];
 
 export function toolMap(tools: Tool[]): Map<string, Tool> {

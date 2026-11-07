@@ -18,6 +18,7 @@
     "dist",
     "ui",
     "docs",
+    "design-tokens.json",
     "README.md",
     "LICENSE"
   ],
@@ -26,7 +27,7 @@
     "build": "tsc -p tsconfig.build.json && node scripts/copy-ui.mjs",
     "typecheck": "tsc --noEmit",
     "dev": "node --watch src/index.ts",
-    "test": "node scripts/check-ui.mjs && node test/prompt.test.mjs && node test/ui.test.mjs && node test/p0.test.mjs && node test/features.test.mjs && node test/gui.test.mjs && node test/web-search.test.mjs && node test/eval.mjs && node test/smoke.mjs",
+    "test": "node scripts/check-ui.mjs && node test/prompt.test.mjs && node test/ui.test.mjs && node test/p0.test.mjs && node test/features.test.mjs && node test/ui-docs.test.mjs && node test/gui.test.mjs && node test/web-search.test.mjs && node test/eval.mjs && node test/smoke.mjs",
     "gui:sync": "node scripts/sync-gui.mjs",
     "gui:check": "node scripts/check-gui-sync.mjs",
     "ui:check": "node scripts/check-ui.mjs",

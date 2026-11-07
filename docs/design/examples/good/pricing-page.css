@@ -1,0 +1,74 @@
+:root {
+  --bg: #f7f7f5;
+  --panel: #ffffff;
+  --text: #1a1a1a;
+  --text-2: #5c5c5c;
+  --line: #dddddd;
+  --accent: #0f5c4a;
+  --radius-md: 8px;
+  --space-2: 8px;
+  --space-4: 16px;
+  --space-5: 24px;
+  --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.06);
+}
+
+body {
+  margin: 0;
+  padding: var(--space-5);
+  background: var(--bg);
+  color: var(--text);
+  font-family: -apple-system, "Segoe UI", "PingFang SC", sans-serif;
+}
+
+.pricing {
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  gap: var(--space-4);
+  max-width: 960px;
+  margin: 0 auto;
+}
+
+.tier {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+
+.tier h2 {
+  margin: 0 0 var(--space-2);
+  font-size: 16px;
+}
+
+.tier .price {
+  margin: 0 0 var(--space-4);
+  font-size: 28px;
+  font-weight: 650;
+}
+
+.tier ul {
+  margin: 0 0 var(--space-4);
+  padding-left: 18px;
+  color: var(--text-2);
+  line-height: 1.7;
+}
+
+.tier button {
+  width: 100%;
+  min-height: 36px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel);
+  color: var(--text);
+  cursor: pointer;
+}
+
+.tier button:hover { border-color: var(--accent); }
+.tier button:focus-visible { outline: 2px solid var(--accent); outline-offset: 2px; }
+.tier button:disabled { opacity: 0.45; cursor: not-allowed; }
+.tier.is-selected { border-color: var(--accent); }
+
+@media (max-width: 720px) {
+  .pricing { grid-template-columns: 1fr; }
+}

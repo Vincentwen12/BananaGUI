@@ -72,6 +72,8 @@ export interface AppConfig {
   preferences?: string[];
   /** /verify 运行的验收命令。 */
   verifyCommands?: string[];
+  /** UI 质量门禁：off / warn / enforce，默认 enforce。 */
+  uiGuard?: 'off' | 'warn' | 'enforce';
   /** 运行时加载的项目规则（AGENT.md），不写入配置文件。 */
   agentDoc?: string;
   /** AGENT.md 的实际路径，供 GUI 展示。 */
@@ -264,6 +266,7 @@ export function defaultSystemPrompt(workspace: string): string {
     '- 用用户提问的语言回答。',
     '- 简洁直接：先结论，再必要解释和改动清单；不要复述每一步。',
     `- 做 UI 时先读 ${designRoot}/principles.md 与 ${designRoot}/tokens.md，遵守禁用清单。`,
+    '- 交付 UI 前必须调用 ui_audit；审计未通过时先修复，不能直接说完成。',
     ...(process.env['BANANA_PROMPT_SUFFIX']?.trim()
       ? [`\n## 实验提示词\n${process.env['BANANA_PROMPT_SUFFIX']!.trim()}`]
       : []),
@@ -305,6 +308,7 @@ function defaultConfig(workspace: string): AppConfig {
     trustedProjects: {},
     preferences: [],
     verifyCommands: ['npm test', 'npm run build'],
+    uiGuard: 'enforce',
     search: {
       provider: 'auto',
       deep: false,
@@ -413,6 +417,9 @@ export function sanitizeProjectConfig(patch: ConfigFile): ConfigFile {
     out.maxContextChars = patch.maxContextChars;
   }
   if (typeof patch.showReasoning === 'boolean') out.showReasoning = patch.showReasoning;
+  if (patch.uiGuard === 'off' || patch.uiGuard === 'warn' || patch.uiGuard === 'enforce') {
+    out.uiGuard = patch.uiGuard;
+  }
   if (Array.isArray(patch.verifyCommands)) {
     out.verifyCommands = patch.verifyCommands
       .filter((command): command is string => typeof command === 'string')

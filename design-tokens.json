@@ -1,0 +1,33 @@
+{
+  "color": {
+    "bg": "#fafafa",
+    "bgDeep": "#ffffff",
+    "panel": "#f2f2f2",
+    "panel2": "#ededed",
+    "border": "rgba(0,0,0,0.08)",
+    "borderStrong": "rgba(0,0,0,0.16)",
+    "text": "#161616",
+    "text2": "#5c5c5c",
+    "text3": "#6b6b73",
+    "accent": "#dcde8d",
+    "accentInk": "#8a6d12",
+    "danger": "#c9564a",
+    "success": "#2f7d50"
+  },
+  "radius": { "none": 0, "sm": 4, "md": 6, "lg": 8 },
+  "shadow": {
+    "sm": "0 1px 2px rgba(16,16,20,0.05)",
+    "overlay": "0 12px 32px rgba(16,16,20,0.14)"
+  },
+  "spacing": { "unit": 4, "scale": [4, 8, 12, 16, 24, 32, 40, 48] },
+  "typography": {
+    "xs": 11,
+    "sm": 12,
+    "md": 13,
+    "base": 14,
+    "lg": 16,
+    "xl": 20,
+    "xxl": 28
+  },
+  "grid": { "columns": 12, "gutter": 24 }
+}

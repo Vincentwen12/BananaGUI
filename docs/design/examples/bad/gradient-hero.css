@@ -1,0 +1,11 @@
+.hero {
+  text-align: center;
+}
+
+.hero h1 {
+  font-size: 72px;
+}
+
+.hero button {
+  background: linear-gradient(90deg, #6366f1, #a855f7);
+}

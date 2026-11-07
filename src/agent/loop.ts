@@ -17,7 +17,7 @@ import {
 import { formatMemory } from '../tools/memory.ts';
 import { compactMessages, estimateChars, estimateTokens } from './context.ts';
 
-export type StopReason = 'done' | 'max_steps' | 'aborted' | 'error' | 'budget';
+export type StopReason = 'done' | 'max_steps' | 'aborted' | 'error' | 'budget' | 'quality_gate';
 
 export interface Budget {
   /** 本轮累计 token 上限（输入 + 输出）。 */
@@ -49,6 +49,8 @@ export interface AgentDeps {
   search?: SearchConfig;
   /** 本轮预算；超出后在下一次模型调用前停下。 */
   budget?: Budget;
+  /** UI 质量门禁：off 不检查，warn 提示，enforce 阻止交付。 */
+  uiGuard?: 'off' | 'warn' | 'enforce';
   onBudget?: (info: { reason: 'tokens' | 'minutes'; used: number; limit: number }) => void;
   /** 每个工具步骤后落盘一次，用于中断恢复。 */
   onCheckpoint?: (messages: UMessage[]) => void | Promise<void>;
@@ -135,6 +137,9 @@ export async function runTurn(
   let overflowRecovered = false;
   const startedAt = Date.now();
   let budgetNotified = false;
+  const uiIssues = new Map<string, NonNullable<ToolResult['meta']>['uiViolations']>();
+  let uiFixAttempts = 0;
+  let uiWarned = false;
 
   const overBudget = (): boolean => {
     const tokens = (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0);
@@ -236,6 +241,34 @@ export async function runTurn(
 
     const calls: ToolCall[] = result.message.toolCalls ?? [];
     if (calls.length === 0) {
+      if (uiIssues.size && deps.uiGuard === 'warn' && !uiWarned) {
+        uiWarned = true;
+        deps.onNotice?.('UI 审计仍有违规，建议修复后再交付（当前是 warn 模式）。');
+      }
+      if (uiIssues.size && deps.uiGuard === 'enforce') {
+        uiFixAttempts += 1;
+        const issues = [...uiIssues.values()]
+          .flat()
+          .slice(0, 20)
+          .map((item) => (item ? `${item.file}:${item.line} [${item.rule}] ${item.message}` : ''))
+          .join('\n');
+        if (uiFixAttempts > 3) {
+          return {
+            messages: convo,
+            steps,
+            usage,
+            stopReason: 'quality_gate',
+            error: `UI 审计未通过，已重写 ${uiFixAttempts - 1} 次：\n${issues}`,
+            compacted,
+          };
+        }
+        deps.onNotice?.(`UI 审计未通过，要求重写（第 ${uiFixAttempts} 次）。`);
+        convo.push({
+          role: 'user',
+          content: `UI 审计未通过，不能交付。请修复以下问题，然后重新调用 ui_audit：\n${issues}`,
+        });
+        continue;
+      }
       return { messages: convo, steps, usage, stopReason: 'done', compacted };
     }
 
@@ -245,6 +278,13 @@ export async function runTurn(
     const toolCache = new Map<string, ToolResult>();
     const recordResult = (call: ToolCall, toolResult: ToolResult): void => {
       deps.onToolEnd?.(call.name, toolResult, call.id);
+      if (toolResult.meta?.uiFiles) {
+        for (const file of toolResult.meta.uiFiles) {
+          const fails = (toolResult.meta.uiViolations ?? []).filter((item) => item.severity === 'fail');
+          if (fails.length) uiIssues.set(file, fails);
+          else uiIssues.delete(file);
+        }
+      }
       convo.push({
         role: 'tool',
         toolCallId: call.id,

@@ -197,6 +197,13 @@ Run `/env` to print this template. `AGENT.md` is runtime input only, never writt
   - Unknowns: item + reason + verification method.
 - Facts and unknowns are stored with the session and injected into every later turn; switching models does not lose them.
 - `/prefer` turns repeated corrections into user preferences injected into the next prompt.
+
+## UI audit
+
+- Call `ui_audit` before delivering UI, or let `write_file` / `edit_file` trigger it automatically.
+- With `uiGuard: enforce` (default), a failed audit forces a rewrite in the same turn; after 3 attempts the turn stops and cannot claim completion.
+- `node scripts/check-ui.mjs <file-or-dir>` scans any project.
+- Rule IDs, bad/good examples, and the checklist live in `docs/design/`.
 - The GUI Review panel adds a "Verify" tab: plan state, task progress, fact count, unknowns, next steps, and the latest `/verify` test/build results.
 
 ## Project trust and security
@@ -325,7 +332,8 @@ Global `~/.banana/config.json`; project `<workspace>/.banana/config.json` requir
   "showReasoning": true,
   "trustedProjects": {},
   "budget": { "tokens": 200000, "minutes": 30 },
-  "verifyCommands": ["npm test", "npm run build"]
+  "verifyCommands": ["npm test", "npm run build"],
+  "uiGuard": "enforce"
 }
 ```
 

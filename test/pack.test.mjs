@@ -49,6 +49,7 @@ try {
     files.includes('docs/design/principles.md') && files.includes('docs/design/tokens.md'),
     files.filter((f) => f.startsWith('docs/')).join(','),
   );
+  check('包内包含设计令牌', files.includes('design-tokens.json'));
   const guiLauncher = readFileSync(join(root, 'gui', 'bin', 'banana-gui.mjs'), 'utf8');
   const desktopLauncher = readFileSync(join(root, 'gui', 'bin', 'banana-gui-desktop.mjs'), 'utf8');
   check(

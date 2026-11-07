@@ -66,6 +66,7 @@ const PLAN_TOOLS = new Set([
   'todo_write',
   'memory_read',
   'memory_write',
+  'ui_audit',
 ]);
 const ATTACHMENT_MIME: Record<string, string> = {
   '.txt': 'text/plain', '.md': 'text/markdown', '.json': 'application/json', '.js': 'text/javascript',
@@ -410,6 +411,7 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
     agentDoc: Boolean(config.agentDoc),
     agentDocPath: config.agentDocPath ?? null,
     projectTrust: config.projectTrust ?? null,
+    uiGuard: config.uiGuard ?? 'enforce',
     platform: process.platform,
     permissions: config.permissions,
     systemPrompt: config.systemPrompt,
@@ -1552,6 +1554,7 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
           send('status', { message: `网络重试 ${info.attempt}：${info.reason}` });
         },
         budget: config.budget,
+        uiGuard: config.uiGuard,
         onBudget: (info) => {
           const used =
             info.reason === 'tokens' ? `${Math.round(info.used)} tokens` : `${info.used.toFixed(1)} 分钟`;

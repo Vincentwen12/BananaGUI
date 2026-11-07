@@ -1,8 +1,25 @@
 import { readFile, writeFile, mkdir, readdir, stat, rename } from 'node:fs/promises';
 import { existsSync, realpathSync } from 'node:fs';
-import { dirname, isAbsolute, join, relative, resolve, sep } from 'node:path';
+import { dirname, extname, isAbsolute, join, relative, resolve, sep } from 'node:path';
 import { type Tool, type ToolContext, type ToolResult, fail, ok, toolError } from './types.ts';
 import { diffLines, diffStat, formatDiff } from '../util/diff.ts';
+import { auditPaths, formatViolations } from '../util/ui-audit.ts';
+
+const UI_FILE_EXTENSIONS = new Set(['.css', '.html', '.htm', '.jsx', '.tsx', '.vue', '.svelte']);
+
+/** UI 文件写入后立即审计，让模型在同一步看到违规。 */
+function withUiAudit(result: ToolResult, target: string, ctx: ToolContext): ToolResult {
+  if (!UI_FILE_EXTENSIONS.has(extname(target).toLowerCase())) return result;
+  const strictTokens = existsSync(join(ctx.workspace, 'design-tokens.json'));
+  const { violations } = auditPaths([target], { strictTokens });
+  if (!violations.length) return result;
+  const fails = violations.filter((item) => item.severity === 'fail');
+  return {
+    ...result,
+    content: `${result.content}\n\nUI 审计${fails.length ? '未通过' : '提醒'}：\n${formatViolations(violations)}`,
+    meta: { uiViolations: violations, uiFiles: [target] },
+  };
+}
 
 export const IGNORED_DIRS = new Set([
   '.git',
@@ -309,9 +326,13 @@ export const writeFileTool: Tool = {
       }
       await writeFile(target, content, 'utf8');
       const lines = content.split('\n').length;
-      return ok(
-        `已${existed ? '覆盖' : '创建'} ${toDisplay(ctx, target)}（${lines} 行, ${Buffer.byteLength(content)} 字节）`,
-        `${existed ? '覆盖' : '写入'} ${toDisplay(ctx, target)}`,
+      return withUiAudit(
+        ok(
+          `已${existed ? '覆盖' : '创建'} ${toDisplay(ctx, target)}（${lines} 行, ${Buffer.byteLength(content)} 字节）`,
+          `${existed ? '覆盖' : '写入'} ${toDisplay(ctx, target)}`,
+        ),
+        target,
+        ctx,
       );
     } catch (error) {
       return toolError(error);
@@ -391,9 +412,13 @@ export const editFileTool: Tool = {
       await writeFile(temp, updated, 'utf8');
       await rename(temp, target);
       const replaced = input.replace_all ? count : 1;
-      return ok(
-        `已在 ${toDisplay(ctx, target)} 中替换 ${replaced} 处（共 ${original.split(/\r?\n/).length} 行）`,
-        `编辑 ${toDisplay(ctx, target)}（${replaced} 处）`,
+      return withUiAudit(
+        ok(
+          `已在 ${toDisplay(ctx, target)} 中替换 ${replaced} 处（共 ${original.split(/\r?\n/).length} 行）`,
+          `编辑 ${toDisplay(ctx, target)}（${replaced} 处）`,
+        ),
+        target,
+        ctx,
       );
     } catch (error) {
       return toolError(error);

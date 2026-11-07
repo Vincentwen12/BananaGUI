@@ -197,6 +197,13 @@ banana "帮我跑一下测试"      单轮任务模式（不进入对话）
   - 未验证项：内容 + 原因 + 验证方法。
 - 事实和未验证项随会话保存，并自动注入后续每一轮；换模型不丢。
 - `/prefer` 把反复出现的纠正沉淀成用户偏好，下一轮注入系统提示词。
+
+## UI 审计
+
+- 交付 UI 前必须调用 `ui_audit`，或让 `write_file` / `edit_file` 自动触发审计。
+- `uiGuard: enforce`（默认）时，审计未通过会在本回合强制重写；超过 3 次直接停止，不能声称完成。
+- `node scripts/check-ui.mjs <文件或目录>` 可扫描任意项目。
+- 规则 ID、反例、正例见 `docs/design/`；示例在 `docs/design/examples/`。
 - GUI 的 Review 面板新增「验证」页签：计划状态、任务完成数、事实数量、未验证项、下一步，以及最近一次 `/verify` 的测试/构建结果。
 
 ## 项目信任与安全
@@ -325,7 +332,8 @@ npm run eval   # 契约评测：提示词章节、知识包、UI 扫描、多行
   "showReasoning": true,
   "trustedProjects": {},
   "budget": { "tokens": 200000, "minutes": 30 },
-  "verifyCommands": ["npm test", "npm run build"]
+  "verifyCommands": ["npm test", "npm run build"],
+  "uiGuard": "enforce"
 }
 ```
 
@@ -351,7 +359,8 @@ src/                  CLI 内核
   cli/                REPL、slash 命令、补全、配置向导、终端输出
   ui/                 浏览器界面（HTML/CSS/JS，无前端框架）
 gui/                  独立 GUI 包（启动器、Electron 桌面壳、同步的 ui/）
-docs/design/          UI 原则、令牌、组件、状态、无障碍、自检清单、参考卡
+docs/design/          UI 原则、令牌、组件、状态、无障碍、自检清单、参考卡、good/bad 示例
+design-tokens.json    唯一设计令牌源
 docs/failures.md      失败案例库
 docs/prompt-versions.md  提示词与知识包版本记录
 scripts/              构建、同步、UI 扫描、发布
@@ -365,7 +374,8 @@ npm run typecheck   # tsc --noEmit
 npm test            # 类型检查 + UI 扫描 + 全量测试
 npm run dev         # node --watch
 npm run build       # 编译到 dist/（发布用）
-npm run ui:check    # 只跑 UI 反 AI 味扫描
+npm run ui:check    # 只跑 UI 反 AI 味扫描（默认 src/ui）
+node scripts/check-ui.mjs path/to/ui   # 扫描任意 UI 文件/目录
 npm run eval        # 契约评测（提示词/知识包/关键行为）
 npm run ab          # 两组提示词后缀的契约 A/B
 npm run gui:sync    # src/ui -> gui/ui

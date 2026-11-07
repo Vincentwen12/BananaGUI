@@ -1,37 +1,39 @@
 # Banana 设计令牌
 
-所有 UI 颜色、间距、字号、圆角、阴影、动效必须引用 `src/ui/style.css` 顶部的 `:root` 变量。
+唯一令牌源：根目录 `design-tokens.json`。CSS 变量映射在 `src/ui/style.css` 的 `:root`。
 
 ## 颜色
 
-| 令牌 | 用途 |
-|---|---|
-| `--bg-deep` / `--bg` / `--panel` / `--panel-2` / `--panel-3` | 背景层级 |
-| `--line` / `--line-strong` | 边框与分隔 |
-| `--text` / `--text-2` / `--text-3` / `--text-placeholder` | 文字层级 |
-| `--accent` / `--accent-ink` / `--accent-soft` / `--on-accent` | 品牌香蕉黄 |
-| `--success` / `--warn` / `--danger` / `--info` | 语义色 |
-| `--diff-add` / `--diff-del` / `--diff-add-ink` / `--diff-del-ink` | diff 背景与文字 |
-| `--on-danger` | 危险色上的文字 |
-
-## 间距
-
-`--space-1` 4px、`--space-2` 8px、`--space-3` 12px、`--space-4` 16px、`--space-5` 24px、`--space-6` 32px、`--space-7` 40px、`--space-8` 48px。
-
-## 字号
-
-`--text-xs` 11px、`--text-sm` 12px、`--text-md` 13px、`--text-base` 14px、`--text-lg` 16px、`--text-xl` 20px、`--text-2xl` 28px。
+| 令牌 | 值 | 用途 |
+|---|---|---|
+| `bg` | `#fafafa` | 页面背景 |
+| `panel` / `panel2` | `#f2f2f2` / `#ededed` | 面板层级 |
+| `border` / `borderStrong` | `rgba(0,0,0,.08)` / `.16` | 边框与分隔 |
+| `text` / `text2` / `text3` | `#161616` / `#5c5c5c` / `#6b6b73` | 文字层级 |
+| `accent` / `accentInk` | `#dcde8d` / `#8a6d12` | 香蕉黄强调 |
+| `danger` / `success` | `#c9564a` / `#2f7d50` | 语义色 |
 
 ## 圆角
 
-`--radius-sm` 4px、`--radius-md` 6px、`--radius` 8px。胶囊/开关/滚动条/头像可用 `99px` 或 `999px`，圆形可用 `50%`。
+`none` 0、`sm` 4、`md` 6、`lg` 8。矩形表面 ≤ 8px；胶囊/开关/滚动条/头像可用 `99px` / `999px` / `50%`。
 
 ## 阴影
 
-- `--shadow-sm`：卡片、输入框等表面。
-- `--shadow-overlay`：弹层、菜单、Toast。
-- 禁止 `a, b` 形式的多层阴影。
+- `sm`：`0 1px 2px rgba(16,16,20,.05)`
+- `overlay`：`0 12px 32px rgba(16,16,20,.14)`
+- 禁止逗号分隔的多层重阴影。
 
-## 动效
+## 间距
 
-`--dur-1` 140ms、`--dur-2` 200ms、`--dur-3` 240ms；缓动使用 `--ease` / `--ease-soft` / `--spring`。减少动态效果时全部降为 0。
+`4 / 8 / 12 / 16 / 24 / 32 / 40 / 48`。CSS 变量：`--space-1..8`。
+
+## 字号
+
+`11 / 12 / 13 / 14 / 16 / 20 / 28`。CSS 变量：`--text-xs..2xl`。
+
+## 强制规则
+
+- 令牌文件之外不得出现 `#hex`、`rgb()`、`hsl()`。
+- 不允许 `border-radius: 16px` 这类裸值；用 `var(--radius-*)`。
+- 项目存在 `design-tokens.json` 时，`ui_audit` 会把令牌外硬编码颜色视为失败。
+- 颜色对比度由令牌组合保证；新增颜色必须同时提供深色主题值。

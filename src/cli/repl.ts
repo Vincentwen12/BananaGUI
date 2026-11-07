@@ -429,6 +429,7 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
           unknowns: session.unknowns,
           search: config.search,
           budget: config.budget,
+          uiGuard: config.uiGuard,
           onBudget: (info) => {
             const used = info.reason === 'tokens' ? `${Math.round(info.used)} tokens` : `${info.used.toFixed(1)} 分钟`;
             ui.warn(`达到本轮预算（${info.reason === 'tokens' ? 'token' : '时间'} ${used}），本轮停止。`);
@@ -542,6 +543,8 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
       ui.warn(`已达到 ${config.maxSteps} 步上限，本轮停止。可以直接说"继续"接着做。`);
     } else if (result.stopReason === 'budget') {
       ui.warn('已达到本轮预算，停止。可以直接说"继续"接着做，或调大 config.budget。');
+    } else if (result.stopReason === 'quality_gate') {
+      ui.error(`UI 质量门禁未通过：${result.error ?? '仍有违规'}`);
     }
 
     const previous = session.usage;

@@ -1,34 +1,41 @@
-# Banana 组件约定
+# 组件
 
-## 按钮
+## 规则
 
-- 主按钮：`--accent` 背景 + `--on-accent` 文字；次按钮：`--panel-2` + `--line`；幽灵按钮：透明背景。
-- 必须有 hover / active / focus-visible / disabled / loading 态。
-- 不用渐变、不用彩色发光。
+- 按钮、输入、卡片、弹窗、计划卡、任务栏必须有明确状态和令牌。
+- 主按钮用 `--accent` + `--on-accent`；次按钮用 `--panel-2`；幽灵按钮透明。
+- 卡片背景 `--bg`/`--panel`，边框 `--line`，圆角 ≤ 8px，阴影最多 `--shadow-sm`。
+- 弹窗遮罩用半透明实色，不用模糊；圆角 8px，阴影 `--shadow-overlay`。
+- 计划卡只在 pending 时显示操作；批准后由验证页签推进阶段。
+- 任务栏只显示 pending / in_progress；全部完成或取消后收起。
 
-## 输入
+## 反例
 
-- 边框 `--line`，聚焦 `--line-strong` 或 `--accent-ink`，焦点轮廓保留。
-- placeholder 用 `--text-placeholder`，不要用正文色。
+```css
+.card {
+  border-radius: 16px;
+  background: linear-gradient(135deg, #6366f1, #a855f7);
+  box-shadow: 0 1px 2px #000, 0 24px 48px #000;
+  backdrop-filter: blur(18px);
+}
+```
 
-## 卡片 / 面板
+## 正例
 
-- 背景 `--bg` 或 `--panel`，边框 `--line`，圆角 8px，阴影最多 `--shadow-sm`。
-- 不为每个区块加卡片；优先用留白和分隔线。
+```css
+.card {
+  padding: var(--space-4);
+  border: 1px solid var(--line);
+  border-radius: var(--radius);
+  background: var(--panel);
+  box-shadow: var(--shadow-sm);
+}
+```
 
-## 弹层
+## 扫描器
 
-- 遮罩用半透明实色，不用模糊。
-- 圆角 8px，阴影 `--shadow-overlay`。
-- Tab 焦点限制在弹层内，Esc 关闭并归还焦点。
+`no-gradient`、`no-glass`、`no-big-radius`、`no-heavy-shadow`。
 
-## 计划卡 / 任务栏
+## 验收
 
-- 计划卡只在 `pending` 时出现；批准后不再固定追加到消息底部。
-- 计划项状态只允许 pending / in_progress / done；批准时全部重置为 pending。
-- 任务栏只显示 pending / in_progress；全部完成或取消计划后收起。
-- 计划项可附带阶段、文件、验证方式、置信度，用次要文字展示。
-
-## 终端
-
-- xterm 调色板是固定接口，允许具体色值，文件里用 `scanner-allow: terminal-palette` 标记。
+组件在浅色/深色/窄屏下均可用，状态齐全，无令牌外硬编码值。

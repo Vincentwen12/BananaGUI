@@ -351,6 +351,57 @@ async function testAgentDoc() {
   rmSync(workspace, { recursive: true, force: true });
 }
 
+async function testUiQualityGate() {
+  const workspace = mkdtempSync(join(tmpdir(), 'banana-ui-gate-'));
+  let calls = 0;
+  const provider = {
+    name: 'ui-provider',
+    get model() {
+      return 'ui-model';
+    },
+    async generate() {
+      calls += 1;
+      if (calls === 1) {
+        return {
+          message: {
+            role: 'assistant',
+            content: '',
+            toolCalls: [
+              {
+                id: 'ui-1',
+                name: 'write_file',
+                input: { path: 'bad.css', content: '.x { border-radius: 20px; }' },
+              },
+            ],
+          },
+          usage: { inputTokens: 10, outputTokens: 10 },
+        };
+      }
+      return { message: { role: 'assistant', content: '完成了' }, usage: {} };
+    },
+  };
+  const result = await runTurn(
+    {
+      provider,
+      tools: [writeFileTool],
+      permissions: { shell: 'allow', write: 'allow', network: 'allow' },
+      system: 'test',
+      maxSteps: 12,
+      maxContextChars: 100_000,
+      toolsWorkspace: workspace,
+      allowOutsideWorkspace: false,
+      signal: new AbortController().signal,
+      todos: [],
+      uiGuard: 'enforce',
+      approve: async () => true,
+    },
+    [],
+    '做一个 UI',
+  );
+  check('UI 审计未通过时不能 done', result.stopReason === 'quality_gate', result.stopReason);
+  rmSync(workspace, { recursive: true, force: true });
+}
+
 async function testPhaseGate() {
   const items = [
     { text: 'p1 task', status: 'pending', phase: 'p1' },
@@ -580,6 +631,7 @@ async function main() {
   await testCrlf();
   await testPlatformPrompt();
   await testAgentDoc();
+  await testUiQualityGate();
   await testPhaseGate();
   await testVerification();
   await testMemory();

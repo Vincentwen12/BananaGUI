@@ -64,6 +64,17 @@ export interface ToolResult {
   content: string;
   /** 只给终端用户看的提示，可选。 */
   display?: string;
+  /** 结构化附加信息，例如 UI 审计结果（用于回合质量门禁）。 */
+  meta?: {
+    uiViolations?: Array<{
+      file: string;
+      line: number;
+      rule: string;
+      severity: 'fail' | 'warn';
+      message: string;
+    }>;
+    uiFiles?: string[];
+  };
 }
 
 export interface Tool {
