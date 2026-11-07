@@ -1,0 +1,8 @@
+node_modules/
+tmp/
+dist/
+*.log
+*.tgz
+.DS_Store
+.banana/
+.opencode/

@@ -1,0 +1,81 @@
+{
+  "name": "@vincentbanana/banana-gui",
+  "version": "1.0.5",
+  "description": "Banana 的图形界面：本地服务 + 浏览器。黑白主题，自绘图标，无第三方 UI 依赖",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "bin": {
+    "banana-gui": "bin/banana-gui.mjs",
+    "banana-gui-desktop": "bin/banana-gui-desktop.mjs"
+  },
+  "files": [
+    "bin",
+    "ui",
+    "desktop",
+    "README.md"
+  ],
+  "keywords": [
+    "ai",
+    "agent",
+    "gui",
+    "web-ui",
+    "llm",
+    "terminal",
+    "desktop",
+    "electron"
+  ],
+  "scripts": {
+    "sync": "node ../scripts/sync-gui.mjs",
+    "test": "node test/gui-package.test.mjs",
+    "prepublishOnly": "npm run sync && node ../scripts/check-gui-sync.mjs && node test/gui-package.test.mjs",
+    "desktop": "electron desktop/main.cjs",
+    "pack": "electron-builder --dir",
+    "dist": "electron-builder",
+    "dist:win": "electron-builder --win",
+    "dist:mac": "electron-builder --mac",
+    "dist:linux": "electron-builder --linux"
+  },
+  "build": {
+    "appId": "dev.banana.gui",
+    "productName": "Banana",
+    "files": [
+      "desktop/**/*",
+      "ui/**/*",
+      "bin/**/*",
+      "package.json"
+    ],
+    "npmRebuild": false,
+    "mac": {
+      "category": "public.app-category.developer-tools",
+      "target": [
+        "dmg"
+      ]
+    },
+    "win": {
+      "target": [
+        "nsis"
+      ]
+    },
+    "linux": {
+      "target": [
+        "AppImage"
+      ],
+      "category": "Development"
+    }
+  },
+  "optionalDependencies": {
+    "electron": "^33.4.11"
+  },
+  "devDependencies": {
+    "electron-builder": "^25.0.0"
+  },
+  "dependencies": {
+    "@vincentbanana/bananacli": "^0.8.5"
+  },
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  }
+}

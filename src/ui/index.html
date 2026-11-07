@@ -1,0 +1,279 @@
+<!doctype html>
+<html lang="zh-CN">
+  <head>
+    <meta charset="utf-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="color-scheme" content="light dark" />
+    <title>Banana</title>
+    <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 32 32'%3E%3Crect width='32' height='32' rx='8' fill='%23171717'/%3E%3Cg fill='none' stroke='%23dcde8d' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpath d='M9 21c1.6-7 6-11.4 14-12 0 7.4-3.9 12.9-9.9 15'/%3E%3Cpath d='M9 27c3-6 7-10 13-13'/%3E%3C/g%3E%3C/svg%3E" />
+    <link rel="stylesheet" href="vendor/xterm.css" />
+    <link rel="stylesheet" href="style.css" />
+  </head>
+  <body>
+    <div class="shell" id="shell">
+      <header class="titlebar" id="titlebar">
+        <div class="tb-left">
+          <button class="tb-brand" id="toggleSidebar" title="会话列表（Ctrl+B）" aria-label="会话列表">
+            <svg class="brand-mark" viewBox="0 0 24 24" aria-hidden="true">
+              <path d="M7 4.6c2.6-.4 4.9.5 6.3 2.6M12.3 7.2c1.4-2.1 3.7-3 6.3-2.6-1.1 1.6-1.2 3.1-.4 4.6.8 1.5.8 3-.1 4.5-1.1 2-3.3 3.5-5.9 4.3-2.3.7-4.7.7-7.1 0" />
+              <path d="M7.2 18c-1.1-2-1.2-4-.4-6 .9-2.3 2.5-3.7 4.7-4.2" />
+            </svg>
+          </button>
+          <div class="tb-tabs" id="tabStrip"></div>
+          <button class="tb-action" id="newTab" title="新建对话" aria-label="新建对话"></button>
+        </div>
+        <div class="tb-right">
+          <button class="tb-action" id="searchBtn" title="命令中心（Ctrl+K）" aria-label="命令中心"></button>
+          <button class="tb-action" id="termBtn" title="终端（Ctrl+`）" aria-label="终端"></button>
+          <button class="tb-action" id="pluginsBtn" title="插件工坊" aria-label="插件工坊"></button>
+          <button class="tb-action" id="openSettings" title="设置" aria-label="设置"></button>
+          <button class="tb-action" id="themeBtn" title="切换主题" aria-label="切换主题"></button>
+          <div class="win-controls" id="winControls" hidden>
+            <button class="win-btn" id="winMin" title="最小化" aria-label="最小化"></button>
+            <button class="win-btn" id="winMax" title="最大化" aria-label="最大化"></button>
+            <button class="win-btn win-close" id="winClose" title="关闭" aria-label="关闭"></button>
+          </div>
+        </div>
+      </header>
+
+      <div class="shell-body" id="shellBody">
+        <aside class="sidebar" id="sidebar">
+          <div class="sidebar-head">
+            <div class="brand">
+              <span class="brand-name">Banana</span>
+              <span class="brand-sub" id="workspaceLabel"></span>
+            </div>
+            <button class="icon-btn" id="newChat" title="新建对话" aria-label="新建对话"></button>
+          </div>
+          <label class="sb-search">
+            <span class="sb-search-ico" data-icon="search"></span>
+            <input id="sessionSearch" autocomplete="off" spellcheck="false" placeholder="搜索会话" />
+          </label>
+          <div class="session-list" id="sessionList"></div>
+          <div class="sidebar-foot">
+            <button class="ghost-btn" id="openSettingsFoot">
+              <span class="ghost-ico" data-icon="sliders"></span>
+              <span>设置</span>
+            </button>
+            <button class="ghost-btn danger" id="undoBtn" title="撤销上一轮文件改动">
+              <span class="ghost-ico" data-icon="undo"></span>
+              <span>撤销</span>
+            </button>
+          </div>
+          <div class="sb-resizer" id="sbResizer" title="拖动调整宽度"></div>
+        </aside>
+
+        <main class="main" id="main">
+          <div class="panel-row" id="panelRow">
+            <section class="chat-card" id="chatCard">
+              <header class="chat-head">
+                <div class="chat-title-wrap">
+                  <div class="chat-title" id="threadTitle">新对话</div>
+                  <div class="chat-sub" id="threadMeta" role="status" aria-live="polite"></div>
+                </div>
+                <div class="chat-actions">
+                  <span class="mode-badge" id="modeBadge" hidden>Plan</span>
+                  <button class="icon-btn" id="filesBtn" title="工作区文件" aria-label="工作区文件"></button>
+                  <button class="icon-btn" id="reviewBtn" title="查看改动 / 文件 / 任务（Review）" aria-label="查看 Review"></button>
+                </div>
+              </header>
+
+              <div class="thread" id="thread"></div>
+
+              <div class="composer-wrap">
+                <div class="todo-dock" id="todoDock" hidden>
+                  <button class="todo-summary" id="todoSummary" type="button" aria-expanded="true">
+                    <span class="todo-title">任务</span>
+                    <span class="todo-count" id="todoCount">0/0</span>
+                    <span class="todo-bar"><i id="todoBarFill"></i></span>
+                    <span class="todo-caret" data-icon="chevronDown"></span>
+                  </button>
+                  <div class="todo-list" id="todoList"></div>
+                </div>
+                <div class="attachments" id="attachments" hidden></div>
+                <form class="composer" id="composer">
+                  <div class="command-palette" id="commandPalette" hidden></div>
+                  <textarea id="input" rows="1" aria-label="给 Banana 发消息" placeholder="说点什么，Banana 来动手；输入 / 调命令，@ 引文件"></textarea>
+                  <div class="composer-toolbar">
+                    <div class="ct-left">
+                      <button class="icon-btn attach-btn" id="attachBtn" type="button" title="添加附件" aria-label="添加附件"></button>
+                      <input type="file" id="attachInput" multiple hidden />
+                      <div class="mode-switch" id="modeSwitch" role="group" aria-label="工作模式">
+                        <button type="button" data-mode="plan" title="只读调研，先出计划等你批准">Plan</button>
+                        <button type="button" data-mode="build" title="允许改文件和执行命令">Build</button>
+                      </div>
+                      <button class="model-chip" id="modelBtn" type="button" title="切换模型">
+                        <span data-icon="chevronDown"></span><span id="modelLabel">—</span>
+                      </button>
+                      <button class="model-chip reasoning-chip" id="reasoningBtn" type="button" title="思考强度">
+                        <span data-icon="chevronDown"></span><span id="reasoningLabel">标准</span>
+                      </button>
+                    </div>
+                    <div class="ct-right">
+                      <span class="composer-hint" id="composerHint"></span>
+                      <button class="send-btn" id="sendBtn" type="button" title="发送" aria-label="发送"></button>
+                    </div>
+                  </div>
+                </form>
+                <div class="home-tips" id="homeTips" hidden></div>
+              </div>
+              <button class="jump-latest" id="jumpLatest" type="button" hidden>回到最新</button>
+            </section>
+
+            <div class="review-scrim" id="reviewScrim" hidden></div>
+            <aside class="review" id="reviewPanel" hidden aria-label="Review">
+              <div class="review-resizer" id="reviewResizer" title="拖动调整宽度"></div>
+              <header class="review-head">
+                <div class="review-tabs">
+                  <button class="review-tab is-on" data-mode="changes" id="reviewTabChanges">改动</button>
+                  <button class="review-tab" data-mode="files" id="reviewTabFiles">文件</button>
+                  <button class="review-tab" data-mode="tasks" id="reviewTabTasks">任务</button>
+                </div>
+                <div class="review-actions">
+                  <span class="review-stats" id="reviewStats"></span>
+                  <button class="icon-btn" id="reviewRefresh" title="刷新" aria-label="刷新"></button>
+                  <button class="icon-btn" id="reviewClose" title="收起 Review" aria-label="收起 Review"></button>
+                </div>
+              </header>
+              <div class="review-body">
+                <div class="review-pane is-on" data-pane="changes" id="changesPanel">
+                  <div class="changes-list" id="changesList"></div>
+                  <div class="changes-detail" id="changesDetail">
+                    <div class="hint">选择上面的文件查看改动。</div>
+                  </div>
+                </div>
+                <div class="review-pane" data-pane="tasks" id="tasksPanel">
+                  <div class="tasks-empty" id="tasksEmpty">这一轮还没有任务清单。</div>
+                  <div class="tasks-list" id="tasksList"></div>
+                </div>
+                <div class="review-pane" data-pane="files" id="filesPanel">
+                  <div class="files-head">
+                    <span id="filesTitle">工作区文件</span>
+                  </div>
+                  <div class="files-split" id="filesSplit">
+                    <div class="files-tree" id="filesTree"></div>
+                    <div class="files-divider" id="filesDivider" title="拖动调整代码区域高度"></div>
+                    <div class="files-preview" id="filesPreview" hidden>
+                      <div class="files-preview-head">
+                        <span class="preview-path" id="previewName"></span>
+                        <div class="preview-actions">
+                          <button class="btn tiny" id="insertPath" title="插入到输入框">引用</button>
+                          <button class="btn tiny" id="previewCopyPath" title="复制文件路径">路径</button>
+                          <button class="btn tiny" id="previewWrap" title="自动换行">换行</button>
+                          <button class="btn tiny" id="previewCopy" title="复制内容">复制</button>
+                          <button class="btn tiny" id="previewFull" title="全屏查看">全屏</button>
+                          <button class="btn tiny" id="previewClose" title="关闭预览">关闭</button>
+                        </div>
+                      </div>
+                      <div class="files-code" id="previewBody"></div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </aside>
+          </div>
+
+          <section class="terminal-dock" id="terminalPanel" hidden aria-label="终端">
+            <div class="term-resizer" id="termResizer" title="拖动调整高度"></div>
+            <div class="term-inner">
+              <header class="term-head">
+                <div class="term-tabs" id="termTabs"></div>
+                <button class="icon-btn" id="termAdd" title="新建标签" aria-label="新建标签"></button>
+                <span class="term-cwd" id="termCwd"></span>
+                <button class="icon-btn" id="termMore" title="终端菜单" aria-label="终端菜单"></button>
+                <div class="term-menu" id="termMenu" hidden>
+                  <div class="term-menu-row">
+                    <span>Shell</span>
+                    <select id="termShell" title="新建标签使用的 shell"></select>
+                  </div>
+                  <button id="termAnalyze">分析输出</button>
+                  <button id="termCopy">复制选中</button>
+                  <button id="termClear">清空</button>
+                </div>
+              </header>
+              <div class="term-body" id="termBody"></div>
+            </div>
+          </section>
+        </main>
+      </div>
+    </div>
+
+    <div class="settings" id="settingsSheet" hidden>
+      <div class="settings-panel" role="dialog" aria-modal="true" aria-label="设置" tabindex="-1">
+        <header class="settings-head">
+          <div>
+            <h2>设置</h2>
+            <p>模型、外观、终端、工作区、插件</p>
+          </div>
+          <button class="icon-btn" id="closeSettings" aria-label="关闭"></button>
+        </header>
+        <div class="settings-layout">
+          <nav class="settings-nav" id="settingsNav"></nav>
+          <div class="settings-content" id="settingsBody"></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="viewer" id="codeViewer" hidden>
+      <div class="viewer-panel" role="dialog" aria-modal="true" aria-label="代码查看器">
+        <header class="viewer-head">
+          <span class="viewer-path" id="viewerName"></span>
+          <div class="viewer-actions">
+            <button class="btn tiny" id="viewerCopyPath">路径</button>
+            <button class="btn tiny" id="viewerWrap">换行</button>
+            <button class="btn tiny" id="viewerCopy">复制</button>
+            <button class="icon-btn" id="viewerClose" aria-label="关闭"></button>
+          </div>
+        </header>
+        <div class="viewer-body" id="viewerBody"></div>
+      </div>
+    </div>
+
+    <div class="command-center" id="commandCenter" hidden>
+      <div class="cc-panel" role="dialog" aria-modal="true" aria-label="命令中心">
+        <div class="cc-search">
+          <span class="cc-ico" id="ccIcon"></span>
+          <input id="ccInput" autocomplete="off" spellcheck="false" placeholder="搜索会话、文件、命令、设置或动作…" />
+          <kbd>Esc</kbd>
+        </div>
+        <div class="cc-results" id="ccResults"></div>
+      </div>
+    </div>
+
+    <div class="viewer attachment-viewer" id="attachmentViewer" hidden>
+      <div class="viewer-panel" role="dialog" aria-modal="true" aria-label="附件预览">
+        <header class="viewer-head">
+          <span class="viewer-path" id="attachmentName"></span>
+          <div class="viewer-actions">
+            <span class="attachment-meta" id="attachmentMeta"></span>
+            <button class="btn tiny" id="attachmentCopyPath">路径</button>
+            <button class="icon-btn" id="attachmentClose" aria-label="关闭"></button>
+          </div>
+        </header>
+        <div class="viewer-body attachment-body" id="attachmentBody"></div>
+      </div>
+    </div>
+
+    <div class="modal" id="approvalModal" hidden>
+      <div class="modal-card" role="dialog" aria-modal="true" aria-label="需要确认">
+        <div class="modal-head">
+          <span class="modal-ico" data-icon="shield"></span>
+          <span id="approvalKind">需要确认</span>
+        </div>
+        <div class="modal-summary" id="approvalSummary"></div>
+        <pre class="modal-preview" id="approvalPreview" hidden></pre>
+        <div class="modal-actions">
+          <button class="btn" id="approvalNo">拒绝</button>
+          <button class="btn primary" id="approvalYes">允许</button>
+        </div>
+      </div>
+    </div>
+
+    <div class="selection-tools" id="selectionTools" hidden></div>
+    <div class="toast" id="toast" role="status" aria-live="polite" hidden></div>
+    <script src="vendor/xterm.js"></script>
+    <script src="vendor/addon-fit.js"></script>
+    <script src="vendor/highlight.min.js"></script>
+    <script type="module" src="app.js"></script>
+  </body>
+</html>

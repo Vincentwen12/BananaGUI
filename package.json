@@ -1,0 +1,64 @@
+{
+  "name": "@vincentbanana/bananacli",
+  "version": "0.8.5",
+  "description": "A multi-provider AI agent for your terminal: file tools, shell, web search, persistent sessions, diff preview and undo",
+  "type": "module",
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "bin": {
+    "banana": "dist/index.js"
+  },
+  "main": "dist/index.js",
+  "exports": {
+    ".": "./dist/index.js",
+    "./server": "./dist/server/ui-server.js"
+  },
+  "files": [
+    "dist",
+    "ui",
+    "docs",
+    "README.md",
+    "LICENSE"
+  ],
+  "scripts": {
+    "start": "node src/index.ts",
+    "build": "tsc -p tsconfig.build.json && node scripts/copy-ui.mjs",
+    "typecheck": "tsc --noEmit",
+    "dev": "node --watch src/index.ts",
+    "test": "node scripts/check-ui.mjs && node test/prompt.test.mjs && node test/ui.test.mjs && node test/p0.test.mjs && node test/features.test.mjs && node test/gui.test.mjs && node test/web-search.test.mjs && node test/smoke.mjs",
+    "gui:sync": "node scripts/sync-gui.mjs",
+    "gui:check": "node scripts/check-gui-sync.mjs",
+    "ui:check": "node scripts/check-ui.mjs",
+    "release": "node scripts/release.mjs",
+    "prepare": "npm run build",
+    "prepublishOnly": "npm run typecheck && npm test && npm run build && npm run gui:sync && node scripts/check-gui-sync.mjs && node scripts/check-ui.mjs && node test/pack.test.mjs"
+  },
+  "keywords": [
+    "ai",
+    "agent",
+    "cli",
+    "llm",
+    "anthropic",
+    "openai",
+    "deepseek",
+    "coding-agent",
+    "terminal"
+  ],
+  "license": "MIT",
+  "publishConfig": {
+    "access": "public"
+  },
+  "devDependencies": {
+    "@highlightjs/cdn-assets": "^11.12.0",
+    "@types/node": "^22.20.5",
+    "@types/ws": "^8.18.2",
+    "@xterm/addon-fit": "^0.11.0",
+    "@xterm/xterm": "^6.0.0",
+    "typescript": "^5.7.3"
+  },
+  "dependencies": {
+    "@lydell/node-pty": "^1.2.0-beta.15",
+    "ws": "^8.22.0"
+  }
+}
