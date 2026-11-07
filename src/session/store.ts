@@ -3,7 +3,7 @@ import { mkdir, readFile, readdir, rename, unlink, writeFile } from 'node:fs/pro
 import { join } from 'node:path';
 import type { UMessage } from '../providers/types.ts';
 import type { ReasoningLevel } from '../providers/reasoning.ts';
-import type { TodoItem } from '../tools/types.ts';
+import type { FactItem, TodoItem, UnknownItem } from '../tools/types.ts';
 
 export type AgentMode = 'plan' | 'build';
 
@@ -13,6 +13,8 @@ export interface SessionPlan {
   summary?: string;
   createdAt: string;
   approvedAt?: string;
+  /** 已批准计划当前执行的阶段；只执行这个阶段，完成后等用户确认。 */
+  currentPhase?: string;
 }
 
 export interface SessionUsage {
@@ -32,6 +34,10 @@ export interface Session {
   messages: UMessage[];
   /** 任务清单（todo_* 工具维护）。 */
   todos?: TodoItem[];
+  /** 已确认事实（memory_* 工具维护）。 */
+  facts?: FactItem[];
+  /** 未验证项（memory_* 工具维护）。 */
+  unknowns?: UnknownItem[];
   /** 会话累计 token 用量。 */
   usage?: SessionUsage;
   /** Plan 只读调研，Build 允许写文件和执行命令。 */
@@ -112,6 +118,8 @@ export class SessionStore {
       updatedAt: now,
       messages: [],
       todos: [],
+      facts: [],
+      unknowns: [],
       mode: 'build',
       reasoning: 'standard',
       titleSource: 'auto',
@@ -146,6 +154,8 @@ export class SessionStore {
         ...parsed,
         messages: parsed.messages ?? [],
         todos: parsed.todos ?? [],
+        facts: Array.isArray(parsed.facts) ? parsed.facts : [],
+        unknowns: Array.isArray(parsed.unknowns) ? parsed.unknowns : [],
         mode: parsed.mode === 'plan' ? 'plan' : 'build',
         reasoning:
           parsed.reasoning === 'fast' || parsed.reasoning === 'deep' ? parsed.reasoning : 'standard',

@@ -68,6 +68,8 @@ export interface AppConfig {
   search: SearchConfig;
   /** 单轮预算；超出后在下一次模型调用前停止。 */
   budget?: { tokens?: number; minutes?: number };
+  /** 用户反复纠正后沉淀的偏好，注入系统提示词。 */
+  preferences?: string[];
   /** 运行时加载的项目规则（AGENT.md），不写入配置文件。 */
   agentDoc?: string;
   /** AGENT.md 的实际路径，供 GUI 展示。 */
@@ -294,6 +296,7 @@ function defaultConfig(workspace: string): AppConfig {
     showReasoning: true,
     disabledPlugins: [],
     trustedProjects: {},
+    preferences: [],
     search: {
       provider: 'auto',
       deep: false,
@@ -328,6 +331,12 @@ function merge(base: AppConfig, patch: ConfigFile): AppConfig {
     permissions: { ...base.permissions, ...(patch.permissions ?? {}) },
     search: { ...base.search, ...(patch.search ?? {}) },
   };
+}
+
+export function formatPreferences(preferences: string[] = []): string {
+  const items = preferences.map((item) => item.trim()).filter(Boolean);
+  if (!items.length) return '';
+  return `## 用户偏好\n${items.map((item, index) => `${index + 1}. ${item}`).join('\n')}`;
 }
 
 function applyEnvOverrides(config: AppConfig): AppConfig {

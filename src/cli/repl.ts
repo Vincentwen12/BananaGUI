@@ -5,7 +5,7 @@ import type { Interface } from 'node:readline/promises';
 import { dirname, extname, join } from 'node:path';
 import { collectContinuation } from './continuation.ts';
 import type { AppConfig } from '../config/config.ts';
-import { bananaHome } from '../config/config.ts';
+import { bananaHome, formatPreferences } from '../config/config.ts';
 import { runTurn } from '../agent/loop.ts';
 import { compactMessages, estimateTokens } from '../agent/context.ts';
 import { createProvider } from '../providers/index.ts';
@@ -359,6 +359,8 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
     let reasoningOpen = false;
     let streamedInTool = false;
     session.todos ??= [];
+    session.facts ??= [];
+    session.unknowns ??= [];
     const todosBefore = JSON.stringify(session.todos);
 
     // 等待首个 token 时的状态指示，任何输出前都会先擦掉
@@ -413,6 +415,7 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
           system: [
             config.systemPrompt,
             config.agentDoc ? `## 项目规则（AGENT.md）\n${config.agentDoc}` : '',
+            formatPreferences(config.preferences),
           ]
             .filter(Boolean)
             .join('\n\n'),
@@ -422,6 +425,8 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
           allowOutsideWorkspace: config.allowOutsideWorkspace,
           signal: controller.signal,
           todos: session.todos,
+          facts: session.facts,
+          unknowns: session.unknowns,
           search: config.search,
           budget: config.budget,
           onBudget: (info) => {

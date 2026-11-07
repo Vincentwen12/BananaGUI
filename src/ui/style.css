@@ -444,6 +444,10 @@ body.switching { cursor: progress; }
 .msg-body li { margin: 2px 0; }
 .msg-body h1, .msg-body h2, .msg-body h3 { font-size: 15px; margin: 16px 0 6px; }
 .msg-body a { color: var(--text); text-decoration: underline; text-underline-offset: 3px; }
+.fact-tag { display: inline-flex; align-items: center; padding: 0 4px; border-radius: 4px; font-size: 11px; line-height: 18px; font-weight: 550; white-space: nowrap; }
+.fact-tag.is-fact { color: var(--diff-add-ink); background: rgba(18, 201, 5, 0.1); }
+.fact-tag.is-infer { color: var(--info); background: rgba(0, 197, 223, 0.1); }
+.fact-tag.is-guess { color: var(--warn); background: rgba(143, 107, 31, 0.12); }
 
 .msg-body code {
   font-family: var(--mono);
@@ -3958,6 +3962,11 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 
 .tasks-empty { padding: 18px 14px; color: var(--text-3); font-size: 12px; }
 .tasks-list { padding: 8px; overflow: auto; }
+.verify-list { padding: 8px; overflow: auto; }
+.verify-row { display: flex; gap: 10px; padding: 6px 8px; border-bottom: 1px solid var(--line); font-size: 12.5px; }
+.verify-row:last-of-type { border-bottom: 0; }
+.verify-key { flex: none; width: 64px; color: var(--text-3); }
+.verify-value { min-width: 0; color: var(--text-2); word-break: break-word; }
 .task-row { min-height: 34px; display: flex; align-items: center; gap: 8px; padding: 5px 7px; border-radius: 7px; font-size: 12.5px; color: var(--text-2); }
 .task-row:hover { background: var(--panel); }
 .task-index { width: 16px; flex: none; font-family: var(--mono); font-size: 10px; color: var(--text-3); }

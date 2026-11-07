@@ -1,8 +1,11 @@
+import { appendFile, mkdir } from 'node:fs/promises';
 import type { AppConfig } from '../config/config.ts';
-import { defaultSystemPrompt, loadAgentDoc, saveConfig } from '../config/config.ts';
+import { bananaHome, defaultSystemPrompt, loadAgentDoc, saveConfig } from '../config/config.ts';
+import { reviewSession } from '../agent/review.ts';
+import { TEMPLATES } from './templates.ts';
 import { formatCost } from '../providers/pricing.ts';
 import { existsSync } from 'node:fs';
-import { isAbsolute, resolve } from 'node:path';
+import { dirname, isAbsolute, join, resolve } from 'node:path';
 import type { Provider } from '../providers/types.ts';
 import { createProvider } from '../providers/index.ts';
 import type { Session, SessionStore } from '../session/store.ts';
@@ -168,6 +171,8 @@ const clearCommand: Command = {
     if (!confirmed) return ui.hint('已取消。');
     ctx.session.messages = [];
     ctx.session.todos = [];
+    ctx.session.facts = [];
+    ctx.session.unknowns = [];
     ctx.session.usage = { inputTokens: 0, outputTokens: 0 };
     await ctx.saveSession();
     ui.ok('上下文已清空。');
@@ -406,6 +411,99 @@ const workspaceCommand: Command = {
   },
 };
 
+const reviewCommand: Command = {
+  name: 'review',
+  usage: '/review',
+  summary: '让独立的审查 agent 检查最近对话的交付质量',
+  async run(_args, ctx) {
+    if (!ctx.session.messages.length) return ui.hint('还没有可审查的对话。');
+    ui.hint('  审查中…（第二次模型调用，不修改文件）');
+    try {
+      const result = await reviewSession({
+        provider: ctx.provider,
+        messages: ctx.session.messages,
+        system: ctx.config.systemPrompt,
+        signal: new AbortController().signal,
+      });
+      ui.line(result);
+    } catch (error) {
+      ui.error(`审查失败: ${error instanceof Error ? error.message : String(error)}`);
+    }
+  },
+};
+
+const preferCommand: Command = {
+  name: 'prefer',
+  usage: '/prefer [文本|clear]',
+  summary: '查看/追加用户偏好（会注入系统提示词）',
+  async run(args, ctx) {
+    const value = args.trim();
+    ctx.config.preferences ??= [];
+    if (!value) {
+      if (!ctx.config.preferences.length) {
+        ui.hint('还没有偏好。用 /prefer <文本> 添加，例如 /prefer 命令优先单行，不要写脚本。');
+        return;
+      }
+      ui.line(ui.c.bold('用户偏好'));
+      for (const [index, item] of ctx.config.preferences.entries()) {
+        ui.line(`  ${index + 1}. ${item}`);
+      }
+      return;
+    }
+    if (value === 'clear') {
+      ctx.config.preferences = [];
+      await saveConfig(ctx.config);
+      ui.ok('偏好已清空。');
+      return;
+    }
+    ctx.config.preferences.push(value.slice(0, 300));
+    await saveConfig(ctx.config);
+    ui.ok('偏好已添加，下一轮生效。');
+  },
+};
+
+const templateCommand: Command = {
+  name: 'template',
+  usage: '/template [名称]',
+  summary: '查看任务模板（步骤、验收清单、常见坑）',
+  async run(args, ctx) {
+    const name = args.trim();
+    if (!name) {
+      ui.line(ui.c.bold('任务模板'));
+      for (const template of TEMPLATES) ui.line(`  ${ui.c.cyan(template.name)}  ${template.summary}`);
+      ui.hint('  用 /template <名称> 查看详情。');
+      return;
+    }
+    const template = TEMPLATES.find((item) => item.name === name);
+    if (!template) return ui.error(`没有模板 "${name}"。可用: ${TEMPLATES.map((item) => item.name).join(', ')}`);
+    ui.line(`${ui.c.bold(template.name)} · ${template.summary}`);
+    ui.line(ui.c.bold('步骤'));
+    for (const step of template.steps) ui.line(`  - ${step}`);
+    ui.line(ui.c.bold('验收'));
+    for (const item of template.checklist) ui.line(`  - ${item}`);
+    ui.line(ui.c.bold('常见坑'));
+    for (const item of template.pitfalls) ui.line(`  - ${item}`);
+  },
+};
+
+const feedbackCommand: Command = {
+  name: 'feedback',
+  usage: '/feedback <文本>',
+  summary: '记录一条人工反馈到本地 feedback.jsonl',
+  async run(args, ctx) {
+    const text = args.trim();
+    if (!text) return ui.hint('用法: /feedback <你遇到的问题或想改进的点>');
+    const file = join(bananaHome(), 'feedback.jsonl');
+    await mkdir(dirname(file), { recursive: true });
+    await appendFile(
+      file,
+      `${JSON.stringify({ at: new Date().toISOString(), session: ctx.session.id, text })}\n`,
+      'utf8',
+    );
+    ui.ok(`反馈已记录：${file}`);
+  },
+};
+
 const envCommand: Command = {
   name: 'env',
   usage: '/env',
@@ -445,6 +543,10 @@ export const commands: Command[] = [
   compactCommand,
   workspaceCommand,
   envCommand,
+  reviewCommand,
+  preferCommand,
+  templateCommand,
+  feedbackCommand,
   {
     name: 'image',
     usage: '/image <路径|clear>',

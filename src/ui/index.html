@@ -128,6 +128,7 @@
                   <button class="review-tab is-on" data-mode="changes" id="reviewTabChanges">改动</button>
                   <button class="review-tab" data-mode="files" id="reviewTabFiles">文件</button>
                   <button class="review-tab" data-mode="tasks" id="reviewTabTasks">任务</button>
+                  <button class="review-tab" data-mode="verify" id="reviewTabVerify">验证</button>
                 </div>
                 <div class="review-actions">
                   <span class="review-stats" id="reviewStats"></span>
@@ -145,6 +146,9 @@
                 <div class="review-pane" data-pane="tasks" id="tasksPanel">
                   <div class="tasks-empty" id="tasksEmpty">这一轮还没有任务清单。</div>
                   <div class="tasks-list" id="tasksList"></div>
+                </div>
+                <div class="review-pane" data-pane="verify" id="verifyPanel">
+                  <div class="verify-list" id="verifyList"></div>
                 </div>
                 <div class="review-pane" data-pane="files" id="filesPanel">
                   <div class="files-head">

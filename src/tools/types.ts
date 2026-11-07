@@ -6,6 +6,20 @@ export type PermissionKey = 'shell' | 'write' | 'network';
 export type PermissionMode = 'ask' | 'allow' | 'deny';
 export type PermissionMap = Partial<Record<PermissionKey, PermissionMode>>;
 
+export type FactSource = 'user' | 'doc' | 'test' | 'infer' | 'guess';
+
+export interface FactItem {
+  content: string;
+  source: FactSource;
+  confidence: 'high' | 'medium' | 'low';
+}
+
+export interface UnknownItem {
+  item: string;
+  reason?: string;
+  verify?: string;
+}
+
 export interface TodoItem {
   text: string;
   status: 'pending' | 'in_progress' | 'done';
@@ -30,6 +44,10 @@ export interface ToolContext {
   permissions: PermissionMap;
   /** 当前会话的任务清单；todo_* 工具直接读写这个数组。 */
   todos: TodoItem[];
+  /** 已确认事实；memory_* 工具直接读写。 */
+  facts?: FactItem[];
+  /** 未验证项；memory_* 工具直接读写。 */
+  unknowns?: UnknownItem[];
   /** 长时间运行的命令可以边跑边把输出交给界面显示。 */
   onOutput?: (chunk: string, stream: 'stdout' | 'stderr') => void;
   /** 写文件前记录改动前内容，供 /undo 回滚；before 为 null 表示新建。 */

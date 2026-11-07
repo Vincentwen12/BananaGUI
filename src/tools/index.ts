@@ -2,13 +2,21 @@ import type { Provider, ToolSchema } from '../providers/types.ts';
 import { fileTools } from './fs.ts';
 import { shellTool } from './shell.ts';
 import { todoTools } from './todo.ts';
+import { memoryTools } from './memory.ts';
 import type { PermissionMap, PermissionMode } from './types.ts';
 import { type ApprovalKind, type Tool, type ToolContext, type ToolResult, fail } from './types.ts';
 import { webSearchTool, webFetchTool } from './web.ts';
 
 export * from './types.ts';
 
-export const allTools: Tool[] = [...fileTools, shellTool, webSearchTool, webFetchTool, ...todoTools];
+export const allTools: Tool[] = [
+  ...fileTools,
+  shellTool,
+  webSearchTool,
+  webFetchTool,
+  ...todoTools,
+  ...memoryTools,
+];
 
 export function toolMap(tools: Tool[]): Map<string, Tool> {
   return new Map(tools.map((tool) => [tool.name, tool]));

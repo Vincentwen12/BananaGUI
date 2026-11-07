@@ -4,14 +4,17 @@ import type { MessageAttachment, Provider, ToolCall, UMessage, Usage } from '../
 import type { ReasoningLevel } from '../providers/reasoning.ts';
 import {
   type ApprovalKind,
+  type FactItem,
   type TodoItem,
   type Tool,
   type ToolResult,
+  type UnknownItem,
   permissionFor,
   runTool,
   toolMap,
   toolSchemas,
 } from '../tools/index.ts';
+import { formatMemory } from '../tools/memory.ts';
 import { compactMessages, estimateChars, estimateTokens } from './context.ts';
 
 export type StopReason = 'done' | 'max_steps' | 'aborted' | 'error' | 'budget';
@@ -36,6 +39,10 @@ export interface AgentDeps {
   signal: AbortSignal;
   /** 当前会话的任务清单（todo_* 工具读写它，由调用方持久化）。 */
   todos?: TodoItem[];
+  /** 已确认事实（memory_* 工具读写）。 */
+  facts?: FactItem[];
+  /** 未验证项（memory_* 工具读写）。 */
+  unknowns?: UnknownItem[];
   /** 本轮思考强度。 */
   reasoning?: ReasoningLevel;
   /** 联网搜索配置；不传时工具退回环境变量和免费源。 */
@@ -121,6 +128,8 @@ export async function runTurn(
 
   const usage: Usage = {};
   const todos: TodoItem[] = deps.todos ?? [];
+  const facts: FactItem[] = deps.facts ?? [];
+  const unknowns: UnknownItem[] = deps.unknowns ?? [];
   let steps = 0;
   let compacted = false;
   let overflowRecovered = false;
@@ -154,6 +163,8 @@ export async function runTurn(
     allowOutsideWorkspace: deps.allowOutsideWorkspace,
     permissions: deps.permissions,
     todos,
+    facts,
+    unknowns,
     recordChange: deps.recordChange,
     search: deps.search,
   };
@@ -199,7 +210,7 @@ export async function runTurn(
       deps.onStep?.(steps + 1);
       result = await deps.provider.generate({
         messages: convo,
-        system: deps.system,
+        system: [deps.system, formatMemory(facts, unknowns)].filter(Boolean).join('\n\n'),
         tools: schemas,
         signal: deps.signal,
         onText: deps.onText,

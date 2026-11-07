@@ -4,6 +4,7 @@ import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { diffLines, diffStat, formatDiff } from '../src/util/diff.ts';
 import { editFileTool, grepTool, readFileTool, writeFileTool } from '../src/tools/fs.ts';
+import { memoryReadTool, memoryWriteTool } from '../src/tools/memory.ts';
 import { shellTool } from '../src/tools/shell.ts';
 import { runTool } from '../src/tools/index.ts';
 import { completeCommand, completeFileReference } from '../src/cli/completion.ts';
@@ -348,6 +349,25 @@ async function testAgentDoc() {
   rmSync(workspace, { recursive: true, force: true });
 }
 
+async function testMemory() {
+  const workspace = mkdtempSync(join(tmpdir(), 'banana-memory-'));
+  const facts = [];
+  const unknowns = [];
+  const ctx = makeContext(workspace, { facts, unknowns });
+  await memoryWriteTool.run(
+    {
+      facts: [{ content: '项目路径 /app', source: 'user', confidence: 'high' }],
+      unknowns: [{ item: '移动端帧率', reason: '未测', verify: '真机跑 Performance' }],
+    },
+    ctx,
+  );
+  check('memory_write 写入事实', facts.length === 1 && facts[0].source === 'user');
+  check('memory_write 写入未知项', unknowns.length === 1 && unknowns[0].verify.includes('Performance'));
+  const read = await memoryReadTool.run({}, ctx);
+  check('memory_read 返回事实和未验证项', read.content.includes('项目路径 /app') && read.content.includes('移动端帧率'));
+  rmSync(workspace, { recursive: true, force: true });
+}
+
 async function testSessionMeta() {
   const dir = mkdtempSync(join(tmpdir(), 'banana-meta-'));
   const store = new SessionStore(dir);
@@ -531,6 +551,7 @@ async function main() {
   await testCrlf();
   await testPlatformPrompt();
   await testAgentDoc();
+  await testMemory();
   await testSessionMeta();
   await testGrepCount();
   await testContinuation();

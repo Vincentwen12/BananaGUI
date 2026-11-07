@@ -98,7 +98,11 @@ function inline(text) {
   value = value
     .replace(/\*\*([^*\n]+)\*\*/g, '<strong>$1</strong>')
     .replace(/(^|[\s(])\*([^*\n]+)\*/g, '$1<em>$2</em>')
-    .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>');
+    .replace(/\[([^\]\n]+)\]\((https?:\/\/[^\s)]+)\)/g, '<a href="$2" target="_blank" rel="noreferrer">$1</a>')
+    .replace(/\[(事实|推断|猜测)-([^\]\n]{1,24})\]/g, (_, kind, source) => {
+      const key = kind === '事实' ? 'fact' : kind === '推断' ? 'infer' : 'guess';
+      return `<span class="fact-tag is-${key}">${kind} · ${source}</span>`;
+    });
   return value.replace(/\u0000(\d+)\u0000/g, (_, index) => `<code>${codes[Number(index)] ?? ''}</code>`);
 }
 
@@ -1178,6 +1182,7 @@ async function refresh(path) {
   renderSidebar();
   renderTabs();
   renderTodos();
+  if (state.review.open && state.review.mode === 'verify') renderVerify();
   if (path) renderThread();
 }
 
@@ -2455,6 +2460,7 @@ async function requestFileComplete(value) {
 const GUI_COMMANDS = new Set([
   'help', 'h', '?', 'new', 'list', 'ls', 'use', 'switch', 'resume', 'rename',
   'session', 'history', 'provider', 'model', 'perm', 'system', 'cwd', 'undo', 'save', 'clear', 'delete',
+  'review', 'prefer', 'template', 'feedback',
 ]);
 
 function leaveHomeMode() {
@@ -3597,24 +3603,61 @@ function applyReviewWidth(width) {
 }
 
 function setReviewMode(mode) {
-  if (!['changes', 'files', 'tasks'].includes(mode)) mode = 'changes';
+  if (!['changes', 'files', 'tasks', 'verify'].includes(mode)) mode = 'changes';
   state.review.mode = mode;
   try {
     localStorage.setItem(SHELL_STORAGE.reviewMode, mode);
   } catch {}
-  $('reviewTabChanges').classList.toggle('is-on', mode === 'changes');
-  $('reviewTabFiles').classList.toggle('is-on', mode === 'files');
-  $('reviewTabTasks').classList.toggle('is-on', mode === 'tasks');
-  $('changesPanel').classList.toggle('is-on', mode === 'changes');
-  $('filesPanel').classList.toggle('is-on', mode === 'files');
-  $('tasksPanel').classList.toggle('is-on', mode === 'tasks');
+  for (const name of ['Changes', 'Files', 'Tasks', 'Verify']) {
+    $(`reviewTab${name}`)?.classList.toggle('is-on', mode === name.toLowerCase());
+  }
+  for (const name of ['changes', 'files', 'tasks', 'verify']) {
+    $(`${name}Panel`)?.classList.toggle('is-on', mode === name);
+  }
   if (mode === 'changes') void loadChanges();
   else if (mode === 'tasks') renderTodos();
+  else if (mode === 'verify') renderVerify();
   else {
     applyFilesLayout();
     $('filesTitle').textContent = `工作区文件 · ${state.info?.workspace ?? ''}`;
     if (!$('filesTree').childElementCount) void loadTree('.');
   }
+}
+
+function renderVerify() {
+  const list = $('verifyList');
+  if (!list) return;
+  const session = state.info?.session;
+  if (!session) {
+    list.innerHTML = '<div class="hint" style="padding:12px">还没有会话。</div>';
+    return;
+  }
+  const todos = Array.isArray(session.todos) ? session.todos : [];
+  const facts = Array.isArray(session.facts) ? session.facts : [];
+  const unknowns = Array.isArray(session.unknowns) ? session.unknowns : [];
+  const done = todos.filter((item) => item.status === 'done').length;
+  const pending = todos.filter((item) => item.status !== 'done');
+  const plan = session.plan;
+  const planText = plan
+    ? `${plan.status === 'approved' ? '已批准' : plan.status === 'pending' ? '等待批准' : '已取消'}${
+        plan.currentPhase ? ` · 当前阶段 ${plan.currentPhase}` : ''
+      }`
+    : '没有计划';
+  const rows = [
+    ['计划', planText],
+    ['任务', `${done}/${todos.length} 完成`],
+    ['事实', `${facts.length} 条已确认`],
+    ['未验证项', unknowns.length ? unknowns.map((item) => item.item).join('、') : '未记录'],
+    ['下一步', pending.length ? pending.slice(0, 6).map((item) => item.text).join('；') : '没有待办'],
+  ];
+  list.innerHTML =
+    rows
+      .map(
+        ([key, value]) =>
+          `<div class="verify-row"><span class="verify-key">${escapeHtml(key)}</span><span class="verify-value">${escapeHtml(value)}</span></div>`,
+      )
+      .join('') +
+    '<div class="hint" style="padding:10px 12px">交付前请运行测试和构建；结果写进交付说明，未知项写进「未验证项」。</div>';
 }
 
 function syncReviewScrim() {
@@ -3676,6 +3719,7 @@ function initShell() {
   $('reviewTabChanges').addEventListener('click', () => setReviewMode('changes'));
   $('reviewTabFiles').addEventListener('click', () => setReviewMode('files'));
   $('reviewTabTasks').addEventListener('click', () => setReviewMode('tasks'));
+  $('reviewTabVerify').addEventListener('click', () => setReviewMode('verify'));
   $('reviewClose').addEventListener('click', closeReview);
   $('reviewScrim').addEventListener('click', closeReview);
   $('reviewRefresh').addEventListener('click', () => {

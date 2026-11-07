@@ -8,7 +8,8 @@ import { WebSocketServer } from 'ws';
 import { fileURLToPath, pathToFileURL } from 'node:url';
 import { createRequire } from 'node:module';
 import { TerminalManager, loadPty, normalizeCwd } from './terminal.ts';
-import { bananaHome, loadConfig, trustProject, type AppConfig } from '../config/config.ts';
+import { bananaHome, formatPreferences, loadConfig, trustProject, type AppConfig } from '../config/config.ts';
+import { KNOWLEDGE_VERSION, PROMPT_VERSION } from '../config/version.ts';
 import { runTurn } from '../agent/loop.ts';
 import {
   REASONING_LEVELS,
@@ -54,7 +55,16 @@ const MAX_FILE_BYTES = 400 * 1024;
 const MAX_ATTACHMENT_BYTES = 20 * 1024 * 1024;
 const MAX_ATTACHMENT_TEXT = 120_000;
 const PLAN_TOOLS = new Set([
-  'read_file', 'list_dir', 'glob', 'grep', 'web_search', 'web_fetch', 'todo_read', 'todo_write',
+  'read_file',
+  'list_dir',
+  'glob',
+  'grep',
+  'web_search',
+  'web_fetch',
+  'todo_read',
+  'todo_write',
+  'memory_read',
+  'memory_write',
 ]);
 const ATTACHMENT_MIME: Record<string, string> = {
   '.txt': 'text/plain', '.md': 'text/markdown', '.json': 'application/json', '.js': 'text/javascript',
@@ -368,6 +378,9 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
 
   const info = async (session: Session): Promise<Record<string, unknown>> => ({
     version: '0.8.5',
+    promptVersion: PROMPT_VERSION,
+    knowledgeVersion: KNOWLEDGE_VERSION,
+    preferences: config.preferences ?? [],
     provider: { name: config.current, model: config.providers[config.current]?.model ?? '', protocol: config.providers[config.current]?.protocol ?? 'openai' },
     reasoning: {
       level: session.reasoning ?? 'standard',
@@ -424,6 +437,8 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
         ...(images?.length ? { imageCount: images.length } : {}),
       })),
       todos: Array.isArray(session.todos) ? session.todos : [],
+      facts: Array.isArray(session.facts) ? session.facts : [],
+      unknowns: Array.isArray(session.unknowns) ? session.unknowns : [],
       usage: session.usage ?? { inputTokens: 0, outputTokens: 0 },
       mode: session.mode ?? 'build',
       reasoning: session.reasoning ?? 'standard',
@@ -712,6 +727,8 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
       } else if (body.action === 'clear') {
         session.messages = [];
         session.todos = [];
+        session.facts = [];
+        session.unknowns = [];
         session.plan = undefined;
         session.usage = { inputTokens: 0, outputTokens: 0 };
         if (blank !== session) await store.save(session);
@@ -1015,11 +1032,13 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
           : sanitizePlanItems(body.items);
         // 计划只是「打算做什么」，批准后从 pending 开始，
         // 不能把 Plan 阶段误标的 done / in_progress 带进执行。
+        const firstPhase = snapshot.find((item) => item.phase)?.phase;
         session.plan = {
           ...session.plan,
           status: 'approved',
           approvedAt: new Date().toISOString(),
           items: snapshot,
+          ...(firstPhase ? { currentPhase: firstPhase } : {}),
         };
         session.todos = snapshot.map((item) => ({ ...item, status: 'pending' as const }));
         session.mode = 'build';
@@ -1396,13 +1415,21 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
     const baseSystem = [
       config.systemPrompt,
       config.agentDoc ? `## 项目规则（AGENT.md）\n${config.agentDoc}` : '',
+      formatPreferences(config.preferences),
     ]
       .filter(Boolean)
       .join('\n\n');
-    const activeSystem = (session.mode === 'plan' ? planSystemPrompt(baseSystem) : baseSystem) + todoContext;
+    const phaseNote =
+      session.plan?.status === 'approved' && session.plan.currentPhase
+        ? `\n\n## 当前阶段\n只执行「${session.plan.currentPhase}」阶段；完成后停下，等用户确认是否进入下一阶段。`
+        : '';
+    const activeSystem =
+      (session.mode === 'plan' ? planSystemPrompt(baseSystem) : baseSystem) + todoContext + phaseNote;
 
     const wasFirstTurn = !session.messages.some((message) => message.role === 'assistant');
     session.todos ??= [];
+    session.facts ??= [];
+    session.unknowns ??= [];
     const turnId = newTurnId();
     const trace = new TraceWriter(session.id, turnId);
     const recorder = await backups(session.id).beginTurn(turnId, config.workspace);
@@ -1453,6 +1480,8 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
         allowOutsideWorkspace: config.allowOutsideWorkspace,
         signal: controller.signal,
         todos: session.todos,
+        facts: session.facts,
+        unknowns: session.unknowns,
         reasoning: session.reasoning ?? 'standard',
         search: config.search,
         recordChange: (path, beforeContent) => recorder.record(path, beforeContent),

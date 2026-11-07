@@ -156,6 +156,10 @@ banana "run the tests"       one-shot task (no REPL)
 | `/cwd [path]` | Show / change workspace |
 | `/system [text]` | Show / replace the system prompt |
 | `/env` | Print the environment questionnaire for `AGENT.md` |
+| `/review` | Run an independent review agent over recent work (no file changes) |
+| `/prefer [text\|clear]` | View/append user preferences injected into the system prompt |
+| `/template [name]` | Show task templates: steps, acceptance, pitfalls |
+| `/feedback <text>` | Append human feedback to `~/.banana/feedback.jsonl` |
 | `/cls` `/exit` | Clear screen / save and exit |
 
 Shortcuts: `Ctrl+C` interrupts the current request (twice to exit), `↑` recalls history, a trailing `\` continues input, and `@` + `Tab` completes project files.
@@ -183,6 +187,15 @@ Please confirm before starting (fill only what you know; write "unknown" otherwi
 ```
 
 Run `/env` to print this template. `AGENT.md` is runtime input only, never written into `config.json`; it is reloaded when the workspace changes. See `AGENT.md.example`.
+
+## Memory and preferences
+
+- `memory_write` / `memory_read` maintain two structured memory lists:
+  - Confirmed facts: content + source (user/doc/test/infer/guess) + confidence.
+  - Unknowns: item + reason + verification method.
+- Facts and unknowns are stored with the session and injected into every later turn; switching models does not lose them.
+- `/prefer` turns repeated corrections into user preferences injected into the next prompt.
+- The GUI Review panel adds a "Verify" tab: plan state, task progress, fact count, unknowns, and next steps.
 
 ## Project trust and security
 
@@ -335,8 +348,9 @@ src/                  CLI core
   cli/                REPL, slash commands, completion, setup wizard, terminal UI
   ui/                 browser UI (HTML/CSS/JS, no frontend framework)
 gui/                  standalone GUI package (launchers, Electron shell, synced ui/)
-docs/design/          UI principles, tokens, components, checklist
+docs/design/          UI principles, tokens, components, states, accessibility, checklist, reference cards
 docs/failures.md      failure library
+docs/prompt-versions.md  prompt and knowledge-pack version log
 scripts/              build, sync, UI scan, release
 test/                 mock provider and full test suite
 ```
