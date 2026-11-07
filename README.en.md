@@ -17,15 +17,15 @@ A multi-provider AI agent for the terminal, with a local GUI. It can read and wr
 
 ## 30-second overview
 
-> Schematic; run the app for the real UI.
+> GUI / Review are real screenshots; CLI is schematic.
 
-![Plan → Build → Review](docs/assets/demo.png)
+![Banana GUI](docs/assets/gui-real.png)
 
-| CLI | GUI |
-|---|---|
-| ![CLI](docs/assets/cli.png) | ![GUI](docs/assets/gui.png) |
+![Review verify tab](docs/assets/review-real.png)
 
-![Review verify tab](docs/assets/review.png)
+| CLI |
+|---|
+| ![CLI](docs/assets/cli.png) |
 
 ```text
    ____                  _

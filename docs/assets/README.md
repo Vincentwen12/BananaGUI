@@ -4,18 +4,23 @@
 
 | 文件 | 用途 |
 |---|---|
-| `demo.svg` / `demo.png` | Plan → Build → Review 流程 |
+| `gui-real.png` | **真实** `banana --ui` 运行截图 |
+| `review-real.png` | **真实** Review「验证」页签截图 |
+| `demo.svg` / `demo.png` | Plan → Build → Review 流程示意 |
 | `cli.svg` / `cli.png` | CLI 示意 |
-| `gui.svg` / `gui.png` | GUI 示意 |
-| `review.svg` / `review.png` | Review「验证」页签示意 |
+| `gui.svg` / `gui.png` | GUI 示意（旧版） |
+| `review.svg` / `review.png` | Review 示意（旧版） |
 | `social-preview.svg` / `social-preview.png` | GitHub Social preview（1280×640） |
 
 PNG 是由 SVG 通过 Edge headless 渲染的，README 使用 PNG；SVG 保留作为可编辑源文件。
 
 ## 替换成真实截图 / GIF
 
+`gui-real.png` 和 `review-real.png` 已经由真实运行的 `banana --ui` 截取。
+
+如果还要补 30 秒 GIF：
+
 1. 运行 `banana --ui` 或 `banana-gui`。
-2. 录制 20–30 秒：Plan → 批准 → `/verify` → UI 审计拦截 → 修复 → 通过。
-3. 保存为 `docs/assets/demo.gif`，把 README 里的 `demo.svg` 改成 `demo.gif`。
-4. 截图分别保存为 `cli.png`、`gui.png`、`review.png`，替换 README 表格里的 SVG。
-5. Social preview 在 GitHub 仓库 Settings → Social preview 上传 `social-preview.svg` 或导出的 PNG。
+2. 录制 20–30 秒：Plan → 批准 → `/verify` → Review 验证 → 结束。
+3. 保存为 `docs/assets/demo.gif`，把 README 里的 `gui-real.png` 换成 `demo.gif`（或新增一段）。
+4. Social preview 在 GitHub 仓库 Settings → Social preview 上传 `social-preview.png`。

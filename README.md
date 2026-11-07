@@ -15,15 +15,15 @@
 
 ## 30 秒看懂
 
-> 示意图；实际界面以运行版本为准。
+> GUI / Review 为真实运行截图；CLI 为示意图。
 
-![Plan → Build → Review](docs/assets/demo.png)
+![Banana GUI](docs/assets/gui-real.png)
 
-| CLI | GUI |
-|---|---|
-| ![CLI](docs/assets/cli.png) | ![GUI](docs/assets/gui.png) |
+![Review 验证页签](docs/assets/review-real.png)
 
-![Review 验证页签](docs/assets/review.png)
+| CLI |
+|---|
+| ![CLI](docs/assets/cli.png) |
 
 ```text
    ____                  _
