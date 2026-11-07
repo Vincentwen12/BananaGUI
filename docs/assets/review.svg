@@ -1,0 +1,39 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="Banana Review verify tab">
+  <rect width="1200" height="675" fill="#fafafa"/>
+  <rect x="0" y="0" width="1200" height="48" fill="#161616"/>
+  <text x="20" y="30" fill="#f2f2f2" font-family="Inter, Segoe UI, sans-serif" font-size="15" font-weight="650">Banana</text>
+  <text x="1170" y="30" text-anchor="end" fill="#94949d" font-family="Inter, Segoe UI, sans-serif" font-size="11">Review / 验证</text>
+
+  <rect x="48" y="88" width="1104" height="540" rx="8" fill="#ffffff" stroke="#dddddd"/>
+  <text x="76" y="126" fill="#161616" font-family="Inter, Segoe UI, sans-serif" font-size="17" font-weight="650">验证</text>
+  <text x="1120" y="126" text-anchor="end" fill="#6b6b73" font-family="Inter, Segoe UI, sans-serif" font-size="11">改动 · 文件 · 任务 · 验证</text>
+  <rect x="76" y="144" width="1048" height="1" fill="#ededed"/>
+
+  <g font-family="Inter, Segoe UI, sans-serif" font-size="13">
+    <text x="76" y="184" fill="#6b6b73">计划</text>
+    <text x="180" y="184" fill="#161616">已批准 · 当前阶段 实现页面</text>
+    <text x="76" y="218" fill="#6b6b73">任务</text>
+    <text x="180" y="218" fill="#161616">3/4 完成</text>
+    <text x="76" y="252" fill="#6b6b73">事实</text>
+    <text x="180" y="252" fill="#161616">6 条已确认</text>
+    <text x="76" y="286" fill="#6b6b73">未验证项</text>
+    <text x="180" y="286" fill="#161616">移动端 Safari 未测、真实设备帧率未测</text>
+    <text x="76" y="320" fill="#6b6b73">下一步</text>
+    <text x="180" y="320" fill="#161616">补充窄屏样式；运行 /verify</text>
+  </g>
+
+  <rect x="76" y="350" width="1048" height="1" fill="#ededed"/>
+  <text x="76" y="386" fill="#161616" font-family="Inter, Segoe UI, sans-serif" font-size="14" font-weight="650">最近验收</text>
+  <g font-family="Consolas, monospace" font-size="12">
+    <rect x="76" y="406" width="1048" height="36" rx="5" fill="#e6ffe5"/>
+    <text x="92" y="429" fill="#2f7d50">✓ ui_audit 0 failures · 2 files</text>
+    <rect x="76" y="450" width="1048" height="36" rx="5" fill="#e6ffe5"/>
+    <text x="92" y="473" fill="#2f7d50">✓ npm test · 96 passed · 42.1s</text>
+    <rect x="76" y="494" width="1048" height="36" rx="5" fill="#e6ffe5"/>
+    <text x="92" y="517" fill="#2f7d50">✓ npm run build · 8.3s</text>
+  </g>
+
+  <rect x="76" y="552" width="240" height="36" rx="6" fill="#161616"/>
+  <text x="196" y="575" text-anchor="middle" fill="#dcde8d" font-family="Inter, Segoe UI, sans-serif" font-size="12" font-weight="650">交付并记录</text>
+  <text x="340" y="575" fill="#6b6b73" font-family="Inter, Segoe UI, sans-serif" font-size="11">未验证项会保留在会话里，不会被“完成”覆盖。</text>
+</svg>

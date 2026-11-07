@@ -1,0 +1,61 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="Banana GUI">
+  <rect width="1200" height="675" fill="#fafafa"/>
+  <rect x="0" y="0" width="1200" height="48" fill="#161616"/>
+  <text x="20" y="30" fill="#f2f2f2" font-family="Inter, Segoe UI, sans-serif" font-size="15" font-weight="650">Banana</text>
+  <rect x="120" y="12" width="180" height="24" rx="6" fill="#242424"/>
+  <text x="132" y="29" fill="#dcde8d" font-family="Inter, Segoe UI, sans-serif" font-size="11">pricing-page</text>
+  <text x="1170" y="29" text-anchor="end" fill="#94949d" font-family="Inter, Segoe UI, sans-serif" font-size="11">Plan | Build</text>
+
+  <rect x="0" y="48" width="244" height="627" fill="#f2f2f2"/>
+  <text x="18" y="82" fill="#6b6b73" font-family="Inter, Segoe UI, sans-serif" font-size="10" font-weight="650">CONVERSATIONS</text>
+  <rect x="10" y="96" width="224" height="34" rx="6" fill="#ffffff" stroke="#dddddd"/>
+  <text x="22" y="118" fill="#161616" font-family="Inter, Segoe UI, sans-serif" font-size="12">pricing page</text>
+  <text x="22" y="154" fill="#5c5c5c" font-family="Inter, Segoe UI, sans-serif" font-size="12">login bug</text>
+  <text x="22" y="178" fill="#5c5c5c" font-family="Inter, Segoe UI, sans-serif" font-size="12">release notes</text>
+  <text x="18" y="620" fill="#6b6b73" font-family="Inter, Segoe UI, sans-serif" font-size="10">D:\project</text>
+
+  <rect x="244" y="48" width="628" height="627" fill="#fafafa"/>
+  <text x="268" y="84" fill="#161616" font-family="Inter, Segoe UI, sans-serif" font-size="16" font-weight="650">建立一个干净的定价页</text>
+  <text x="268" y="106" fill="#6b6b73" font-family="Inter, Segoe UI, sans-serif" font-size="11">Plan 模式 · 只读 · 等待批准</text>
+
+  <rect x="268" y="130" width="580" height="156" rx="8" fill="#ffffff" stroke="#dddddd"/>
+  <text x="286" y="156" fill="#161616" font-family="Inter, Segoe UI, sans-serif" font-size="12" font-weight="650">计划 · 等你批准</text>
+  <text x="286" y="180" fill="#5c5c5c" font-family="Inter, Segoe UI, sans-serif" font-size="11">1. 问清套餐与受众</text>
+  <text x="286" y="202" fill="#5c5c5c" font-family="Inter, Segoe UI, sans-serif" font-size="11">2. 生成令牌并实现页面</text>
+  <text x="286" y="224" fill="#5c5c5c" font-family="Inter, Segoe UI, sans-serif" font-size="11">3. 运行 verify 和 ui_audit</text>
+  <rect x="286" y="246" width="104" height="28" rx="6" fill="#dcde8d"/>
+  <text x="338" y="264" text-anchor="middle" fill="#1c1a08" font-family="Inter, Segoe UI, sans-serif" font-size="11" font-weight="650">批准并执行</text>
+  <rect x="400" y="246" width="86" height="28" rx="6" fill="#f2f2f2" stroke="#dddddd"/>
+  <text x="443" y="264" text-anchor="middle" fill="#5c5c5c" font-family="Inter, Segoe UI, sans-serif" font-size="11">修改计划</text>
+
+  <rect x="268" y="306" width="580" height="120" rx="8" fill="#ffffff" stroke="#dddddd"/>
+  <text x="286" y="332" fill="#161616" font-family="Inter, Segoe UI, sans-serif" font-size="12" font-weight="650">验证</text>
+  <text x="286" y="356" fill="#2f7d50" font-family="Inter, Segoe UI, sans-serif" font-size="11">✓ ui_audit 0 failures</text>
+  <text x="286" y="378" fill="#2f7d50" font-family="Inter, Segoe UI, sans-serif" font-size="11">✓ npm test · ✓ npm run build</text>
+  <text x="286" y="400" fill="#6b6b73" font-family="Inter, Segoe UI, sans-serif" font-size="11">Unverified: mobile Safari</text>
+
+  <rect x="268" y="446" width="580" height="66" rx="8" fill="#f2f2f2" stroke="#dddddd"/>
+  <text x="286" y="472" fill="#161616" font-family="Inter, Segoe UI, sans-serif" font-size="12" font-weight="650">任务 3/4</text>
+  <rect x="286" y="484" width="544" height="6" rx="3" fill="#e6e6e6"/>
+  <rect x="286" y="484" width="408" height="6" rx="3" fill="#8a6d12"/>
+
+  <rect x="268" y="540" width="580" height="94" rx="8" fill="#ffffff" stroke="#dddddd"/>
+  <text x="286" y="566" fill="#6b6b73" font-family="Inter, Segoe UI, sans-serif" font-size="11">说点什么，Banana 来动手；输入 / 调命令，@ 引文件</text>
+  <rect x="764" y="584" width="64" height="32" rx="6" fill="#161616"/>
+  <text x="796" y="605" text-anchor="middle" fill="#dcde8d" font-family="Inter, Segoe UI, sans-serif" font-size="11">发送</text>
+
+  <rect x="872" y="48" width="328" height="627" fill="#ffffff" stroke="#dddddd"/>
+  <text x="892" y="82" fill="#161616" font-family="Inter, Segoe UI, sans-serif" font-size="13" font-weight="650">Review</text>
+  <text x="1030" y="82" fill="#6b6b73" font-family="Inter, Segoe UI, sans-serif" font-size="10">改动 · 文件 · 任务 · 验证</text>
+  <rect x="892" y="100" width="288" height="1" fill="#ededed"/>
+  <text x="892" y="130" fill="#5c5c5c" font-family="Inter, Segoe UI, sans-serif" font-size="11">pricing-page.css</text>
+  <text x="892" y="152" fill="#2f7d50" font-family="Inter, Segoe UI, sans-serif" font-size="11">+ 68</text>
+  <text x="936" y="152" fill="#c9564a" font-family="Inter, Segoe UI, sans-serif" font-size="11">− 0</text>
+  <text x="892" y="190" fill="#5c5c5c" font-family="Inter, Segoe UI, sans-serif" font-size="11">pricing-page.html</text>
+  <text x="892" y="212" fill="#2f7d50" font-family="Inter, Segoe UI, sans-serif" font-size="11">+ 40</text>
+  <rect x="892" y="246" width="288" height="120" rx="6" fill="#f4f4f2"/>
+  <text x="906" y="272" fill="#6b6b73" font-family="Consolas, monospace" font-size="10">:root {</text>
+  <text x="906" y="290" fill="#2f7d50" font-family="Consolas, monospace" font-size="10">+ --accent: #dcde8d;</text>
+  <text x="906" y="308" fill="#2f7d50" font-family="Consolas, monospace" font-size="10">+ --radius: 8px;</text>
+  <text x="906" y="326" fill="#6b6b73" font-family="Consolas, monospace" font-size="10">}</text>
+</svg>

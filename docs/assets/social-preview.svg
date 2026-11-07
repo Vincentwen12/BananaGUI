@@ -1,0 +1,35 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1280" height="640" viewBox="0 0 1280 640" role="img" aria-label="Banana — local-first AI coding agent">
+  <rect width="1280" height="640" fill="#161616"/>
+  <rect x="0" y="0" width="1280" height="10" fill="#dcde8d"/>
+  <text x="72" y="150" fill="#f2f2f2" font-family="Inter, Segoe UI, sans-serif" font-size="72" font-weight="700" letter-spacing="-2">Banana</text>
+  <text x="76" y="204" fill="#dcde8d" font-family="Inter, Segoe UI, sans-serif" font-size="26" font-weight="550">local-first AI coding agent</text>
+  <text x="76" y="256" fill="#b7b1b1" font-family="Inter, Segoe UI, sans-serif" font-size="19">Plan / Build / Review · project trust · hard UI anti-slop gate</text>
+  <text x="76" y="288" fill="#94949d" font-family="Inter, Segoe UI, sans-serif" font-size="17">CLI + browser GUI + Electron desktop · Node.js · MIT</text>
+
+  <rect x="76" y="350" width="352" height="196" rx="8" fill="#1e1e1e" stroke="#33333a"/>
+  <text x="96" y="382" fill="#dcde8d" font-family="Consolas, monospace" font-size="13">banana</text>
+  <text x="96" y="410" fill="#f2f2f2" font-family="Consolas, monospace" font-size="12">› 做一个定价页</text>
+  <text x="96" y="436" fill="#94949d" font-family="Consolas, monospace" font-size="12">Plan · 4 steps</text>
+  <text x="96" y="462" fill="#86b98d" font-family="Consolas, monospace" font-size="12">✓ ui_audit 0 failures</text>
+  <text x="96" y="488" fill="#86b98d" font-family="Consolas, monospace" font-size="12">✓ npm test</text>
+  <text x="96" y="514" fill="#86b98d" font-family="Consolas, monospace" font-size="12">✓ npm run build</text>
+
+  <rect x="452" y="350" width="352" height="196" rx="8" fill="#1e1e1e" stroke="#33333a"/>
+  <text x="472" y="382" fill="#f2f2f2" font-family="Inter, Segoe UI, sans-serif" font-size="13" font-weight="650">Plan · 等你批准</text>
+  <text x="472" y="412" fill="#b7b1b1" font-family="Inter, Segoe UI, sans-serif" font-size="12">☐ 问清套餐与受众</text>
+  <text x="472" y="438" fill="#b7b1b1" font-family="Inter, Segoe UI, sans-serif" font-size="12">☐ 生成令牌并实现页面</text>
+  <text x="472" y="464" fill="#b7b1b1" font-family="Inter, Segoe UI, sans-serif" font-size="12">☐ 运行 verify 和 ui_audit</text>
+  <rect x="472" y="492" width="118" height="30" rx="6" fill="#dcde8d"/>
+  <text x="531" y="512" text-anchor="middle" fill="#1c1a08" font-family="Inter, Segoe UI, sans-serif" font-size="11" font-weight="650">批准并执行</text>
+
+  <rect x="828" y="350" width="376" height="196" rx="8" fill="#1e1e1e" stroke="#33333a"/>
+  <text x="848" y="382" fill="#f2f2f2" font-family="Inter, Segoe UI, sans-serif" font-size="13" font-weight="650">Review / 验证</text>
+  <text x="848" y="412" fill="#86b98d" font-family="Inter, Segoe UI, sans-serif" font-size="12">✓ ui_audit 0 failures</text>
+  <text x="848" y="438" fill="#86b98d" font-family="Inter, Segoe UI, sans-serif" font-size="12">✓ npm test · 96 passed</text>
+  <text x="848" y="464" fill="#86b98d" font-family="Inter, Segoe UI, sans-serif" font-size="12">✓ npm run build</text>
+  <text x="848" y="496" fill="#94949d" font-family="Inter, Segoe UI, sans-serif" font-size="11">Unverified: mobile Safari</text>
+  <text x="848" y="518" fill="#94949d" font-family="Inter, Segoe UI, sans-serif" font-size="11">Next: deploy preview</text>
+
+  <text x="76" y="602" fill="#94949d" font-family="Inter, Segoe UI, sans-serif" font-size="14">github.com/Vincentwen12/BananaGUI</text>
+  <text x="1204" y="602" text-anchor="end" fill="#dcde8d" font-family="Inter, Segoe UI, sans-serif" font-size="14">AI-generated · human-reviewed · tested</text>
+</svg>

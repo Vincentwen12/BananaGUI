@@ -2,7 +2,26 @@
 
 [English](README.en.md) | 中文
 
+![AI-generated](https://img.shields.io/badge/code-AI--generated-dcde8d?style=flat-square)
+![human reviewed](https://img.shields.io/badge/review-human--reviewed-2f7d50?style=flat-square)
+![tests](https://img.shields.io/badge/tests-passing-2f7d50?style=flat-square)
+![license](https://img.shields.io/badge/license-MIT-161616?style=flat-square)
+
+> [!IMPORTANT]
+> **AI 生成代码声明**
+> 本仓库大部分代码和文档由 AI 生成，经过人工审查、自动化测试和安全检查。它不是“完全人工审计”的代码；用于生产前请自行审查。详见 [AI_DISCLOSURE.md](AI_DISCLOSURE.md)。
+
 终端里的多 provider AI agent，附带一个本地图形界面。能读写文件、跑命令、搜代码、上网查资料；多轮对话自动保存，随时切换历史会话。
+
+## 30 秒看懂
+
+![Plan → Build → Review](docs/assets/demo.svg)
+
+| CLI | GUI |
+|---|---|
+| ![CLI](docs/assets/cli.svg) | ![GUI](docs/assets/gui.svg) |
+
+![Review 验证页签](docs/assets/review.svg)
 
 ```text
    ____                  _

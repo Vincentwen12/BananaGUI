@@ -1,0 +1,59 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="Banana workflow: Plan, Build, Verify">
+  <rect width="1200" height="675" fill="#fafafa"/>
+  <rect x="0" y="0" width="1200" height="64" fill="#161616"/>
+  <text x="32" y="41" fill="#f2f2f2" font-family="Inter, Segoe UI, sans-serif" font-size="20" font-weight="650">Banana</text>
+  <text x="1168" y="41" text-anchor="end" fill="#dcde8d" font-family="Inter, Segoe UI, sans-serif" font-size="14">Plan → Build → Review</text>
+
+  <g font-family="Inter, Segoe UI, sans-serif">
+    <rect x="32" y="96" width="352" height="520" rx="8" fill="#ffffff" stroke="#dddddd"/>
+    <rect x="424" y="96" width="352" height="520" rx="8" fill="#ffffff" stroke="#dddddd"/>
+    <rect x="816" y="96" width="352" height="520" rx="8" fill="#ffffff" stroke="#dddddd"/>
+
+    <text x="56" y="132" fill="#161616" font-size="17" font-weight="650">1 · Plan</text>
+    <text x="56" y="156" fill="#6b6b73" font-size="12">read-only research</text>
+    <rect x="56" y="176" width="304" height="1" fill="#ededed"/>
+    <text x="56" y="204" fill="#161616" font-size="13" font-weight="600">Pricing page</text>
+    <text x="56" y="226" fill="#5c5c5c" font-size="12">3–7 structured steps</text>
+    <g font-size="12" fill="#5c5c5c">
+      <text x="56" y="262">☐ Ask audience / tiers</text>
+      <text x="56" y="288">☐ Read UI rules + tokens</text>
+      <text x="56" y="314">☐ Implement page</text>
+      <text x="56" y="340">☐ Run verify + ui_audit</text>
+    </g>
+    <rect x="56" y="376" width="304" height="64" rx="6" fill="#f7f7dd" stroke="#dcde8d"/>
+    <text x="72" y="402" fill="#161616" font-size="12" font-weight="600">Waiting for approval</text>
+    <text x="72" y="422" fill="#6b6b73" font-size="11">No files changed in Plan mode</text>
+
+    <text x="448" y="132" fill="#161616" font-size="17" font-weight="650">2 · Build</text>
+    <text x="448" y="156" fill="#6b6b73" font-size="12">approved plan → execute</text>
+    <rect x="448" y="176" width="304" height="1" fill="#ededed"/>
+    <g font-size="12">
+      <rect x="448" y="198" width="304" height="34" rx="5" fill="#f4f4f2"/>
+      <text x="462" y="220" fill="#161616">✓ read_file docs/design/tokens.md</text>
+      <rect x="448" y="240" width="304" height="34" rx="5" fill="#f4f4f2"/>
+      <text x="462" y="262" fill="#161616">✓ write_file pricing-page.css</text>
+      <rect x="448" y="282" width="304" height="34" rx="5" fill="#f4f4f2"/>
+      <text x="462" y="304" fill="#161616">✓ shell npm run ui:check</text>
+    </g>
+    <rect x="448" y="336" width="304" height="72" rx="6" fill="#fff2f0" stroke="#c9564a"/>
+    <text x="464" y="362" fill="#c9564a" font-size="12" font-weight="650">UI audit failed</text>
+    <text x="464" y="382" fill="#5c5c5c" font-size="11">no-gradient · no-glass</text>
+    <text x="464" y="398" fill="#5c5c5c" font-size="11">no-neon-glow · no-ai-palette</text>
+
+    <text x="840" y="132" fill="#161616" font-size="17" font-weight="650">3 · Review</text>
+    <text x="840" y="156" fill="#6b6b73" font-size="12">fix, verify, deliver</text>
+    <rect x="840" y="176" width="304" height="1" fill="#ededed"/>
+    <g font-size="12">
+      <rect x="840" y="198" width="304" height="34" rx="5" fill="#e6ffe5"/>
+      <text x="854" y="220" fill="#2f7d50">✓ ui_audit 0 failures</text>
+      <rect x="840" y="240" width="304" height="34" rx="5" fill="#e6ffe5"/>
+      <text x="854" y="262" fill="#2f7d50">✓ npm test</text>
+      <rect x="840" y="282" width="304" height="34" rx="5" fill="#e6ffe5"/>
+      <text x="854" y="304" fill="#2f7d50">✓ npm run build</text>
+    </g>
+    <text x="840" y="348" fill="#6b6b73" font-size="11">Unverified: mobile Safari</text>
+    <text x="840" y="368" fill="#6b6b73" font-size="11">Next: deploy preview</text>
+    <rect x="840" y="396" width="304" height="48" rx="6" fill="#161616"/>
+    <text x="992" y="426" text-anchor="middle" fill="#dcde8d" font-size="12" font-weight="650">Deliver with evidence</text>
+  </g>
+</svg>

@@ -1,0 +1,29 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="1200" height="675" viewBox="0 0 1200 675" role="img" aria-label="Banana CLI">
+  <rect width="1200" height="675" fill="#0e0e10"/>
+  <rect x="0" y="0" width="1200" height="36" fill="#161616"/>
+  <circle cx="20" cy="18" r="5" fill="#c9564a"/><circle cx="38" cy="18" r="5" fill="#d2b06a"/><circle cx="56" cy="18" r="5" fill="#2f7d50"/>
+  <text x="80" y="23" fill="#94949d" font-family="Consolas, monospace" font-size="12">banana — 120×34</text>
+  <g font-family="Consolas, monospace" font-size="14">
+    <text x="28" y="78" fill="#dcde8d">banana</text>
+    <text x="28" y="106" fill="#94949d">BananaCLI v0.8.5 · deepseek/deepseek-chat · D:\project</text>
+    <text x="28" y="134" fill="#f2f2f2">› 做一个定价页，先给计划</text>
+    <text x="28" y="166" fill="#e6e8a4">◐ Plan 模式 · 只读调研</text>
+    <text x="28" y="194" fill="#f2f2f2">✓ read_file docs/design/principles.md</text>
+    <text x="28" y="218" fill="#f2f2f2">✓ read_file docs/design/tokens.md</text>
+    <text x="28" y="242" fill="#f2f2f2">✓ todo_write 4 项计划</text>
+    <text x="28" y="278" fill="#94949d">计划 · 等你批准</text>
+    <text x="44" y="302" fill="#f2f2f2">1. 问清套餐与受众</text>
+    <text x="44" y="326" fill="#f2f2f2">2. 生成令牌并实现页面</text>
+    <text x="44" y="350" fill="#f2f2f2">3. 运行 /verify 和 ui_audit</text>
+    <text x="28" y="392" fill="#dcde8d">› 批准并执行</text>
+    <text x="28" y="424" fill="#f2f2f2">✓ write_file pricing-page.css</text>
+    <text x="28" y="448" fill="#f2f2f2">✓ shell npm run ui:check</text>
+    <text x="28" y="480" fill="#d1786e">✗ UI 审计未通过：no-gradient, no-neon-glow</text>
+    <text x="28" y="504" fill="#94949d">  2 个问题已回灌，要求重写…</text>
+    <text x="28" y="536" fill="#86b98d">✓ ui_audit 0 failures</text>
+    <text x="28" y="560" fill="#86b98d">✓ npm test · ✓ npm run build</text>
+    <text x="28" y="592" fill="#f2f2f2">交付：pricing-page.html/css · 未验证：移动端 Safari</text>
+    <text x="28" y="630" fill="#dcde8d">› </text>
+    <rect x="46" y="616" width="2" height="18" fill="#dcde8d"/>
+  </g>
+</svg>
