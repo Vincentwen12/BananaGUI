@@ -156,7 +156,8 @@ banana "run the tests"       one-shot task (no REPL)
 | `/cwd [path]` | Show / change workspace |
 | `/system [text]` | Show / replace the system prompt |
 | `/env` | Print the environment questionnaire for `AGENT.md` |
-| `/phase [next\|name]` | View/switch the current phase of an approved plan |
+| `/verify` | Run configured verification commands (default `npm test` + `npm run build`) and store results |
+| `/phase [next\|name]` | View/switch the current phase; blocked when dependencies are unfinished |
 | `/review` | Run an independent review agent over recent work (no file changes) |
 | `/prefer [text\|clear]` | View/append user preferences injected into the system prompt |
 | `/template [name]` | Show task templates: steps, acceptance, pitfalls |
@@ -196,7 +197,7 @@ Run `/env` to print this template. `AGENT.md` is runtime input only, never writt
   - Unknowns: item + reason + verification method.
 - Facts and unknowns are stored with the session and injected into every later turn; switching models does not lose them.
 - `/prefer` turns repeated corrections into user preferences injected into the next prompt.
-- The GUI Review panel adds a "Verify" tab: plan state, task progress, fact count, unknowns, and next steps.
+- The GUI Review panel adds a "Verify" tab: plan state, task progress, fact count, unknowns, next steps, and the latest `/verify` test/build results.
 
 ## Project trust and security
 
@@ -323,7 +324,8 @@ Global `~/.banana/config.json`; project `<workspace>/.banana/config.json` requir
   "allowOutsideWorkspace": false,
   "showReasoning": true,
   "trustedProjects": {},
-  "budget": { "tokens": 200000, "minutes": 30 }
+  "budget": { "tokens": 200000, "minutes": 30 },
+  "verifyCommands": ["npm test", "npm run build"]
 }
 ```
 

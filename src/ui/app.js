@@ -1582,7 +1582,11 @@ function planCardNode(plan) {
   const card = document.createElement('div');
   card.className = `plan-card is-${plan.status ?? 'pending'}`;
   const title =
-    plan.status === 'approved' ? '计划已批准' : plan.status === 'cancelled' ? '计划已取消' : '计划 · 等你批准';
+    plan.status === 'approved'
+      ? `计划已批准${plan.currentPhase ? ` · 当前阶段 ${plan.currentPhase}` : ''}`
+      : plan.status === 'cancelled'
+        ? '计划已取消'
+        : '计划 · 等你批准';
   card.innerHTML =
     `<div class="plan-head"><span class="plan-dot"></span><span>${title}</span>` +
     (plan.status === 'pending' ? '<span class="plan-hint">Plan 模式不会改动文件</span>' : '') +
@@ -1605,6 +1609,7 @@ function planCardNode(plan) {
         item.files?.length ? item.files.join(' · ') : '',
         item.verify ? `验证 ${item.verify}` : '',
         item.confidence ? `置信度 ${item.confidence}` : '',
+        item.dependsOn?.length ? `依赖 ${item.dependsOn.join('、')}` : '',
       ]
         .filter(Boolean)
         .join(' · ');
@@ -1635,6 +1640,19 @@ function planCardNode(plan) {
     cancel.addEventListener('click', () => cancelPlan(card));
     actions.append(approve, revise, cancel);
     card.appendChild(actions);
+  } else if (plan.status === 'approved') {
+    const phases = [...new Set((plan.items ?? []).map((item) => item.phase).filter(Boolean))];
+    const index = phases.indexOf(plan.currentPhase);
+    if (phases.length > 1 && index >= 0 && index < phases.length - 1) {
+      const actions = document.createElement('div');
+      actions.className = 'plan-actions';
+      const next = document.createElement('button');
+      next.className = 'btn primary';
+      next.textContent = `下一阶段：${phases[index + 1]}`;
+      next.addEventListener('click', () => nextPlanPhase());
+      actions.appendChild(next);
+      card.appendChild(actions);
+    }
   }
   return card;
 }
@@ -1685,6 +1703,26 @@ async function revisePlan() {
     grow();
   } catch (error) {
     toast('操作失败：' + error.message);
+  }
+}
+
+async function nextPlanPhase() {
+  if (state.busy) return;
+  try {
+    const result = await post('plan', { action: 'nextPhase', session: state.info?.session?.id });
+    if (result?.info) state.info = result.info;
+    renderHeader();
+    renderTodos();
+    if (state.review.open && state.review.mode === 'verify') renderVerify();
+    const next = state.info?.session?.plan?.currentPhase;
+    if (next) {
+      toast(`进入阶段：${next}`);
+      const input = $('input');
+      input.value = `进入下一阶段：${next}，按清单执行。`;
+      await send();
+    }
+  } catch (error) {
+    toast('切换阶段失败：' + (error?.message ?? error));
   }
 }
 
@@ -2460,7 +2498,7 @@ async function requestFileComplete(value) {
 const GUI_COMMANDS = new Set([
   'help', 'h', '?', 'new', 'list', 'ls', 'use', 'switch', 'resume', 'rename',
   'session', 'history', 'provider', 'model', 'perm', 'system', 'cwd', 'undo', 'save', 'clear', 'delete',
-  'review', 'prefer', 'template', 'feedback', 'phase',
+  'review', 'prefer', 'template', 'feedback', 'phase', 'verify',
 ]);
 
 function leaveHomeMode() {
@@ -3650,6 +3688,22 @@ function renderVerify() {
     ['未验证项', unknowns.length ? unknowns.map((item) => item.item).join('、') : '未记录'],
     ['下一步', pending.length ? pending.slice(0, 6).map((item) => item.text).join('；') : '没有待办'],
   ];
+  const verification = session.verification;
+  if (verification?.results?.length) {
+    const failed = verification.results.filter((result) => !result.ok).length;
+    rows.push([
+      '验收',
+      `${verification.results.length - failed}/${verification.results.length} 通过 · ${new Date(verification.at).toLocaleString()}`,
+    ]);
+    for (const result of verification.results) {
+      rows.push([
+        result.ok ? '✓ 通过' : '✗ 失败',
+        `${result.command} · ${(result.ms / 1000).toFixed(1)}s`,
+      ]);
+    }
+  } else {
+    rows.push(['验收', '还没有运行 /verify']);
+  }
   list.innerHTML =
     rows
       .map(
@@ -3657,7 +3711,18 @@ function renderVerify() {
           `<div class="verify-row"><span class="verify-key">${escapeHtml(key)}</span><span class="verify-value">${escapeHtml(value)}</span></div>`,
       )
       .join('') +
-    '<div class="hint" style="padding:10px 12px">交付前请运行测试和构建；结果写进交付说明，未知项写进「未验证项」。</div>';
+    '<div class="hint" style="padding:10px 12px">交付前请运行 /verify 跑测试和构建；结果会自动写入这里。</div>';
+
+  const phases = [...new Set((plan?.items ?? []).map((item) => item.phase).filter(Boolean))];
+  const phaseIndex = phases.indexOf(plan?.currentPhase);
+  if (plan?.status === 'approved' && phaseIndex >= 0 && phaseIndex < phases.length - 1) {
+    const next = document.createElement('button');
+    next.className = 'btn primary';
+    next.style.margin = '10px 12px';
+    next.textContent = `下一阶段：${phases[phaseIndex + 1]}`;
+    next.addEventListener('click', () => nextPlanPhase());
+    list.appendChild(next);
+  }
 }
 
 function syncReviewScrim() {

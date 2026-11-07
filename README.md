@@ -156,7 +156,8 @@ banana "帮我跑一下测试"      单轮任务模式（不进入对话）
 | `/cwd [路径]` | 查看/切换工作目录 |
 | `/system [文本]` | 查看/替换系统提示词 |
 | `/env` | 打印环境询问模板，写进 `AGENT.md` 可避免重复探测 |
-| `/phase [next\|阶段名]` | 查看/切换已批准计划的当前阶段 |
+| `/verify` | 运行配置的验收命令（默认 `npm test` + `npm run build`），结果写入会话 |
+| `/phase [next\|阶段名]` | 查看/切换已批准计划的当前阶段；依赖未完成会拒绝 |
 | `/review` | 让独立审查 agent 检查最近交付（不修改文件） |
 | `/prefer [文本\|clear]` | 查看/追加用户偏好，注入系统提示词 |
 | `/template [名称]` | 查看任务模板：步骤、验收清单、常见坑 |
@@ -196,7 +197,7 @@ banana "帮我跑一下测试"      单轮任务模式（不进入对话）
   - 未验证项：内容 + 原因 + 验证方法。
 - 事实和未验证项随会话保存，并自动注入后续每一轮；换模型不丢。
 - `/prefer` 把反复出现的纠正沉淀成用户偏好，下一轮注入系统提示词。
-- GUI 的 Review 面板新增「验证」页签：计划状态、任务完成数、事实数量、未验证项和下一步。
+- GUI 的 Review 面板新增「验证」页签：计划状态、任务完成数、事实数量、未验证项、下一步，以及最近一次 `/verify` 的测试/构建结果。
 
 ## 项目信任与安全
 
@@ -323,7 +324,8 @@ npm run eval   # 契约评测：提示词章节、知识包、UI 扫描、多行
   "allowOutsideWorkspace": false,
   "showReasoning": true,
   "trustedProjects": {},
-  "budget": { "tokens": 200000, "minutes": 30 }
+  "budget": { "tokens": 200000, "minutes": 30 },
+  "verifyCommands": ["npm test", "npm run build"]
 }
 ```
 

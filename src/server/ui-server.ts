@@ -23,6 +23,7 @@ import { estimateCost, formatCost, resolvePricing } from '../providers/pricing.t
 import { SessionStore, deriveTitle, type AgentMode, type Session, type SessionPlan } from '../session/store.ts';
 import { BackupStore, newTurnId } from '../session/backups.ts';
 import { TraceWriter } from '../session/trace.ts';
+import { canAdvance, nextPhase } from '../session/phases.ts';
 import { allTools, permissionFor, summarizeInput, type ApprovalKind, type Tool, type ToolContext } from '../tools/index.ts';
 import { loadPluginTools, pluginTemplate } from '../tools/plugins.ts';
 import { formatTodos } from '../tools/todo.ts';
@@ -443,6 +444,7 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
       todos: Array.isArray(session.todos) ? session.todos : [],
       facts: Array.isArray(session.facts) ? session.facts : [],
       unknowns: Array.isArray(session.unknowns) ? session.unknowns : [],
+      verification: session.verification ?? null,
       usage: session.usage ?? { inputTokens: 0, outputTokens: 0 },
       mode: session.mode ?? 'build',
       reasoning: session.reasoning ?? 'standard',
@@ -1055,6 +1057,15 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
         session.plan = undefined;
         session.todos = [];
         session.mode = 'plan';
+      } else if (body.action === 'nextPhase') {
+        if (!session.plan || session.plan.status !== 'approved') {
+          return json(res, 409, { error: '当前没有已批准的计划' });
+        }
+        const target = nextPhase(session.plan.items, session.plan.currentPhase);
+        if (!target) return json(res, 409, { error: '已经是最后一个阶段' });
+        const gate = canAdvance(session.plan.items, session.plan.currentPhase, target);
+        if (!gate.ok) return json(res, 409, { error: gate.reason ?? '依赖未完成，不能进入下一阶段' });
+        session.plan = { ...session.plan, currentPhase: target };
       }
       await store.save(session);
       return json(res, 200, {

@@ -20,6 +20,8 @@ import { runTurn } from '../src/agent/loop.ts';
 import { collectContinuation } from '../src/cli/continuation.ts';
 import { BackupStore } from '../src/session/backups.ts';
 import { SessionStore } from '../src/session/store.ts';
+import { runVerification } from '../src/session/verify.ts';
+import { canAdvance, nextPhase, planPhases } from '../src/session/phases.ts';
 import { estimateCost, formatCost, resolvePricing } from '../src/providers/pricing.ts';
 import { loadPluginTools, pluginTemplate } from '../src/tools/plugins.ts';
 import { createMockProvider, listenOnRandomPort } from './mock-provider.mjs';
@@ -349,6 +351,33 @@ async function testAgentDoc() {
   rmSync(workspace, { recursive: true, force: true });
 }
 
+async function testPhaseGate() {
+  const items = [
+    { text: 'p1 task', status: 'pending', phase: 'p1' },
+    { text: 'p2 task', status: 'pending', phase: 'p2', dependsOn: ['p1'] },
+  ];
+  check('阶段顺序正确', planPhases(items).join(',') === 'p1,p2', planPhases(items).join(','));
+  check('依赖未完成时拒绝进入下一阶段', canAdvance(items, 'p1', 'p2').ok === false);
+  items[0].status = 'done';
+  check('依赖完成后允许进入下一阶段', canAdvance(items, 'p1', 'p2').ok === true);
+  check('nextPhase 找到下一阶段', nextPhase(items, 'p1') === 'p2');
+}
+
+async function testVerification() {
+  const workspace = mkdtempSync(join(tmpdir(), 'banana-verify-'));
+  const results = await runVerification(
+    [
+      'node -e "process.exit(0)"',
+      'node -e "console.error(\'boom\'); process.exit(1)"',
+    ],
+    workspace,
+    15_000,
+  );
+  check('验收命令成功/失败都被记录', results.length === 2 && results[0].ok && !results[1].ok);
+  check('验收输出包含失败原因', results[1].output.includes('boom'));
+  rmSync(workspace, { recursive: true, force: true });
+}
+
 async function testMemory() {
   const workspace = mkdtempSync(join(tmpdir(), 'banana-memory-'));
   const facts = [];
@@ -551,6 +580,8 @@ async function main() {
   await testCrlf();
   await testPlatformPrompt();
   await testAgentDoc();
+  await testPhaseGate();
+  await testVerification();
   await testMemory();
   await testSessionMeta();
   await testGrepCount();

@@ -70,6 +70,8 @@ export interface AppConfig {
   budget?: { tokens?: number; minutes?: number };
   /** 用户反复纠正后沉淀的偏好，注入系统提示词。 */
   preferences?: string[];
+  /** /verify 运行的验收命令。 */
+  verifyCommands?: string[];
   /** 运行时加载的项目规则（AGENT.md），不写入配置文件。 */
   agentDoc?: string;
   /** AGENT.md 的实际路径，供 GUI 展示。 */
@@ -302,6 +304,7 @@ function defaultConfig(workspace: string): AppConfig {
     disabledPlugins: [],
     trustedProjects: {},
     preferences: [],
+    verifyCommands: ['npm test', 'npm run build'],
     search: {
       provider: 'auto',
       deep: false,
@@ -410,6 +413,13 @@ export function sanitizeProjectConfig(patch: ConfigFile): ConfigFile {
     out.maxContextChars = patch.maxContextChars;
   }
   if (typeof patch.showReasoning === 'boolean') out.showReasoning = patch.showReasoning;
+  if (Array.isArray(patch.verifyCommands)) {
+    out.verifyCommands = patch.verifyCommands
+      .filter((command): command is string => typeof command === 'string')
+      .map((command) => command.trim())
+      .filter(Boolean)
+      .slice(0, 10);
+  }
   if (Array.isArray(patch.disabledPlugins)) {
     out.disabledPlugins = patch.disabledPlugins.filter((name): name is string => typeof name === 'string');
   }

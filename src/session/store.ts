@@ -4,6 +4,7 @@ import { join } from 'node:path';
 import type { UMessage } from '../providers/types.ts';
 import type { ReasoningLevel } from '../providers/reasoning.ts';
 import type { FactItem, TodoItem, UnknownItem } from '../tools/types.ts';
+import type { VerifyResult } from './verify.ts';
 
 export type AgentMode = 'plan' | 'build';
 
@@ -38,6 +39,8 @@ export interface Session {
   facts?: FactItem[];
   /** 未验证项（memory_* 工具维护）。 */
   unknowns?: UnknownItem[];
+  /** 最近一次 /verify 的验收结果。 */
+  verification?: { at: string; results: VerifyResult[] };
   /** 会话累计 token 用量。 */
   usage?: SessionUsage;
   /** Plan 只读调研，Build 允许写文件和执行命令。 */
@@ -156,6 +159,7 @@ export class SessionStore {
         todos: parsed.todos ?? [],
         facts: Array.isArray(parsed.facts) ? parsed.facts : [],
         unknowns: Array.isArray(parsed.unknowns) ? parsed.unknowns : [],
+        verification: parsed.verification,
         mode: parsed.mode === 'plan' ? 'plan' : 'build',
         reasoning:
           parsed.reasoning === 'fast' || parsed.reasoning === 'deep' ? parsed.reasoning : 'standard',

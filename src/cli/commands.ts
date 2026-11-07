@@ -2,6 +2,8 @@ import { appendFile, mkdir } from 'node:fs/promises';
 import type { AppConfig } from '../config/config.ts';
 import { bananaHome, defaultSystemPrompt, loadAgentDoc, saveConfig } from '../config/config.ts';
 import { reviewSession } from '../agent/review.ts';
+import { runVerification } from '../session/verify.ts';
+import { canAdvance, nextPhase, planPhases } from '../session/phases.ts';
 import { TEMPLATES } from './templates.ts';
 import { formatCost } from '../providers/pricing.ts';
 import { existsSync } from 'node:fs';
@@ -411,6 +413,32 @@ const workspaceCommand: Command = {
   },
 };
 
+const verifyCommand: Command = {
+  name: 'verify',
+  usage: '/verify',
+  summary: '运行配置的验收命令并记录测试/构建结果',
+  async run(_args, ctx) {
+    const commands =
+      ctx.config.verifyCommands?.length ? ctx.config.verifyCommands : ['npm test', 'npm run build'];
+    ui.hint(`运行验收命令：${commands.join('；')}`);
+    const results = await runVerification(commands, ctx.config.workspace);
+    ctx.session.verification = { at: new Date().toISOString(), results };
+    await ctx.saveSession();
+    for (const result of results) {
+      const mark = result.ok ? ui.c.green('✓') : ui.c.red('✗');
+      ui.line(`${mark} ${result.command}  ${(result.ms / 1000).toFixed(1)}s`);
+      if (!result.ok) {
+        const tail = result.output.split('\n').slice(-12).join('\n');
+        if (tail) ui.line(ui.c.dim(tail));
+        if (result.timedOut) ui.warn('  超时被终止。');
+      }
+    }
+    const failed = results.filter((result) => !result.ok).length;
+    if (failed) ui.warn(`${failed} 条验收命令失败，结果已写入会话。`);
+    else ui.ok('全部验收命令通过，结果已写入会话。');
+  },
+};
+
 const phaseCommand: Command = {
   name: 'phase',
   usage: '/phase [next|阶段名]',
@@ -418,23 +446,30 @@ const phaseCommand: Command = {
   async run(args, ctx) {
     const plan = ctx.session.plan;
     if (!plan || plan.status !== 'approved') return ui.hint('当前没有已批准的计划。');
-    const phases = [...new Set(plan.items.map((item) => item.phase).filter((name): name is string => Boolean(name)))];
+    const phases = planPhases(plan.items);
     if (!phases.length) return ui.hint('这个计划没有阶段字段，可以直接按清单执行。');
     const target = args.trim();
     if (!target) {
       ui.line(`${ui.c.bold('当前阶段')}  ${plan.currentPhase ?? phases[0]}`);
-      for (const name of phases) ui.line(`  ${name === plan.currentPhase ? ui.c.green('*') : ' '} ${name}`);
-      ui.hint('  用 /phase next 或 /phase <阶段名> 切换。');
+      for (const name of phases) {
+        const mark = name === plan.currentPhase ? ui.c.green('*') : ' ';
+        const deps = plan.items
+          .filter((item) => item.phase === name)
+          .flatMap((item) => item.dependsOn ?? []);
+        ui.line(`  ${mark} ${name}${deps.length ? ui.c.dim(`（依赖 ${[...new Set(deps)].join('、')}）`) : ''}`);
+      }
+      ui.hint('  用 /phase next 或 /phase <阶段名> 切换；依赖未完成会被拒绝。');
       return;
     }
+    let next = target;
     if (target === 'next') {
-      const index = phases.indexOf(plan.currentPhase ?? phases[0]!);
-      plan.currentPhase = phases[(index + 1) % phases.length]!;
-    } else if (phases.includes(target)) {
-      plan.currentPhase = target;
-    } else {
-      return ui.error(`未知阶段 "${target}"。可用: ${phases.join(', ')}`);
+      const candidate = nextPhase(plan.items, plan.currentPhase);
+      if (!candidate) return ui.hint('已经是最后一个阶段。');
+      next = candidate;
     }
+    const gate = canAdvance(plan.items, plan.currentPhase, next);
+    if (!gate.ok) return ui.error(gate.reason ?? '不能进入该阶段。');
+    plan.currentPhase = next;
     await ctx.saveSession();
     ui.ok(`当前阶段：${plan.currentPhase}`);
   },
@@ -572,6 +607,7 @@ export const commands: Command[] = [
   compactCommand,
   workspaceCommand,
   envCommand,
+  verifyCommand,
   phaseCommand,
   reviewCommand,
   preferCommand,
