@@ -37,6 +37,9 @@ function normalize(raw: unknown): TodoItem[] {
       const files = Array.isArray(item['files'])
         ? item['files'].map((file) => String(file).trim()).filter(Boolean).slice(0, 20)
         : [];
+      const dependsOn = Array.isArray(item['dependsOn'])
+        ? item['dependsOn'].map((name) => String(name).trim()).filter(Boolean).slice(0, 10)
+        : [];
       return {
         text,
         status: valid,
@@ -44,6 +47,7 @@ function normalize(raw: unknown): TodoItem[] {
         ...(files.length ? { files } : {}),
         ...(verify ? { verify } : {}),
         ...(confidence ? { confidence } : {}),
+        ...(dependsOn.length ? { dependsOn } : {}),
       } as TodoItem;
     })
     .filter((item) => item.text.length > 0);
@@ -70,6 +74,7 @@ export const todoWriteTool: Tool = {
             files: { type: 'array', items: { type: 'string' }, description: '可选：涉及文件' },
             verify: { type: 'string', description: '可选：如何验证这一步' },
             confidence: { type: 'string', enum: ['high', 'medium', 'low'], description: '可选：置信度' },
+            dependsOn: { type: 'array', items: { type: 'string' }, description: '可选：依赖的阶段名' },
           },
           required: ['text', 'status'],
         },

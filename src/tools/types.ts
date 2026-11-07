@@ -31,6 +31,8 @@ export interface TodoItem {
   verify?: string;
   /** 置信度，可选；没有依据时不要瞎填 high。 */
   confidence?: 'high' | 'medium' | 'low';
+  /** 依赖的阶段名，可选；用于提醒执行顺序。 */
+  dependsOn?: string[];
 }
 
 export interface ToolContext {

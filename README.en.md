@@ -156,6 +156,7 @@ banana "run the tests"       one-shot task (no REPL)
 | `/cwd [path]` | Show / change workspace |
 | `/system [text]` | Show / replace the system prompt |
 | `/env` | Print the environment questionnaire for `AGENT.md` |
+| `/phase [next\|name]` | View/switch the current phase of an approved plan |
 | `/review` | Run an independent review agent over recent work (no file changes) |
 | `/prefer [text\|clear]` | View/append user preferences injected into the system prompt |
 | `/template [name]` | Show task templates: steps, acceptance, pitfalls |
@@ -364,6 +365,7 @@ npm run dev         # node --watch
 npm run build       # compile to dist/ (for publishing)
 npm run ui:check    # anti-AI UI scan only
 npm run eval        # contract eval (prompt/knowledge pack/key behavior)
+npm run ab          # contract A/B for two prompt suffixes
 npm run gui:sync    # src/ui -> gui/ui
 npm run gui:check   # verify both UI copies match
 ```

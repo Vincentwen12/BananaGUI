@@ -262,6 +262,9 @@ export function defaultSystemPrompt(workspace: string): string {
     '- 用用户提问的语言回答。',
     '- 简洁直接：先结论，再必要解释和改动清单；不要复述每一步。',
     `- 做 UI 时先读 ${designRoot}/principles.md 与 ${designRoot}/tokens.md，遵守禁用清单。`,
+    ...(process.env['BANANA_PROMPT_SUFFIX']?.trim()
+      ? [`\n## 实验提示词\n${process.env['BANANA_PROMPT_SUFFIX']!.trim()}`]
+      : []),
   ].join('\n');
 }
 

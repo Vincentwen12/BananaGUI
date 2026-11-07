@@ -2460,7 +2460,7 @@ async function requestFileComplete(value) {
 const GUI_COMMANDS = new Set([
   'help', 'h', '?', 'new', 'list', 'ls', 'use', 'switch', 'resume', 'rename',
   'session', 'history', 'provider', 'model', 'perm', 'system', 'cwd', 'undo', 'save', 'clear', 'delete',
-  'review', 'prefer', 'template', 'feedback',
+  'review', 'prefer', 'template', 'feedback', 'phase',
 ]);
 
 function leaveHomeMode() {

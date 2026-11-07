@@ -411,6 +411,35 @@ const workspaceCommand: Command = {
   },
 };
 
+const phaseCommand: Command = {
+  name: 'phase',
+  usage: '/phase [next|阶段名]',
+  summary: '查看/切换已批准计划的当前阶段',
+  async run(args, ctx) {
+    const plan = ctx.session.plan;
+    if (!plan || plan.status !== 'approved') return ui.hint('当前没有已批准的计划。');
+    const phases = [...new Set(plan.items.map((item) => item.phase).filter((name): name is string => Boolean(name)))];
+    if (!phases.length) return ui.hint('这个计划没有阶段字段，可以直接按清单执行。');
+    const target = args.trim();
+    if (!target) {
+      ui.line(`${ui.c.bold('当前阶段')}  ${plan.currentPhase ?? phases[0]}`);
+      for (const name of phases) ui.line(`  ${name === plan.currentPhase ? ui.c.green('*') : ' '} ${name}`);
+      ui.hint('  用 /phase next 或 /phase <阶段名> 切换。');
+      return;
+    }
+    if (target === 'next') {
+      const index = phases.indexOf(plan.currentPhase ?? phases[0]!);
+      plan.currentPhase = phases[(index + 1) % phases.length]!;
+    } else if (phases.includes(target)) {
+      plan.currentPhase = target;
+    } else {
+      return ui.error(`未知阶段 "${target}"。可用: ${phases.join(', ')}`);
+    }
+    await ctx.saveSession();
+    ui.ok(`当前阶段：${plan.currentPhase}`);
+  },
+};
+
 const reviewCommand: Command = {
   name: 'review',
   usage: '/review',
@@ -543,6 +572,7 @@ export const commands: Command[] = [
   compactCommand,
   workspaceCommand,
   envCommand,
+  phaseCommand,
   reviewCommand,
   preferCommand,
   templateCommand,

@@ -309,6 +309,9 @@ function sanitizePlanItems(raw: unknown): SessionPlan['items'] {
       const files = Array.isArray(item['files'])
         ? item['files'].map((file) => String(file).trim()).filter(Boolean).slice(0, 20)
         : [];
+      const dependsOn = Array.isArray(item['dependsOn'])
+        ? item['dependsOn'].map((name) => String(name).trim()).filter(Boolean).slice(0, 10)
+        : [];
       return {
         text,
         status,
@@ -316,6 +319,7 @@ function sanitizePlanItems(raw: unknown): SessionPlan['items'] {
         ...(files.length ? { files } : {}),
         ...(verify ? { verify } : {}),
         ...(confidence ? { confidence } : {}),
+        ...(dependsOn.length ? { dependsOn } : {}),
       } as SessionPlan['items'][number];
     })
     .filter((item) => item.text.length > 0)

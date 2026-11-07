@@ -31,6 +31,7 @@
     "gui:check": "node scripts/check-gui-sync.mjs",
     "ui:check": "node scripts/check-ui.mjs",
     "eval": "node test/eval.mjs",
+    "ab": "node scripts/ab.mjs",
     "release": "node scripts/release.mjs",
     "prepare": "npm run build",
     "prepublishOnly": "npm run typecheck && npm test && npm run build && npm run gui:sync && node scripts/check-gui-sync.mjs && node scripts/check-ui.mjs && node test/eval.mjs && node test/pack.test.mjs"

@@ -156,6 +156,7 @@ banana "帮我跑一下测试"      单轮任务模式（不进入对话）
 | `/cwd [路径]` | 查看/切换工作目录 |
 | `/system [文本]` | 查看/替换系统提示词 |
 | `/env` | 打印环境询问模板，写进 `AGENT.md` 可避免重复探测 |
+| `/phase [next\|阶段名]` | 查看/切换已批准计划的当前阶段 |
 | `/review` | 让独立审查 agent 检查最近交付（不修改文件） |
 | `/prefer [文本\|clear]` | 查看/追加用户偏好，注入系统提示词 |
 | `/template [名称]` | 查看任务模板：步骤、验收清单、常见坑 |
@@ -364,6 +365,7 @@ npm run dev         # node --watch
 npm run build       # 编译到 dist/（发布用）
 npm run ui:check    # 只跑 UI 反 AI 味扫描
 npm run eval        # 契约评测（提示词/知识包/关键行为）
+npm run ab          # 两组提示词后缀的契约 A/B
 npm run gui:sync    # src/ui -> gui/ui
 npm run gui:check   # 校验两套 UI 一致
 ```
