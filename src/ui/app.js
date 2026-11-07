@@ -78,6 +78,214 @@ function svg(name) {
 
 const $ = (id) => document.getElementById(id);
 
+// ---------------- 界面语言 ----------------
+const LANG_KEY = 'banana.lang';
+const STRINGS = {
+  zh: {
+    'sidebar.toggle': '会话列表（Ctrl+B）',
+    'sidebar.newChat': '新建对话',
+    'sidebar.search': '搜索会话',
+    'sidebar.settings': '设置',
+    'sidebar.undo': '撤销',
+    'sidebar.today': '今天',
+    'sidebar.yesterday': '昨天',
+    'header.search': '命令中心（Ctrl+K）',
+    'header.terminal': '终端（Ctrl+`）',
+    'header.plugins': '插件工坊',
+    'header.settings': '设置',
+    'header.theme': '切换主题',
+    'header.files': '工作区文件',
+    'header.review': '查看改动 / 文件 / 任务（Review）',
+    'composer.placeholder': '说点什么，Banana 来动手；输入 / 调命令，@ 引文件',
+    'composer.send': '发送',
+    'composer.stop': '停止生成',
+    'plan.waiting': '计划 · 等你批准',
+    'plan.approved': '计划已批准',
+    'plan.cancelled': '计划已取消',
+    'plan.planMode': 'Plan 模式不会改动文件',
+    'plan.empty': '这一轮没有生成结构化清单，可以直接批准后按上面的计划执行。',
+    'plan.approve': '批准并执行',
+    'plan.revise': '修改计划',
+    'plan.cancel': '取消',
+    'plan.currentPhase': '当前阶段',
+    'plan.phase': '阶段',
+    'plan.verify': '验证',
+    'plan.confidence': '置信度',
+    'plan.depends': '依赖',
+    'plan.next': '下一阶段',
+    'todo.title': '任务',
+    'todo.done': '完成',
+    'todo.inProgress': '进行中',
+    'todo.pending': '待办',
+    'review.changes': '改动',
+    'review.files': '文件',
+    'review.tasks': '任务',
+    'review.verify': '验证',
+    'review.selectFile': '选择上面的文件查看改动。',
+    'review.tasksEmpty': '这一轮还没有任务清单。',
+    'review.refresh': '刷新',
+    'review.close': '收起 Review',
+    'verify.plan': '计划',
+    'verify.tasks': '任务',
+    'verify.facts': '事实',
+    'verify.unknowns': '未验证项',
+    'verify.next': '下一步',
+    'verify.verification': '验收',
+    'verify.notRun': '还没有运行 /verify',
+    'verify.approved': '已批准',
+    'verify.waiting': '等待批准',
+    'verify.cancelled': '已取消',
+    'verify.noPlan': '没有计划',
+    'verify.currentPhase': '当前阶段',
+    'verify.completed': '完成',
+    'verify.passed': '通过',
+    'verify.failed': '失败',
+    'verify.hint': '交付前请运行 /verify 跑测试和构建；结果会自动写入这里。',
+    'verify.factCount': '条已确认',
+    'time.now': '刚刚',
+    'time.minutes': '分钟前',
+    'time.hours': '小时前',
+    'time.days': '天前',
+    'time.today': '今天',
+    'time.yesterday': '昨天',
+  },
+  en: {
+    'sidebar.toggle': 'Conversations (Ctrl+B)',
+    'sidebar.newChat': 'New conversation',
+    'sidebar.search': 'Search conversations',
+    'sidebar.settings': 'Settings',
+    'sidebar.undo': 'Undo',
+    'sidebar.today': 'Today',
+    'sidebar.yesterday': 'Yesterday',
+    'header.search': 'Command center (Ctrl+K)',
+    'header.terminal': 'Terminal (Ctrl+`)',
+    'header.plugins': 'Plugin workshop',
+    'header.settings': 'Settings',
+    'header.theme': 'Toggle theme',
+    'header.files': 'Workspace files',
+    'header.review': 'Review changes / files / tasks',
+    'composer.placeholder': 'Ask Banana to do something; / commands, @ files',
+    'composer.send': 'Send',
+    'composer.stop': 'Stop generating',
+    'plan.waiting': 'Plan · waiting for approval',
+    'plan.approved': 'Plan approved',
+    'plan.cancelled': 'Plan cancelled',
+    'plan.planMode': "Plan mode won't modify files",
+    'plan.empty': 'No structured checklist this turn. You can approve and follow the plan above.',
+    'plan.approve': 'Approve & run',
+    'plan.revise': 'Revise',
+    'plan.cancel': 'Cancel',
+    'plan.currentPhase': 'Current phase',
+    'plan.phase': 'Phase',
+    'plan.verify': 'Verify',
+    'plan.confidence': 'Confidence',
+    'plan.depends': 'Depends on',
+    'plan.next': 'Next phase',
+    'todo.title': 'Tasks',
+    'todo.done': 'Done',
+    'todo.inProgress': 'In progress',
+    'todo.pending': 'Pending',
+    'review.changes': 'Changes',
+    'review.files': 'Files',
+    'review.tasks': 'Tasks',
+    'review.verify': 'Verify',
+    'review.selectFile': 'Select a file above to view changes.',
+    'review.tasksEmpty': 'No task list for this turn.',
+    'review.refresh': 'Refresh',
+    'review.close': 'Close Review',
+    'verify.plan': 'Plan',
+    'verify.tasks': 'Tasks',
+    'verify.facts': 'Facts',
+    'verify.unknowns': 'Unknowns',
+    'verify.next': 'Next',
+    'verify.verification': 'Verification',
+    'verify.notRun': 'No /verify run yet',
+    'verify.approved': 'Approved',
+    'verify.waiting': 'Waiting for approval',
+    'verify.cancelled': 'Cancelled',
+    'verify.noPlan': 'No plan',
+    'verify.currentPhase': 'Current phase',
+    'verify.completed': 'completed',
+    'verify.passed': 'passed',
+    'verify.failed': 'failed',
+    'verify.hint': 'Run /verify before delivery; results will appear here.',
+    'verify.factCount': 'confirmed',
+    'time.now': 'just now',
+    'time.minutes': 'm ago',
+    'time.hours': 'h ago',
+    'time.days': 'd ago',
+    'time.today': 'Today',
+    'time.yesterday': 'Yesterday',
+  },
+};
+
+let uiLang = (() => {
+  try {
+    return localStorage.getItem(LANG_KEY) === 'en' ? 'en' : 'zh';
+  } catch {
+    return 'zh';
+  }
+})();
+
+function t(key) {
+  return STRINGS[uiLang]?.[key] ?? STRINGS.zh[key] ?? key;
+}
+
+function applyLanguage() {
+  document.documentElement.lang = uiLang === 'en' ? 'en' : 'zh-CN';
+  const setTitle = (id, key) => {
+    const node = $(id);
+    if (!node) return;
+    node.title = t(key);
+    node.setAttribute('aria-label', t(key));
+  };
+  setTitle('toggleSidebar', 'sidebar.toggle');
+  setTitle('newTab', 'sidebar.newChat');
+  setTitle('newChat', 'sidebar.newChat');
+  setTitle('searchBtn', 'header.search');
+  setTitle('termBtn', 'header.terminal');
+  setTitle('pluginsBtn', 'header.plugins');
+  setTitle('openSettings', 'header.settings');
+  setTitle('themeBtn', 'header.theme');
+  setTitle('filesBtn', 'header.files');
+  setTitle('reviewBtn', 'header.review');
+  setTitle('reviewRefresh', 'review.refresh');
+  setTitle('reviewClose', 'review.close');
+  const search = $('sessionSearch');
+  if (search) search.placeholder = t('sidebar.search');
+  const input = $('input');
+  if (input) input.placeholder = t('composer.placeholder');
+  const settingsLabel = document.querySelector('#openSettingsFoot span:last-child');
+  if (settingsLabel) settingsLabel.textContent = t('sidebar.settings');
+  const undoLabel = document.querySelector('#undoBtn span:last-child');
+  if (undoLabel) undoLabel.textContent = t('sidebar.undo');
+  const todoTitle = document.querySelector('.todo-title');
+  if (todoTitle) todoTitle.textContent = t('todo.title');
+  for (const [id, key] of [
+    ['reviewTabChanges', 'review.changes'],
+    ['reviewTabFiles', 'review.files'],
+    ['reviewTabTasks', 'review.tasks'],
+    ['reviewTabVerify', 'review.verify'],
+  ]) {
+    const node = $(id);
+    if (node) node.textContent = t(key);
+  }
+  const tasksEmpty = $('tasksEmpty');
+  if (tasksEmpty) tasksEmpty.textContent = t('review.tasksEmpty');
+}
+
+function setLanguage(lang) {
+  uiLang = lang === 'en' ? 'en' : 'zh';
+  try {
+    localStorage.setItem(LANG_KEY, uiLang);
+  } catch {}
+  applyLanguage();
+  if (state.info) {
+    renderHeader();
+    renderThread();
+  }
+}
+
 // ---------------- Markdown（够用即可） ----------------
 const escapeHtml = (text) =>
   text
@@ -395,11 +603,11 @@ function relativeTime(iso) {
   if (!iso) return '';
   const diff = Date.now() - new Date(iso).getTime();
   const minutes = Math.round(diff / 60000);
-  if (minutes < 1) return '刚刚';
-  if (minutes < 60) return `${minutes} 分钟前`;
+  if (minutes < 1) return t('time.now');
+  if (minutes < 60) return `${minutes} ${t('time.minutes')}`;
   const hours = Math.round(minutes / 60);
-  if (hours < 24) return `${hours} 小时前`;
-  return `${Math.round(hours / 24)} 天前`;
+  if (hours < 24) return `${hours} ${t('time.hours')}`;
+  return `${Math.round(hours / 24)} ${t('time.days')}`;
 }
 
 /** 窄屏下侧边栏是覆盖层，选完会话必须收起来，否则挡住对话。 */
@@ -616,9 +824,9 @@ function renderSidebar() {
     const now = new Date();
     const start = new Date(now.getFullYear(), now.getMonth(), now.getDate()).getTime();
     const value = date.getTime();
-    if (value >= start) return '今天';
-    if (value >= start - 86_400_000) return '昨天';
-    return '更早';
+    if (value >= start) return t('time.today');
+    if (value >= start - 86_400_000) return t('time.yesterday');
+    return uiLang === 'en' ? 'Earlier' : '更早';
   };
   const sessions = state.sessions.filter((item) => {
     const q = state.sessionQuery.trim().toLowerCase();
@@ -650,7 +858,7 @@ function renderSidebar() {
       `<span class="s-act" data-del="${item.id}" title="删除">${svg('trash')}</span>` +
       `</span>` +
       `<span class="s-title">${escapeHtml(item.title || '新对话')}</span>` +
-      `<span class="s-meta">${item.turns} 轮 · ${relativeTime(item.updatedAt)}</span>`;
+      `<span class="s-meta">${item.turns} ${uiLang === 'en' ? (item.turns === 1 ? 'turn' : 'turns') : '轮'} · ${relativeTime(item.updatedAt)}</span>`;
 
     node.tabIndex = 0;
     node.setAttribute('role', 'button');
@@ -909,7 +1117,7 @@ function toolGroup(calls, results) {
   wrap.classList.toggle('has-error', hasError);
   const summary = document.createElement('summary');
   summary.innerHTML =
-    `<span class="wg-dot"></span><span class="wg-title">完成 ${calls.length} 个操作</span>` +
+    `<span class="wg-dot"></span><span class="wg-title">${uiLang === 'en' ? `Completed ${calls.length} operations` : `完成 ${calls.length} 个操作`}</span>` +
     `<span class="wg-state">${hasError ? '有失败' : ''}</span>`;
   const body = document.createElement('div');
   body.className = 'tool-group-body';
@@ -1108,7 +1316,7 @@ function workspaceHint() {
 function renderHeader() {
   const info = state.info;
   if (!info) return;
-  $('threadTitle').textContent = info.session.title || '新对话';
+  $('threadTitle').textContent = info.session.title || (uiLang === 'en' ? 'New conversation' : '新对话');
   $('modelLabel').textContent = `${info.provider.name} / ${info.provider.model}`;
   const mode = info.session?.mode ?? 'build';
   const modeButtons = $('modeSwitch')?.querySelectorAll('[data-mode]') ?? [];
@@ -1119,12 +1327,21 @@ function renderHeader() {
   });
   $('modeBadge').hidden = mode !== 'plan';
   const level = info.session?.reasoning ?? 'standard';
-  $('reasoningLabel').textContent = REASONING_LABELS[level] ?? '标准';
+  const levelLabel =
+    uiLang === 'en'
+      ? ({ fast: 'Fast', standard: 'Standard', deep: 'Deep' }[level] ?? 'Standard')
+      : (REASONING_LABELS[level] ?? '标准');
+  $('reasoningLabel').textContent = levelLabel;
   $('reasoningBtn').classList.toggle('is-unsupported', info.reasoning?.supported === false);
   $('reasoningBtn').setAttribute('aria-disabled', String(info.reasoning?.supported === false));
-  $('reasoningBtn').title = info.reasoning?.supported === false
-    ? '当前模型不支持显式思考强度'
-    : `思考强度：${REASONING_LABELS[level] ?? '标准'}`;
+  $('reasoningBtn').title =
+    info.reasoning?.supported === false
+      ? uiLang === 'en'
+        ? 'This model does not support explicit reasoning levels'
+        : '当前模型不支持显式思考强度'
+      : uiLang === 'en'
+        ? `Reasoning: ${levelLabel}`
+        : `思考强度：${levelLabel}`;
   if (!state.busy) $('composerHint').textContent = workspaceHint();
   else if (state.status) $('composerHint').textContent = state.status;
   renderTurnMeta();
@@ -1264,7 +1481,7 @@ function openAppDialog({ title, body = '', value = null, placeholder = '', confi
     const cancel = document.createElement('button');
     cancel.type = 'button';
     cancel.className = 'btn';
-    cancel.textContent = '取消';
+    cancel.textContent = t('plan.cancel');
     const ok = document.createElement('button');
     ok.type = 'button';
     ok.className = `btn ${danger ? 'danger' : 'primary'}`;
@@ -1572,7 +1789,7 @@ function renderTodos() {
         `<span class="task-index">${index + 1}</span>` +
         `<span class="task-mark">${todoMark(item.status)}</span>` +
         `<span class="task-text">${escapeHtml(item.text)}</span>` +
-        `<span class="task-state">${item.status === 'done' ? '完成' : item.status === 'in_progress' ? '进行中' : '待办'}</span>`;
+        `<span class="task-state">${item.status === 'done' ? t('todo.done') : item.status === 'in_progress' ? t('todo.inProgress') : t('todo.pending')}</span>`;
       panelList.appendChild(row);
     });
   }
@@ -1583,19 +1800,19 @@ function planCardNode(plan) {
   card.className = `plan-card is-${plan.status ?? 'pending'}`;
   const title =
     plan.status === 'approved'
-      ? `计划已批准${plan.currentPhase ? ` · 当前阶段 ${plan.currentPhase}` : ''}`
+      ? `${t('plan.approved')}${plan.currentPhase ? ` · ${t('plan.currentPhase')} ${plan.currentPhase}` : ''}`
       : plan.status === 'cancelled'
-        ? '计划已取消'
-        : '计划 · 等你批准';
+        ? t('plan.cancelled')
+        : t('plan.waiting');
   card.innerHTML =
     `<div class="plan-head"><span class="plan-dot"></span><span>${title}</span>` +
-    (plan.status === 'pending' ? '<span class="plan-hint">Plan 模式不会改动文件</span>' : '') +
+    (plan.status === 'pending' ? `<span class="plan-hint">${t('plan.planMode')}</span>` : '') +
     '</div>';
   const list = document.createElement('div');
   list.className = 'plan-list';
   const items = plan.items ?? [];
   if (!items.length) {
-    list.innerHTML = '<div class="plan-empty">这一轮没有生成结构化清单，可以直接批准后按上面的计划执行。</div>';
+    list.innerHTML = `<div class="plan-empty">${t('plan.empty')}</div>`;
   } else {
     items.forEach((item, index) => {
       const row = document.createElement('div');
@@ -1605,11 +1822,11 @@ function planCardNode(plan) {
         `<span class="plan-mark">${todoMark(item.status)}</span>` +
         `<span class="plan-text">${escapeHtml(item.text)}</span>`;
       const meta = [
-        item.phase ? `阶段 ${item.phase}` : '',
+        item.phase ? `${t('plan.phase')} ${item.phase}` : '',
         item.files?.length ? item.files.join(' · ') : '',
-        item.verify ? `验证 ${item.verify}` : '',
-        item.confidence ? `置信度 ${item.confidence}` : '',
-        item.dependsOn?.length ? `依赖 ${item.dependsOn.join('、')}` : '',
+        item.verify ? `${t('plan.verify')} ${item.verify}` : '',
+        item.confidence ? `${t('plan.confidence')} ${item.confidence}` : '',
+        item.dependsOn?.length ? `${t('plan.depends')} ${item.dependsOn.join(uiLang === 'en' ? ', ' : '、')}` : '',
       ]
         .filter(Boolean)
         .join(' · ');
@@ -1628,15 +1845,15 @@ function planCardNode(plan) {
     actions.className = 'plan-actions';
     const approve = document.createElement('button');
     approve.className = 'btn primary';
-    approve.textContent = '批准并执行';
+    approve.textContent = t('plan.approve');
     approve.addEventListener('click', () => approvePlan(card));
     const revise = document.createElement('button');
     revise.className = 'btn';
-    revise.textContent = '修改计划';
+    revise.textContent = t('plan.revise');
     revise.addEventListener('click', () => revisePlan());
     const cancel = document.createElement('button');
     cancel.className = 'btn ghost';
-    cancel.textContent = '取消';
+    cancel.textContent = t('plan.cancel');
     cancel.addEventListener('click', () => cancelPlan(card));
     actions.append(approve, revise, cancel);
     card.appendChild(actions);
@@ -1648,7 +1865,7 @@ function planCardNode(plan) {
       actions.className = 'plan-actions';
       const next = document.createElement('button');
       next.className = 'btn primary';
-      next.textContent = `下一阶段：${phases[index + 1]}`;
+      next.textContent = `${t('plan.next')}: ${phases[index + 1]}`;
       next.addEventListener('click', () => nextPlanPhase());
       actions.appendChild(next);
       card.appendChild(actions);
@@ -1853,8 +2070,8 @@ function setBusy(busy) {
   THREAD.setAttribute('aria-busy', String(busy));
   // 发送键在原位切换成停止键，不再让用户去右上角找
   send.innerHTML = busy ? svg('stop') : svg('send');
-  send.title = busy ? '停止生成' : '发送';
-  send.setAttribute('aria-label', busy ? '停止生成' : '发送');
+  send.title = busy ? t('composer.stop') : t('composer.send');
+  send.setAttribute('aria-label', busy ? t('composer.stop') : t('composer.send'));
   send.dataset.mode = busy ? 'stop' : 'send';
   send.disabled = busy ? false : $('input').value.trim() === '';
   document.body.style.cursor = busy ? 'progress' : '';
@@ -1939,7 +2156,7 @@ async function send() {
   work.hidden = true;
   const workSummary = document.createElement('summary');
   workSummary.innerHTML =
-    '<span class="wg-dot"></span><span class="wg-title">正在处理</span><span class="wg-state"></span>';
+    `<span class="wg-dot"></span><span class="wg-title">${uiLang === 'en' ? 'Working' : '正在处理'}</span><span class="wg-state"></span>`;
   const workBody = document.createElement('div');
   workBody.className = 'tool-group-body';
   work.append(workSummary, workBody);
@@ -2051,7 +2268,13 @@ async function send() {
     work.classList.remove('is-running');
     const seconds = toolStarted ? ((Date.now() - toolStarted) / 1000).toFixed(1) : '0';
     workSummary.querySelector('.wg-title').textContent =
-      toolCount === 1 ? '完成 1 个操作' : `完成 ${toolCount} 个操作`;
+      uiLang === 'en'
+    ? toolCount === 1
+      ? 'Completed 1 operation'
+      : `Completed ${toolCount} operations`
+    : toolCount === 1
+      ? '完成 1 个操作'
+      : `完成 ${toolCount} 个操作`;
     workSummary.querySelector('.wg-state').textContent = `${seconds}s${toolErrors ? ' · 有失败' : ''}`;
     work.classList.toggle('has-error', toolErrors);
     if (!toolErrors && work.dataset.user !== '1') work.open = false;
@@ -2148,7 +2371,13 @@ async function send() {
             toolCount += 1;
             work.hidden = false;
             workSummary.querySelector('.wg-title').textContent =
-              toolCount === 1 ? '正在执行 1 个操作' : `正在执行 ${toolCount} 个操作`;
+              uiLang === 'en'
+    ? toolCount === 1
+      ? 'Running 1 operation'
+      : `Running ${toolCount} operations`
+    : toolCount === 1
+      ? '正在执行 1 个操作'
+      : `正在执行 ${toolCount} 个操作`;
             workSummary.querySelector('.wg-state').textContent = '';
             work.classList.add('is-updating');
             setTimeout(() => work.classList.remove('is-updating'), 220);
@@ -3252,6 +3481,24 @@ function renderAppearanceSettings(body) {
   const card = settingsCard();
   card.appendChild(
     settingsRow(
+      '界面语言 / Language',
+      '切换后立即生效，只影响当前浏览器。',
+      settingsSeg(
+        [
+          { value: 'zh', label: '中文' },
+          { value: 'en', label: 'English' },
+        ],
+        uiLang,
+        (value) => {
+          setLanguage(value);
+          renderSettings();
+          toast(value === 'en' ? 'Language: English' : '界面语言：中文');
+        },
+      ),
+    ),
+  );
+  card.appendChild(
+    settingsRow(
       '主题',
       '跟随系统最省心；也可以固定浅色或深色。',
       settingsSeg(
@@ -3667,7 +3914,7 @@ function renderVerify() {
   if (!list) return;
   const session = state.info?.session;
   if (!session) {
-    list.innerHTML = '<div class="hint" style="padding:12px">还没有会话。</div>';
+    list.innerHTML = `<div class="hint" style="padding:12px">${uiLang === 'en' ? 'No conversation yet.' : '还没有会话。'}</div>`;
     return;
   }
   const todos = Array.isArray(session.todos) ? session.todos : [];
@@ -3677,32 +3924,32 @@ function renderVerify() {
   const pending = todos.filter((item) => item.status !== 'done');
   const plan = session.plan;
   const planText = plan
-    ? `${plan.status === 'approved' ? '已批准' : plan.status === 'pending' ? '等待批准' : '已取消'}${
-        plan.currentPhase ? ` · 当前阶段 ${plan.currentPhase}` : ''
+    ? `${plan.status === 'approved' ? t('verify.approved') : plan.status === 'pending' ? t('verify.waiting') : t('verify.cancelled')}${
+        plan.currentPhase ? ` · ${t('verify.currentPhase')} ${plan.currentPhase}` : ''
       }`
-    : '没有计划';
+    : t('verify.noPlan');
   const rows = [
-    ['计划', planText],
-    ['任务', `${done}/${todos.length} 完成`],
-    ['事实', `${facts.length} 条已确认`],
-    ['未验证项', unknowns.length ? unknowns.map((item) => item.item).join('、') : '未记录'],
-    ['下一步', pending.length ? pending.slice(0, 6).map((item) => item.text).join('；') : '没有待办'],
+    [t('verify.plan'), planText],
+    [t('verify.tasks'), `${done}/${todos.length} ${t('verify.completed')}`],
+    [t('verify.facts'), `${facts.length} ${t('verify.factCount')}`],
+    [t('verify.unknowns'), unknowns.length ? unknowns.map((item) => item.item).join(uiLang === 'en' ? ', ' : '、') : uiLang === 'en' ? 'None recorded' : '未记录'],
+    [t('verify.next'), pending.length ? pending.slice(0, 6).map((item) => item.text).join(uiLang === 'en' ? '; ' : '；') : uiLang === 'en' ? 'No pending tasks' : '没有待办'],
   ];
   const verification = session.verification;
   if (verification?.results?.length) {
     const failed = verification.results.filter((result) => !result.ok).length;
     rows.push([
-      '验收',
-      `${verification.results.length - failed}/${verification.results.length} 通过 · ${new Date(verification.at).toLocaleString()}`,
+      t('verify.verification'),
+      `${verification.results.length - failed}/${verification.results.length} ${t('verify.passed')} · ${new Date(verification.at).toLocaleString()}`,
     ]);
     for (const result of verification.results) {
       rows.push([
-        result.ok ? '✓ 通过' : '✗ 失败',
+        result.ok ? `✓ ${t('verify.passed')}` : `✗ ${t('verify.failed')}`,
         `${result.command} · ${(result.ms / 1000).toFixed(1)}s`,
       ]);
     }
   } else {
-    rows.push(['验收', '还没有运行 /verify']);
+    rows.push([t('verify.verification'), t('verify.notRun')]);
   }
   list.innerHTML =
     rows
@@ -3711,7 +3958,7 @@ function renderVerify() {
           `<div class="verify-row"><span class="verify-key">${escapeHtml(key)}</span><span class="verify-value">${escapeHtml(value)}</span></div>`,
       )
       .join('') +
-    '<div class="hint" style="padding:10px 12px">交付前请运行 /verify 跑测试和构建；结果会自动写入这里。</div>';
+    `<div class="hint" style="padding:10px 12px">${t('verify.hint')}</div>`;
 
   const phases = [...new Set((plan?.items ?? []).map((item) => item.phase).filter(Boolean))];
   const phaseIndex = phases.indexOf(plan?.currentPhase);
@@ -4666,7 +4913,7 @@ function renderCommandCenter(query) {
     .map((item) => ({
       group: '会话',
       title: item.title || '新对话',
-      sub: `${item.turns} 轮 · ${relativeTime(item.updatedAt)}`,
+      sub: `${item.turns} ${uiLang === 'en' ? (item.turns === 1 ? 'turn' : 'turns') : '轮'} · ${relativeTime(item.updatedAt)}`,
       icon: 'message',
       run: () => switchSession(item.id),
     }));
@@ -5305,6 +5552,7 @@ async function maybePromptProjectTrust() {
 
 async function boot() {
   bind();
+  applyLanguage();
   // 命令表来自服务端（与 CLI 同一份），拉不到也不影响对话
   try {
     const all = (await get('commands')).commands ?? [];

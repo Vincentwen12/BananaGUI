@@ -17,11 +17,13 @@ A multi-provider AI agent for the terminal, with a local GUI. It can read and wr
 
 ## 30-second overview
 
-> GUI / Review are real screenshots; CLI is schematic.
+> GUI / Review are real screenshots from a running `banana --ui`; CLI is schematic.
 
-![Banana GUI](docs/assets/gui-real.png)
+![30-second demo](docs/assets/demo-en.gif)
 
-![Review verify tab](docs/assets/review-real.png)
+![Banana GUI](docs/assets/gui-real-en.png)
+
+![Review verify tab](docs/assets/review-real-en.png)
 
 | CLI |
 |---|
@@ -58,7 +60,7 @@ banana --ui --no-open       # start the server without opening a browser
 npm install -g @vincentbanana/banana-gui && banana-gui   # or install the standalone GUI package
 ```
 
-The GUI shares the same core (agent loop, tools, permissions, slash commands) and the same `~/.banana/config.json`.
+The GUI shares the same core (agent loop, tools, permissions, slash commands) and the same `~/.banana/config.json`. The interface supports Chinese and English via Settings → Appearance.
 
 It includes session management and export (Markdown / JSON), a `/` command palette, `@` file completion, a workspace file panel, tool output details, Plan/Build switching, a task dock, three theme modes, API key and search settings, and an embedded terminal.
 

@@ -17,6 +17,8 @@
 
 > GUI / Review 为真实运行截图；CLI 为示意图。
 
+![30 秒演示](docs/assets/demo-zh.gif)
+
 ![Banana GUI](docs/assets/gui-real.png)
 
 ![Review 验证页签](docs/assets/review-real.png)
@@ -56,7 +58,7 @@ banana --ui --no-open       # 启动服务但不自动开浏览器
 npm install -g @vincentbanana/banana-gui && banana-gui   # 或装独立 GUI 包
 ```
 
-图形界面与终端共用同一套内核（agent 循环、工具、权限、斜杠命令），配置也共用 `~/.banana/config.json`。
+图形界面与终端共用同一套内核（agent 循环、工具、权限、斜杠命令），配置也共用 `~/.banana/config.json`。界面支持中文 / English，在设置 → 外观里切换。
 
 界面提供：会话管理与导出（Markdown / JSON）、`/` 命令面板、`@` 文件补全、工作区文件面板、工具输出详情、Plan/Build 切换、任务栏、三态主题、API Key 和搜索设置、内嵌终端。
 

@@ -4,8 +4,13 @@
 
 | 文件 | 用途 |
 |---|---|
-| `gui-real.png` | **真实** `banana --ui` 运行截图 |
-| `review-real.png` | **真实** Review「验证」页签截图 |
+| `gui-real.png` | **真实** 中文 `banana --ui` 运行截图 |
+| `review-real.png` | **真实** 中文 Review「验证」页签截图 |
+| `demo-zh.gif` | **真实** 中文 GUI 录屏 |
+| `gui-real-en.png` | **真实** 英文 `banana --ui` 运行截图 |
+| `review-real-en.png` | **真实** 英文 Review「验证」页签截图 |
+| `demo-en.gif` | **真实** 英文 GUI 录屏 |
+| `build-real-en.png` / `build-real.png` | Build 执行截图 |
 | `demo.svg` / `demo.png` | Plan → Build → Review 流程示意 |
 | `cli.svg` / `cli.png` | CLI 示意 |
 | `gui.svg` / `gui.png` | GUI 示意（旧版） |
@@ -16,11 +21,6 @@ PNG 是由 SVG 通过 Edge headless 渲染的，README 使用 PNG；SVG 保留�
 
 ## 替换成真实截图 / GIF
 
-`gui-real.png` 和 `review-real.png` 已经由真实运行的 `banana --ui` 截取。
+`gui-real.png`、`review-real.png`、`demo-zh.gif` 和英文版 `*-en.png`、`demo-en.gif` 都已经由真实运行的 `banana --ui` 截取/录制。
 
-如果还要补 30 秒 GIF：
-
-1. 运行 `banana --ui` 或 `banana-gui`。
-2. 录制 20–30 秒：Plan → 批准 → `/verify` → Review 验证 → 结束。
-3. 保存为 `docs/assets/demo.gif`，把 README 里的 `gui-real.png` 换成 `demo.gif`（或新增一段）。
-4. Social preview 在 GitHub 仓库 Settings → Social preview 上传 `social-preview.png`。
+Social preview 在 GitHub 仓库 Settings → Social preview 上传 `social-preview.png`。
