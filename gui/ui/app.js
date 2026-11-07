@@ -123,6 +123,15 @@ const STRINGS = {
     'review.verify': '验证',
     'review.selectFile': '选择上面的文件查看改动。',
     'review.tasksEmpty': '这一轮还没有任务清单。',
+    'review.loadingChanges': '读取改动…',
+    'review.noChangesTitle': '还没有改动',
+    'review.noChangesHint': '让 Banana 改一次文件后，这里会出现增删行。',
+    'review.noDiff': '没有可显示的改动。',
+    'review.fileCount': '个文件',
+    'review.notBackedUp': '未备份',
+    'review.fileGone': '文件已不存在',
+    'review.noLineDiff': '没有行级差异（可能只是换行符变化）。',
+    'review.truncated': '改动较大，只显示前面一部分。',
     'review.refresh': '刷新',
     'review.close': '收起 Review',
     'verify.plan': '计划',
@@ -191,6 +200,15 @@ const STRINGS = {
     'review.verify': 'Verify',
     'review.selectFile': 'Select a file above to view changes.',
     'review.tasksEmpty': 'No task list for this turn.',
+    'review.loadingChanges': 'Loading changes…',
+    'review.noChangesTitle': 'No changes yet',
+    'review.noChangesHint': 'Once Banana edits a file, added and removed lines will appear here.',
+    'review.noDiff': 'Nothing to show.',
+    'review.fileCount': 'files',
+    'review.notBackedUp': 'not backed up',
+    'review.fileGone': 'file no longer exists',
+    'review.noLineDiff': 'No line-level diff (line endings only, perhaps).',
+    'review.truncated': 'Large change; only the first part is shown.',
     'review.refresh': 'Refresh',
     'review.close': 'Close Review',
     'verify.plan': 'Plan',
@@ -4085,7 +4103,7 @@ async function loadChanges(force = false) {
     return;
   }
   const list = $('changesList');
-  list.innerHTML = '<div class="hint" style="padding:12px">读取改动…</div>';
+  list.innerHTML = `<div class="hint" style="padding:12px">${t('review.loadingChanges')}</div>`;
   try {
     const data = await get('changes');
     state.changes = data;
@@ -4103,8 +4121,8 @@ function renderChanges() {
   const turns = state.changes?.turns ?? [];
   if (!turns.length) {
     stats.textContent = '';
-    list.innerHTML = '<div class="changes-empty"><strong>还没有改动</strong><span>让 Banana 改一次文件后，这里会出现增删行。</span></div>';
-    detail.innerHTML = '<div class="hint">没有可显示的改动。</div>';
+    list.innerHTML = `<div class="changes-empty"><strong>${t('review.noChangesTitle')}</strong><span>${t('review.noChangesHint')}</span></div>`;
+    detail.innerHTML = `<div class="hint">${t('review.noDiff')}</div>`;
     return;
   }
   let total = 0;
@@ -4127,7 +4145,7 @@ function renderChanges() {
         `<span class="change-status ${file.missing ? 'deleted' : file.existed ? 'modified' : 'added'}">${file.missing ? 'D' : file.existed ? 'M' : 'A'}</span>` +
         `<span class="cf-name">${escapeHtml(file.path)}</span>` +
         (file.skipped
-          ? '<span class="cf-count" title="文件超过 4MB，未备份，/undo 无法恢复"><i class="minus">未备份</i></span>'
+          ? `<span class="cf-count" title="${uiLang === 'en' ? 'File exceeds 4MB, not backed up, /undo cannot restore it' : '文件超过 4MB，未备份，/undo 无法恢复'}"><i class="minus">${t('review.notBackedUp')}</i></span>`
           : `<span class="cf-count"><i class="plus">+${file.additions}</i><i class="minus">-${file.deletions}</i></span>`);
       button.addEventListener('click', () => {
         list.querySelectorAll('.change-file.is-on').forEach((node) => node.classList.remove('is-on'));
@@ -4138,7 +4156,7 @@ function renderChanges() {
     }
     list.appendChild(group);
   }
-  stats.innerHTML = `<i class="plus">+${additions}</i> <i class="minus">-${deletions}</i> · ${total} 个文件`;
+  stats.innerHTML = `<i class="plus">+${additions}</i> <i class="minus">-${deletions}</i> · ${total} ${t('review.fileCount')}`;
   // 默认打开第一个有内容的文件
   const firstFile = turns.find((turn) => turn.files.length)?.files[0];
   if (firstFile) {
@@ -4146,7 +4164,7 @@ function renderChanges() {
     firstButton?.classList.add('is-on');
     renderDiff(firstFile);
   } else {
-    detail.innerHTML = '<div class="hint">没有可显示的改动。</div>';
+    detail.innerHTML = `<div class="hint">${t('review.noDiff')}</div>`;
   }
 }
 
@@ -4158,13 +4176,13 @@ function renderDiff(file) {
   head.innerHTML =
     `<span class="diff-path">${escapeHtml(file.path)}</span>` +
     `<span class="diff-stat"><i class="plus">+${file.additions}</i><i class="minus">-${file.deletions}</i></span>` +
-    (file.missing ? '<span class="plugin-badge">文件已不存在</span>' : '');
+    (file.missing ? `<span class="plugin-badge">${t('review.fileGone')}</span>` : '');
   detail.appendChild(head);
   const body = document.createElement('div');
   body.className = 'diff-body';
   const lines = file.lines ?? [];
   if (!lines.length) {
-    body.innerHTML = '<div class="hint" style="padding:10px">没有行级差异（可能只是换行符变化）。</div>';
+    body.innerHTML = `<div class="hint" style="padding:10px">${t('review.noLineDiff')}</div>`;
   } else {
     for (const line of lines) {
       const row = document.createElement('div');
@@ -4183,7 +4201,7 @@ function renderDiff(file) {
     const note = document.createElement('div');
     note.className = 'hint';
     note.style.padding = '8px 10px';
-    note.textContent = '改动较大，只显示前面一部分。';
+    note.textContent = t('review.truncated');
     body.appendChild(note);
   }
   detail.appendChild(body);

@@ -19,7 +19,7 @@ A multi-provider AI agent for the terminal, with a local GUI. It can read and wr
 
 > GUI / Review are real screenshots from a running `banana --ui`; CLI is schematic.
 
-![30-second demo](docs/assets/demo-en.gif)
+![Real GUI demo (about 14 seconds)](docs/assets/demo-en.gif)
 
 ![Banana GUI](docs/assets/gui-real-en.png)
 
