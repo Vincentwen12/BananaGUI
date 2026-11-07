@@ -17,7 +17,7 @@
 
 > GUI / Review 为真实运行截图；CLI 为示意图。
 
-![真实 GUI 演示（约 14 秒）](docs/assets/demo-zh.gif)
+[![真实 GUI 演示（约 14 秒）](https://cdn.jsdelivr.net/gh/Vincentwen12/BananaGUI@main/docs/assets/demo-zh.gif)](https://github.com/Vincentwen12/BananaGUI/blob/main/docs/assets/demo-zh.gif)
 
 ![Banana GUI](docs/assets/gui-real.png)
 

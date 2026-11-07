@@ -4,6 +4,8 @@
 
 真实截图按 2 倍像素抓取后降采样到 1120×740，GIF 为同一尺寸、约 14 秒。
 
+README 里的 GIF 走 jsDelivr CDN：GitHub 的 `raw.githubusercontent.com` 在大陆很慢（实测约 20KB/s，2.4MB 要两分钟），换 CDN 后约 10 秒。图片下方链接指向仓库里的原文件，CDN 不可用时可以点开看。
+
 | 文件 | 用途 |
 |---|---|
 | `gui-real.png` | **真实** 中文 `banana --ui` 运行截图 |
