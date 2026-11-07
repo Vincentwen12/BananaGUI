@@ -11,6 +11,11 @@ export interface FileChange {
   existed: boolean;
   /** 备份文件名（相对 turn 目录），新建文件为空 */
   backup?: string;
+  /** 文件太大、没有生成备份；undo 时不能恢复，只能提示。 */
+  skipped?: boolean;
+  /** 原始文件大小，用于展示。 */
+  bytes?: number;
+  reason?: 'too_large';
 }
 
 export interface TurnRecord {
@@ -82,16 +87,26 @@ export class BackupStore {
     await rename(temp, target);
   }
 
-  /** 回滚最近一轮改动，返回恢复/删除的文件数。 */
-  async undo(): Promise<{ restored: number; deleted: number; turn: TurnRecord | null }> {
+  /** 回滚最近一轮改动，返回恢复/删除/跳过的文件数。 */
+  async undo(): Promise<{
+    restored: number;
+    deleted: number;
+    skipped: string[];
+    turn: TurnRecord | null;
+  }> {
     const manifest = await this.load();
     const turn = manifest.turns.pop();
-    if (!turn) return { restored: 0, deleted: 0, turn: null };
+    if (!turn) return { restored: 0, deleted: 0, skipped: [], turn: null };
 
     let restored = 0;
     let deleted = 0;
+    const skipped: string[] = [];
     for (const change of turn.changes) {
       try {
+        if (change.skipped) {
+          skipped.push(change.relative);
+          continue;
+        }
         if (change.existed && change.backup) {
           const source = join(this.turnDir(turn.turnId), change.backup);
           if (!existsSync(source)) continue;
@@ -113,7 +128,7 @@ export class BackupStore {
     await rename(temp, target);
     await rm(this.turnDir(turn.turnId), { recursive: true, force: true }).catch(() => {});
 
-    return { restored, deleted, turn };
+    return { restored, deleted, skipped, turn };
   }
 
   /** 清理会话的所有备份（删除会话时调用）。 */
@@ -144,7 +159,16 @@ export class ChangeRecorder {
       existed: before !== null,
     };
     if (before !== null) {
-      if (Buffer.byteLength(before) > MAX_BACKUP_BYTES) return;
+      const bytes = Buffer.byteLength(before);
+      if (bytes > MAX_BACKUP_BYTES) {
+        // 仍然记录这次改动，让 /undo 能明确告诉用户「这个文件没备份，无法恢复」。
+        change.skipped = true;
+        change.bytes = bytes;
+        change.reason = 'too_large';
+        this.recorded.set(target, change);
+        this.changes.push(change);
+        return;
+      }
       const backupName = `${this.recorded.size}.bak`;
       const dir = join(this.store.dir, this.turnId);
       await mkdir(dir, { recursive: true });

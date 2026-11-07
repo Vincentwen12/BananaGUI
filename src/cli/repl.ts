@@ -3,6 +3,7 @@ import { existsSync } from 'node:fs';
 import { createInterface } from 'node:readline/promises';
 import type { Interface } from 'node:readline/promises';
 import { dirname, extname, join } from 'node:path';
+import { collectContinuation } from './continuation.ts';
 import type { AppConfig } from '../config/config.ts';
 import { bananaHome } from '../config/config.ts';
 import { runTurn } from '../agent/loop.ts';
@@ -13,6 +14,7 @@ import type { Provider } from '../providers/types.ts';
 import type { Session, SessionStore } from '../session/store.ts';
 import { deriveTitle } from '../session/store.ts';
 import { BackupStore, newTurnId } from '../session/backups.ts';
+import { TraceWriter } from '../session/trace.ts';
 import { type ApprovalKind, type Tool, type ToolContext } from '../tools/index.ts';
 import { summarizeInput } from '../tools/index.ts';
 import { resolvePath } from '../tools/fs.ts';
@@ -397,7 +399,9 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
     };
 
     startStatus();
-    const recorder = await currentBackups().beginTurn(newTurnId(), config.workspace);
+    const turnId = newTurnId();
+    const trace = new TraceWriter(session.id, turnId);
+    const recorder = await currentBackups().beginTurn(turnId, config.workspace);
     const images = pendingImages.length ? [...pendingImages] : undefined;
     let result;
     try {
@@ -419,6 +423,11 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
           signal: controller.signal,
           todos: session.todos,
           search: config.search,
+          budget: config.budget,
+          onBudget: (info) => {
+            const used = info.reason === 'tokens' ? `${Math.round(info.used)} tokens` : `${info.used.toFixed(1)} 分钟`;
+            ui.warn(`达到本轮预算（${info.reason === 'tokens' ? 'token' : '时间'} ${used}），本轮停止。`);
+          },
           recordChange: (path, before) => recorder.record(path, before),
           onText: (chunk) => {
             clearStatus();
@@ -441,6 +450,7 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
             ui.write(ui.c.dim(chunk));
           },
           onToolStart: (name, toolInput) => {
+            trace.add('tool_start', { name, input: summarizeInput(toolInput) });
             clearStatus();
             closeReasoning();
             if (printed) ui.line();
@@ -458,6 +468,7 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
               }
             : undefined,
           onToolEnd: (name, toolResult) => {
+            trace.add('tool_end', { name, ok: toolResult.ok, display: toolResult.display ?? '' });
             clearStatus();
             if (streamedInTool && !toolResult.content.endsWith('\n')) ui.line();
             streamedInTool = false;
@@ -473,10 +484,12 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
             ui.hint(message);
           },
           onRetry: (info) => {
+            trace.add('retry', { attempt: info.attempt, reason: info.reason, delayMs: info.delayMs });
             clearStatus();
             ui.hint(`  网络重试 ${info.attempt}：${info.reason}，${info.delayMs}ms 后再试…`);
           },
           onCompact: () => {
+            trace.add('compact');
             clearStatus();
             ui.hint('  已压缩历史对话。');
           },
@@ -489,10 +502,17 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
     } catch (error) {
       clearStatus();
       busy = false;
+      await trace.finish({ stopReason: 'error', error: error instanceof Error ? error.message : String(error) });
       await recorder.commit().catch(() => {});
       throw error;
     }
     clearStatus();
+    await trace.finish({
+      stopReason: result.stopReason,
+      steps: result.steps,
+      usage: result.usage,
+      ms: Date.now() - started,
+    });
     await recorder.commit().catch(() => {});
 
     session.messages = result.messages;
@@ -515,6 +535,8 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
       ui.warn('已中断。');
     } else if (result.stopReason === 'max_steps') {
       ui.warn(`已达到 ${config.maxSteps} 步上限，本轮停止。可以直接说"继续"接着做。`);
+    } else if (result.stopReason === 'budget') {
+      ui.warn('已达到本轮预算，停止。可以直接说"继续"接着做，或调大 config.budget。');
     }
 
     const previous = session.usage;
@@ -653,14 +675,10 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
       }
       if (answer.endsWith('\\')) {
         // 尾随反斜杠 = 续行，方便粘贴多行内容
-        let buffer = answer.slice(0, -1);
-        let next = answer;
-        while (next.endsWith('\\')) {
-          buffer += `\n${next.slice(0, -1).trimEnd()}`;
-          next = ((await rl?.question(ui.c.dim('    … '))) ?? '').trim();
-          if (next.endsWith('\\')) buffer += `\n${next.slice(0, -1).trimEnd()}`;
-          else buffer += `\n${next}`;
-        }
+        const buffer = await collectContinuation(
+          answer,
+          async () => ((await rl?.question(ui.c.dim('    … '))) ?? '').trim(),
+        );
         await handleInput(buffer);
       } else {
         await handleInput(answer);

@@ -211,6 +211,7 @@ Other safety defaults:
 - Before a file write/edit that needs confirmation, the exact added/removed lines are shown (up to 40 lines).
 - Before each tool write, the previous content is snapshotted to `~/.banana/backups/<sessionId>/` (up to 30 turns).
 - `/undo` restores modified files and deletes newly created ones from the last turn.
+- Files over 4 MB are not backed up; `/undo` lists them as "not backed up" instead of deleting them.
 - Conversation history is not rolled back; `shell` and plugin side effects cannot be undone.
 
 ## Images
@@ -254,13 +255,31 @@ Name conflicts, a missing `run`, or invalid fields are reported and skipped. Plu
 - `depth=deep` or the "Deep search" toggle reads the first few pages; off by default.
 - Search language defaults to English/technical sources; `auto` and `zh` are available.
 
-## Cost estimation
+## Cost estimation and budget
 
 Per-turn and per-session cost is estimated from the built-in price table (USD per million tokens); unknown models show nothing. Override prices per provider:
 
 ```json
 { "pricing": { "input": 0.27, "output": 1.1 } }
 ```
+
+Set a per-turn budget in the global config; the turn stops before the next model call when exceeded:
+
+```json
+{ "budget": { "tokens": 200000, "minutes": 30 } }
+```
+
+## Trace
+
+Every turn writes `~/.banana/traces/<sessionId>-<turnId>.jsonl` with tool calls, timings, retries, compaction, and the stop reason for later replay.
+
+## Evaluation and failure library
+
+```bash
+npm run eval   # contract eval: prompt sections, knowledge pack, UI scan, multiline, grep, plan fields
+```
+
+Real failures are recorded in `docs/failures.md` with scene, root cause, fix, and the test that covers it.
 
 ## Configuration
 
@@ -289,7 +308,8 @@ Global `~/.banana/config.json`; project `<workspace>/.banana/config.json` requir
   "maxContextChars": 160000,
   "allowOutsideWorkspace": false,
   "showReasoning": true,
-  "trustedProjects": {}
+  "trustedProjects": {},
+  "budget": { "tokens": 200000, "minutes": 30 }
 }
 ```
 
@@ -316,6 +336,7 @@ src/                  CLI core
   ui/                 browser UI (HTML/CSS/JS, no frontend framework)
 gui/                  standalone GUI package (launchers, Electron shell, synced ui/)
 docs/design/          UI principles, tokens, components, checklist
+docs/failures.md      failure library
 scripts/              build, sync, UI scan, release
 test/                 mock provider and full test suite
 ```
@@ -328,6 +349,7 @@ npm test            # typecheck + UI scan + full tests
 npm run dev         # node --watch
 npm run build       # compile to dist/ (for publishing)
 npm run ui:check    # anti-AI UI scan only
+npm run eval        # contract eval (prompt/knowledge pack/key behavior)
 npm run gui:sync    # src/ui -> gui/ui
 npm run gui:check   # verify both UI copies match
 ```

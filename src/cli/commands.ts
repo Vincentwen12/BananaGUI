@@ -27,7 +27,12 @@ export interface CommandContext {
   reloadProvider: () => void;
   compactNow: () => Promise<void>;
   runSetup: () => Promise<void>;
-  undo: () => Promise<{ restored: number; deleted: number; turn: { turnId: string } | null }>;
+  undo: () => Promise<{
+    restored: number;
+    deleted: number;
+    skipped: string[];
+    turn: { turnId: string } | null;
+  }>;
   clearBackups: (sessionId: string) => Promise<void>;
   attachImage: (path: string) => Promise<{ ok: boolean; message: string }>;
   listImages: () => string[];
@@ -477,6 +482,10 @@ export const commands: Command[] = [
       ui.ok(
         `已回滚 ${result.turn.turnId}：恢复 ${result.restored} 个文件，删除 ${result.deleted} 个新建文件。`,
       );
+      if (result.skipped.length) {
+        ui.warn(`  ${result.skipped.length} 个文件超过 4MB，没有备份，无法恢复：`);
+        for (const file of result.skipped) ui.hint(`  - ${file}`);
+      }
       ui.hint('  只回滚文件内容，对话记录和 shell 命令的副作用不会撤销。');
     },
   },

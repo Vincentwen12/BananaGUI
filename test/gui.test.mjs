@@ -274,6 +274,14 @@ async function main() {
   check('可执行命令并拿到输出', helpRun.status === 200 && String(helpRun.json.output ?? '').includes('/help'), String(helpRun.json.output).slice(0, 60));
   const badRun = await postJson(new URL('api/command', server.url).toString(), { input: '/zzzz' });
   check('未知命令给出提示', badRun.status === 200 && badRun.json.ok === false && String(badRun.json.output).includes('未知命令'));
+  const cwdDenied = await postJson(new URL('api/command', server.url).toString(), {
+    input: `/cwd ${home}`,
+  });
+  check(
+    'GUI 破坏性命令未确认时取消',
+    cwdDenied.status === 200 && String(cwdDenied.json.output ?? '').includes('已取消'),
+    JSON.stringify(cwdDenied.json.output ?? '').slice(0, 120),
+  );
 
   // @ 文件补全：与 CLI 同一份 completeFileReference
   const complete = await getJson(new URL('api/complete?line=' + encodeURIComponent('@src/a'), server.url).toString());

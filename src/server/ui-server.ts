@@ -21,6 +21,7 @@ import { createProvider } from '../providers/index.ts';
 import { estimateCost, formatCost, resolvePricing } from '../providers/pricing.ts';
 import { SessionStore, deriveTitle, type AgentMode, type Session, type SessionPlan } from '../session/store.ts';
 import { BackupStore, newTurnId } from '../session/backups.ts';
+import { TraceWriter } from '../session/trace.ts';
 import { allTools, permissionFor, summarizeInput, type ApprovalKind, type Tool, type ToolContext } from '../tools/index.ts';
 import { loadPluginTools, pluginTemplate } from '../tools/plugins.ts';
 import { formatTodos } from '../tools/todo.ts';
@@ -745,8 +746,8 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
     }
 
     if (path === '/api/command' && req.method === 'POST') {
-      const body = await readJson<{ input: string }>(req);
-      return runCliCommand(body.input ?? '', res, session);
+      const body = await readJson<{ input: string; confirmed?: boolean }>(req);
+      return runCliCommand(body.input ?? '', res, session, Boolean(body.confirmed));
     }
 
     if (path === '/api/find' && req.method === 'GET') {
@@ -825,6 +826,8 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
               // 大文件读不出内容不等于文件被删了。
               missing: !afterExists && change.existed,
               tooLarge,
+              skipped: Boolean(change.skipped),
+              bytes: change.bytes,
               additions: diff.additions,
               deletions: diff.deletions,
               truncated: diff.truncated || tooLarge,
@@ -942,7 +945,12 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
     if (path === '/api/undo' && req.method === 'POST') {
       if (turn) return json(res, 409, { error: '正在生成，请先停止当前任务再撤销' });
       const result = await backups(session.id).undo();
-      return json(res, 200, { restored: result.restored, deleted: result.deleted, had: Boolean(result.turn) });
+      return json(res, 200, {
+        restored: result.restored,
+        deleted: result.deleted,
+        skipped: result.skipped,
+        had: Boolean(result.turn),
+      });
     }
 
     if (path === '/api/attach' && req.method === 'POST') {
@@ -1190,7 +1198,12 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
    * 执行 CLI 命令：命令表只有一份（cli/commands.ts），GUI 只是换了个输出通道。
    * 输出逐行推给前端，行为和终端里一致。
    */
-  async function runCliCommand(input: string, res: ServerResponse, session: Session): Promise<void> {
+  async function runCliCommand(
+    input: string,
+    res: ServerResponse,
+    session: Session,
+    confirmed = false,
+  ): Promise<void> {
     const trimmed = input.trim();
     const [token = '', ...rest] = trimmed.replace(/^\//, '').split(/\s+/);
     const command = findCommand(token);
@@ -1236,7 +1249,7 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
         ask: async (question) => {
           throw new Error(`${question}（这个命令需要交互输入，请用界面上的对应功能）`);
         },
-        confirm: async () => false,
+        confirm: async () => confirmed,
         setSession: (value) => {
           next = value;
         },
@@ -1390,7 +1403,9 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
 
     const wasFirstTurn = !session.messages.some((message) => message.role === 'assistant');
     session.todos ??= [];
-    const recorder = await backups(session.id).beginTurn(newTurnId(), config.workspace);
+    const turnId = newTurnId();
+    const trace = new TraceWriter(session.id, turnId);
+    const recorder = await backups(session.id).beginTurn(turnId, config.workspace);
 
     const approve = async (kind: ApprovalKind, summary: string, preview?: string): Promise<boolean> => {
       const id = randomBytes(6).toString('hex');
@@ -1445,6 +1460,7 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
         onReasoning: (chunk) => send('reasoning', { chunk }),
         onStep: (step) => send('step', { step }),
         onToolStart: (name, input, id) => {
+          trace.add('tool_start', { name, input: summarizeInput(input), id });
           if (id) toolStartedAt.set(id, Date.now());
           send('tool_start', {
             id: id ?? name,
@@ -1457,6 +1473,12 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
           const key = id ?? name;
           const began = toolStartedAt.get(key);
           toolStartedAt.delete(key);
+          trace.add('tool_end', {
+            name,
+            id: key,
+            ok: toolResult.ok,
+            ms: began ? Date.now() - began : undefined,
+          });
           send('tool_end', {
             id: key,
             name,
@@ -1477,8 +1499,26 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
           if (clean) send('tool_output', { id, chunk: clean, stream });
         },
         onNotice: (message) => send('status', { message }),
-        onCompact: () => send('status', { message: '已压缩历史对话' }),
-        onRetry: (info) => send('status', { message: `网络重试 ${info.attempt}：${info.reason}` }),
+        onCompact: () => {
+          trace.add('compact');
+          send('status', { message: '已压缩历史对话' });
+        },
+        onRetry: (info) => {
+          trace.add('retry', { attempt: info.attempt, reason: info.reason, delayMs: info.delayMs });
+          send('status', { message: `网络重试 ${info.attempt}：${info.reason}` });
+        },
+        budget: config.budget,
+        onBudget: (info) => {
+          const used =
+            info.reason === 'tokens' ? `${Math.round(info.used)} tokens` : `${info.used.toFixed(1)} 分钟`;
+          send('status', {
+            message: `达到本轮预算（${info.reason === 'tokens' ? 'token' : '时间'} ${used}），本轮停止。`,
+          });
+        },
+        onCheckpoint: async (messages) => {
+          session.messages = messages;
+          await store.save(session).catch(() => {});
+        },
         approve,
       },
       session.messages,
@@ -1489,6 +1529,11 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
       );
     } catch (error) {
       // 异常也要把已经发生的 todo / plan 变更落盘，否则界面看得到、重启就丢。
+      await trace.finish({
+        stopReason: 'error',
+        error: error instanceof Error ? error.message : String(error),
+        ms: Date.now() - started,
+      });
       await store.save(session).catch(() => {});
       // 任何异常都要以 error 事件收尾，否则前端会一直等下去
       send('error', {
@@ -1541,6 +1586,12 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
     await store.save(session);
     await recorder.commit().catch(() => {});
 
+    await trace.finish({
+      stopReason: result.stopReason,
+      steps: result.steps,
+      usage: result.usage,
+      ms: Date.now() - started,
+    });
     // done 发出后这一轮就结束了；提前释放 turn，让客户端紧接着的标题请求不会被 409 挡掉。
     turn = null;
     send('done', {

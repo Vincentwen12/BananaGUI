@@ -65,7 +65,9 @@ async function runBanana(args, options = {}) {
 /** 最近更新的那个会话文件 */
 function newestSession() {
   const dir = join(home, 'sessions');
-  const files = readdirSync(dir).filter((name) => name.endsWith('.json'));
+  const files = readdirSync(dir).filter(
+    (name) => name.endsWith('.json') && !name.endsWith('.meta.json'),
+  );
   const sessions = files.map((name) => JSON.parse(readFileSync(join(dir, name), 'utf8')));
   sessions.sort((a, b) => String(a.updatedAt).localeCompare(String(b.updatedAt)));
   return sessions[sessions.length - 1];

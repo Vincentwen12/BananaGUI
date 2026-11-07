@@ -2454,7 +2454,7 @@ async function requestFileComplete(value) {
 // GUI 已经有对应界面的命令才放出来；其余命令由 runCommand 明确提示，避免“显示成功但没生效”。
 const GUI_COMMANDS = new Set([
   'help', 'h', '?', 'new', 'list', 'ls', 'use', 'switch', 'resume', 'rename',
-  'session', 'history', 'provider', 'model', 'perm', 'system', 'cwd', 'undo', 'save', 'clear',
+  'session', 'history', 'provider', 'model', 'perm', 'system', 'cwd', 'undo', 'save', 'clear', 'delete',
 ]);
 
 function leaveHomeMode() {
@@ -2563,6 +2563,21 @@ async function runCommand(text) {
     return;
   }
 
+  let confirmed = false;
+  if (name === 'delete' || (name === 'cwd' && arg)) {
+    const ok = await openAppDialog({
+      title: name === 'delete' ? '删除对话？' : '切换工作目录？',
+      body:
+        name === 'delete'
+          ? '匹配到的对话会被删除，无法恢复。'
+          : 'agent 的文件工具范围会切换到新目录。',
+      confirmLabel: name === 'delete' ? '删除' : '切换',
+      danger: name === 'delete',
+    });
+    if (!ok) return;
+    confirmed = true;
+  }
+
   leaveHomeMode();
   const userMsg = document.createElement('article');
   userMsg.className = 'msg user cmd';
@@ -2591,14 +2606,14 @@ async function runCommand(text) {
   scrollToEnd();
 
   try {
-    const result = await post('command', { input: text });
+    const result = await post('command', { input: text, ...(confirmed ? { confirmed: true } : {}) });
     // CLI 在 TTY 下会输出 ANSI 颜色；GUI 里统一去掉，避免出现 [36m 之类的乱码。
     const cleaned = String(result.output ?? '').replace(/\u001b\[[0-9;?]*[ -/]*[@-~]/g, '');
     out.textContent = cleaned || (result.ok ? '（没有输出）' : '');
     out.classList.toggle('is-error', !result.ok);
     if (result.error) out.textContent += (out.textContent ? '\n' : '') + result.error;
     if ((name === 'help' || name === 'h' || name === '?') && !result.error) {
-      out.textContent += '\nGUI 提示：/tools /compact /cls /exit /image /delete /setup 已隐藏，请用界面里的对应功能。';
+      out.textContent += '\nGUI 提示：/tools /compact /cls /exit /image /setup 已隐藏，请用界面里的对应功能。';
     }
     const beforeId = state.info?.session?.id;
     if (result.info) state.info = result.info;
@@ -3755,7 +3770,9 @@ function renderChanges() {
       button.innerHTML =
         `<span class="change-status ${file.missing ? 'deleted' : file.existed ? 'modified' : 'added'}">${file.missing ? 'D' : file.existed ? 'M' : 'A'}</span>` +
         `<span class="cf-name">${escapeHtml(file.path)}</span>` +
-        `<span class="cf-count"><i class="plus">+${file.additions}</i><i class="minus">-${file.deletions}</i></span>`;
+        (file.skipped
+          ? '<span class="cf-count" title="文件超过 4MB，未备份，/undo 无法恢复"><i class="minus">未备份</i></span>'
+          : `<span class="cf-count"><i class="plus">+${file.additions}</i><i class="minus">-${file.deletions}</i></span>`);
       button.addEventListener('click', () => {
         list.querySelectorAll('.change-file.is-on').forEach((node) => node.classList.remove('is-on'));
         button.classList.add('is-on');
@@ -4913,7 +4930,8 @@ function bind() {
     }
     try {
       const result = await post('undo');
-      toast(result.had ? `已回滚：恢复 ${result.restored} 个文件` : '没有可回滚的改动');
+      const skipped = result.skipped?.length ? `，${result.skipped.length} 个文件超过 4MB 未恢复` : '';
+      toast(result.had ? `已回滚：恢复 ${result.restored} 个文件${skipped}` : '没有可回滚的改动');
       state.changes = null;
       if (state.review.open && state.review.mode === 'changes') void loadChanges(true);
     } catch (error) {

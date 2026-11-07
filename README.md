@@ -211,6 +211,7 @@ banana "帮我跑一下测试"      单轮任务模式（不进入对话）
 - 写文件 / 改文件需要确认时，先显示 `+新增 / -删除` 的具体行（最多 40 行）。
 - 每次工具写入前，旧内容快照到 `~/.banana/backups/<sessionId>/`，每轮一条记录（最多保留 30 轮）。
 - `/undo` 回滚最近一轮：被改的文件恢复原内容，新建的文件直接删除。
+- 超过 4MB 的文件不会生成备份；`/undo` 会明确列出「未备份，无法恢复」，不会误删文件。
 - 对话记录不会回滚；`shell` 命令和插件工具的副作用不在撤销范围内。
 
 ## 图片输入
@@ -254,13 +255,31 @@ export default {
 - `depth=deep` 或开启「深度搜索」会额外读取前几页正文；默认关闭。
 - 搜索语言默认英文/技术源优先，可切 `auto` / `zh`。
 
-## 成本估算
+## 成本估算与预算
 
 按内置价目表（美元 / 百万 token）估算每轮和整会话花费，未知模型不显示。价格会变，可在 provider 配置里覆盖：
 
 ```json
 { "pricing": { "input": 0.27, "output": 1.1 } }
 ```
+
+可以在全局配置里设单轮预算，超出后在下一次模型调用前停止：
+
+```json
+{ "budget": { "tokens": 200000, "minutes": 30 } }
+```
+
+## Trace
+
+每轮对话会在 `~/.banana/traces/<sessionId>-<turnId>.jsonl` 留一份 trace，记录工具调用、耗时、重试、压缩和结束原因。出问题可以按 session / turn 回放。
+
+## 评测与失败案例
+
+```bash
+npm run eval   # 契约评测：提示词章节、知识包、UI 扫描、多行、grep、计划字段
+```
+
+失败案例记录在 `docs/failures.md`，每次翻车补场景、根因、修正和对应测试。
 
 ## 配置
 
@@ -289,7 +308,8 @@ export default {
   "maxContextChars": 160000,
   "allowOutsideWorkspace": false,
   "showReasoning": true,
-  "trustedProjects": {}
+  "trustedProjects": {},
+  "budget": { "tokens": 200000, "minutes": 30 }
 }
 ```
 
@@ -316,6 +336,7 @@ src/                  CLI 内核
   ui/                 浏览器界面（HTML/CSS/JS，无前端框架）
 gui/                  独立 GUI 包（启动器、Electron 桌面壳、同步的 ui/）
 docs/design/          UI 原则、令牌、组件、自检清单
+docs/failures.md      失败案例库
 scripts/              构建、同步、UI 扫描、发布
 test/                 mock provider 与全量测试
 ```
@@ -328,6 +349,7 @@ npm test            # 类型检查 + UI 扫描 + 全量测试
 npm run dev         # node --watch
 npm run build       # 编译到 dist/（发布用）
 npm run ui:check    # 只跑 UI 反 AI 味扫描
+npm run eval        # 契约评测（提示词/知识包/关键行为）
 npm run gui:sync    # src/ui -> gui/ui
 npm run gui:check   # 校验两套 UI 一致
 ```

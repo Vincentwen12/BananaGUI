@@ -14,7 +14,14 @@ import {
 } from '../tools/index.ts';
 import { compactMessages, estimateChars, estimateTokens } from './context.ts';
 
-export type StopReason = 'done' | 'max_steps' | 'aborted' | 'error';
+export type StopReason = 'done' | 'max_steps' | 'aborted' | 'error' | 'budget';
+
+export interface Budget {
+  /** 本轮累计 token 上限（输入 + 输出）。 */
+  tokens?: number;
+  /** 本轮墙钟时间上限（分钟）。 */
+  minutes?: number;
+}
 
 export interface AgentDeps {
   provider: Provider;
@@ -33,6 +40,11 @@ export interface AgentDeps {
   reasoning?: ReasoningLevel;
   /** 联网搜索配置；不传时工具退回环境变量和免费源。 */
   search?: SearchConfig;
+  /** 本轮预算；超出后在下一次模型调用前停下。 */
+  budget?: Budget;
+  onBudget?: (info: { reason: 'tokens' | 'minutes'; used: number; limit: number }) => void;
+  /** 每个工具步骤后落盘一次，用于中断恢复。 */
+  onCheckpoint?: (messages: UMessage[]) => void | Promise<void>;
   onText?: (chunk: string) => void;
   onReasoning?: (chunk: string) => void;
   onToolStart?: (name: string, input: Record<string, unknown>, id?: string) => void;
@@ -112,6 +124,27 @@ export async function runTurn(
   let steps = 0;
   let compacted = false;
   let overflowRecovered = false;
+  const startedAt = Date.now();
+  let budgetNotified = false;
+
+  const overBudget = (): boolean => {
+    const tokens = (usage.inputTokens ?? 0) + (usage.outputTokens ?? 0);
+    const minutes = (Date.now() - startedAt) / 60_000;
+    const tokenLimit = deps.budget?.tokens;
+    const minuteLimit = deps.budget?.minutes;
+    const hitTokens = typeof tokenLimit === 'number' && tokens >= tokenLimit;
+    const hitMinutes = typeof minuteLimit === 'number' && minutes >= minuteLimit;
+    if (!hitTokens && !hitMinutes) return false;
+    if (!budgetNotified) {
+      budgetNotified = true;
+      deps.onBudget?.({
+        reason: hitTokens ? 'tokens' : 'minutes',
+        used: hitTokens ? tokens : minutes,
+        limit: hitTokens ? tokenLimit! : minuteLimit!,
+      });
+    }
+    return true;
+  };
 
   const toolContext = {
     workspace: deps.toolsWorkspace,
@@ -154,6 +187,7 @@ export async function runTurn(
 
   while (steps < deps.maxSteps) {
     if (deps.signal.aborted) return { messages: convo, steps, usage, stopReason: 'aborted', compacted };
+    if (overBudget()) return { messages: convo, steps, usage, stopReason: 'budget', compacted };
 
     if (estimateChars(convo) > deps.maxContextChars) {
       const done = await tryCompact(false);
@@ -280,6 +314,7 @@ export async function runTurn(
         for (let offset = 0; offset < batch.length; offset += 1) {
           recordResult(batch[offset]!.call, results[offset]!);
         }
+        await deps.onCheckpoint?.(convo);
         index = cursor;
         continue;
       }
@@ -292,6 +327,7 @@ export async function runTurn(
       };
       const toolResult = await runTool(tool, input, callContext, permissionFor(deps.permissions, tool));
       recordResult(call, toolResult);
+      await deps.onCheckpoint?.(convo);
       // 一旦发生写操作/命令，之前的只读缓存可能过期。
       toolCache.clear();
       index += 1;

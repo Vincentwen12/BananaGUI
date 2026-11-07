@@ -66,6 +66,8 @@ export interface AppConfig {
   disabledPlugins: string[];
   /** 联网搜索：API Key、深度搜索和语言偏好。 */
   search: SearchConfig;
+  /** 单轮预算；超出后在下一次模型调用前停止。 */
+  budget?: { tokens?: number; minutes?: number };
   /** 运行时加载的项目规则（AGENT.md），不写入配置文件。 */
   agentDoc?: string;
   /** AGENT.md 的实际路径，供 GUI 展示。 */

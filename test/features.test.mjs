@@ -3,7 +3,7 @@ import { existsSync, mkdirSync, mkdtempSync, readFileSync, rmSync, writeFileSync
 import { tmpdir } from 'node:os';
 import { join } from 'node:path';
 import { diffLines, diffStat, formatDiff } from '../src/util/diff.ts';
-import { editFileTool, readFileTool, writeFileTool } from '../src/tools/fs.ts';
+import { editFileTool, grepTool, readFileTool, writeFileTool } from '../src/tools/fs.ts';
 import { shellTool } from '../src/tools/shell.ts';
 import { runTool } from '../src/tools/index.ts';
 import { completeCommand, completeFileReference } from '../src/cli/completion.ts';
@@ -16,7 +16,9 @@ import {
   trustProject,
 } from '../src/config/config.ts';
 import { runTurn } from '../src/agent/loop.ts';
+import { collectContinuation } from '../src/cli/continuation.ts';
 import { BackupStore } from '../src/session/backups.ts';
+import { SessionStore } from '../src/session/store.ts';
 import { estimateCost, formatCost, resolvePricing } from '../src/providers/pricing.ts';
 import { loadPluginTools, pluginTemplate } from '../src/tools/plugins.ts';
 import { createMockProvider, listenOnRandomPort } from './mock-provider.mjs';
@@ -226,6 +228,18 @@ async function testUndo() {
   const empty = await store.undo();
   check('没有历史时撤销安全返回', empty.turn === null && empty.restored === 0);
 
+  // 超过 4MB 的文件不生成备份，但必须记录 skipped，undo 不能误删文件。
+  const huge = join(workspace, 'huge.txt');
+  const hugeContent = 'x'.repeat(4 * 1024 * 1024 + 10);
+  writeFileSync(huge, hugeContent);
+  const turn3 = await store.beginTurn('turn-3', workspace);
+  await turn3.record(huge, hugeContent);
+  await turn3.commit();
+  writeFileSync(huge, 'changed');
+  const third = await store.undo();
+  check('>4MB 文件记录 skipped', third.skipped.includes('huge.txt'), JSON.stringify(third.skipped));
+  check('>4MB 文件不会被误删', existsSync(huge) && readFileSync(huge, 'utf8') === 'changed');
+
   rmSync(workspace, { recursive: true, force: true });
   rmSync(backupsDir, { recursive: true, force: true });
 }
@@ -334,6 +348,42 @@ async function testAgentDoc() {
   rmSync(workspace, { recursive: true, force: true });
 }
 
+async function testSessionMeta() {
+  const dir = mkdtempSync(join(tmpdir(), 'banana-meta-'));
+  const store = new SessionStore(dir);
+  const session = store.create('meta test');
+  session.messages.push({ role: 'user', content: 'hello meta' });
+  await store.save(session);
+  const metaFile = join(dir, `${session.id}.meta.json`);
+  check('会话侧车摘要生成', existsSync(metaFile));
+  const list = await store.list();
+  check('列表优先读摘要', list[0]?.title === 'meta test' && list[0]?.turns === 1, JSON.stringify(list));
+  rmSync(metaFile, { force: true });
+  const list2 = await store.list();
+  check('旧会话自动补摘要', existsSync(metaFile) && list2.length === 1);
+  await store.remove(session.id);
+  check('删除会话同时删除摘要', !existsSync(metaFile));
+  rmSync(dir, { recursive: true, force: true });
+}
+
+async function testGrepCount() {
+  const workspace = mkdtempSync(join(tmpdir(), 'banana-grep-'));
+  writeFileSync(join(workspace, 'a.txt'), Array.from({ length: 5 }, (_, i) => `match ${i}`).join('\n'));
+  const result = await grepTool.run({ pattern: 'match', limit: 2 }, makeContext(workspace));
+  check(
+    'grep 截断后仍报告真实总数',
+    result.content.includes('找到 5 处匹配') && result.content.includes('还有 3 条未显示'),
+    result.content,
+  );
+  rmSync(workspace, { recursive: true, force: true });
+}
+
+async function testContinuation() {
+  const queue = ['b\\', 'c'];
+  const joined = await collectContinuation('a\\', async () => queue.shift() ?? '');
+  check('多行续行每行只加入一次', joined === 'a\nb\nc', JSON.stringify(joined));
+}
+
 async function testProjectTrust() {
   const workspace = mkdtempSync(join(tmpdir(), 'banana-trust-'));
   const configFile = join(workspace, 'global-config.json');
@@ -375,6 +425,55 @@ async function testProjectTrust() {
   writeFileSync(pluginFile, 'export default { name: "evil_tool_v2", run() {} }');
   const changed = await loadConfig({ workspace, configFile });
   check('项目文件变化后信任失效', changed.projectTrust?.status === 'pending');
+  rmSync(workspace, { recursive: true, force: true });
+}
+
+async function testBudget() {
+  const workspace = mkdtempSync(join(tmpdir(), 'banana-budget-'));
+  const tool = {
+    name: 'noop',
+    description: 'noop',
+    parameters: { type: 'object', properties: {}, required: [], additionalProperties: false },
+    approval: 'never',
+    async run() {
+      return { ok: true, content: 'ok' };
+    },
+  };
+  const provider = {
+    name: 'budget-provider',
+    get model() {
+      return 'budget-model';
+    },
+    async generate() {
+      return {
+        message: {
+          role: 'assistant',
+          content: '',
+          toolCalls: [{ id: 'call-1', name: 'noop', input: {} }],
+        },
+        usage: { inputTokens: 10, outputTokens: 10 },
+      };
+    },
+  };
+  const result = await runTurn(
+    {
+      provider,
+      tools: [tool],
+      permissions: { shell: 'allow', write: 'allow', network: 'allow' },
+      system: 'test',
+      maxSteps: 5,
+      maxContextChars: 100_000,
+      toolsWorkspace: workspace,
+      allowOutsideWorkspace: false,
+      signal: new AbortController().signal,
+      todos: [],
+      budget: { tokens: 5 },
+      approve: async () => true,
+    },
+    [],
+    'go',
+  );
+  check('token 预算触发停止', result.stopReason === 'budget', result.stopReason);
   rmSync(workspace, { recursive: true, force: true });
 }
 
@@ -432,7 +531,11 @@ async function main() {
   await testCrlf();
   await testPlatformPrompt();
   await testAgentDoc();
+  await testSessionMeta();
+  await testGrepCount();
+  await testContinuation();
   await testProjectTrust();
+  await testBudget();
   await testModelSwitchKeepsContext();
 
   if (failures.length) {

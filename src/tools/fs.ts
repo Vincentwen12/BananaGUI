@@ -530,9 +530,11 @@ export const grepTool: Tool = {
       const globFilter = input.glob ? globToRegExp(String(input.glob)) : undefined;
       const files = await walk(root, { maxFiles: 20_000, includeHidden: false });
       const lines: string[] = [];
+      const MAX_GREP_MATCHES = 20_000;
       let total = 0;
+      let capped = false;
 
-      for (const file of files) {
+      outer: for (const file of files) {
         const rel = relative(root, file).split(sep).join('/');
         if (globFilter && !globFilter.test(rel)) continue;
         const buffer = await readFile(file).catch(() => undefined);
@@ -544,17 +546,24 @@ export const grepTool: Tool = {
           if (!line.trim()) continue;
           regex.lastIndex = 0;
           if (!regex.test(line)) continue;
+          if (total >= MAX_GREP_MATCHES) {
+            capped = true;
+            break outer;
+          }
           total += 1;
+          // 只限制展示行数，不再提前停止计数。
           if (lines.length < limit) lines.push(`${rel}:${i + 1}: ${line.trim().slice(0, 300)}`);
-          if (lines.length >= limit) break;
         }
-        if (lines.length >= limit) break;
       }
 
-      const suffix = total > limit ? `\n... 还有 ${total - limit} 条未显示` : '';
+      const remaining = total - lines.length;
+      const suffix = remaining > 0
+        ? `\n... 还有 ${remaining}${capped ? '+' : ''} 条未显示`
+        : '';
+      const totalLabel = capped ? `至少 ${total}` : `${total}`;
       return ok(
-        `找到 ${total} 处匹配\n${lines.join('\n') || '(无匹配)'}${suffix}`,
-        `grep ${pattern} -> ${total} 处`,
+        `找到 ${totalLabel} 处匹配\n${lines.join('\n') || '(无匹配)'}${suffix}`,
+        `grep ${pattern} -> ${totalLabel} 处`,
       );
     } catch (error) {
       return toolError(error);

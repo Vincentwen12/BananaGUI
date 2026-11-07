@@ -81,6 +81,24 @@ export class SessionStore {
     return join(this.dir, `${id}.json`);
   }
 
+  private metaPath(id: string): string {
+    if (!/^[A-Za-z0-9_-]+$/.test(id)) throw new Error(`非法的会话 id: ${id}`);
+    return join(this.dir, `${id}.meta.json`);
+  }
+
+  private summaryOf(session: Session): SessionSummary {
+    const messages = session.messages ?? [];
+    const lastUser = [...messages].reverse().find((message) => message.role === 'user');
+    return {
+      id: session.id,
+      title: session.title || deriveTitle(lastUser?.content ?? ''),
+      updatedAt: session.updatedAt ?? session.createdAt ?? '',
+      createdAt: session.createdAt ?? '',
+      turns: messages.filter((message) => message.role === 'user').length,
+      preview: (lastUser?.content ?? '').replace(/\s+/g, ' ').slice(0, 80),
+    };
+  }
+
   async ensure(): Promise<void> {
     await mkdir(this.dir, { recursive: true });
   }
@@ -107,6 +125,16 @@ export class SessionStore {
     const temp = `${target}.tmp`;
     await writeFile(temp, `${JSON.stringify(session, null, 2)}\n`, 'utf8');
     await rename(temp, target);
+
+    // 侧车摘要让侧栏不必解析包含图片 base64 的完整会话。
+    try {
+      const meta = this.metaPath(session.id);
+      const metaTemp = `${meta}.tmp`;
+      await writeFile(metaTemp, `${JSON.stringify(this.summaryOf(session), null, 2)}\n`, 'utf8');
+      await rename(metaTemp, meta);
+    } catch {
+      // 摘要写失败不影响主会话保存
+    }
   }
 
   async load(id: string): Promise<Session | null> {
@@ -130,20 +158,29 @@ export class SessionStore {
 
   async list(): Promise<SessionSummary[]> {
     if (!existsSync(this.dir)) return [];
-    const files = (await readdir(this.dir)).filter((name) => name.endsWith('.json'));
+    const files = (await readdir(this.dir)).filter(
+      (name) => name.endsWith('.json') && !name.endsWith('.meta.json'),
+    );
     const summaries: SessionSummary[] = [];
     for (const file of files) {
+      const id = file.slice(0, -'.json'.length);
+      // 优先读侧车摘要；旧会话没有摘要时解析一次主文件并补写。
+      try {
+        const meta = JSON.parse(await readFile(this.metaPath(id), 'utf8')) as SessionSummary;
+        if (meta?.id === id) {
+          summaries.push(meta);
+          continue;
+        }
+      } catch {
+        // 没有摘要或摘要损坏，走完整解析
+      }
       try {
         const parsed = JSON.parse(await readFile(join(this.dir, file), 'utf8')) as Session;
-        const lastUser = [...(parsed.messages ?? [])].reverse().find((message) => message.role === 'user');
-        summaries.push({
-          id: parsed.id,
-          title: parsed.title || deriveTitle(lastUser?.content ?? ''),
-          updatedAt: parsed.updatedAt ?? parsed.createdAt ?? '',
-          createdAt: parsed.createdAt ?? '',
-          turns: (parsed.messages ?? []).filter((message) => message.role === 'user').length,
-          preview: (lastUser?.content ?? '').replace(/\s+/g, ' ').slice(0, 80),
-        });
+        const summary = this.summaryOf(parsed);
+        summaries.push(summary);
+        await writeFile(this.metaPath(id), `${JSON.stringify(summary, null, 2)}\n`, 'utf8').catch(
+          () => {},
+        );
       } catch {
         // 跳过损坏的会话文件
       }
@@ -172,6 +209,7 @@ export class SessionStore {
     const path = this.pathOf(id);
     if (!existsSync(path)) return false;
     await unlink(path);
+    await unlink(this.metaPath(id)).catch(() => {});
     return true;
   }
 
