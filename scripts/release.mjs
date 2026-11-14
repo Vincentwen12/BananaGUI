@@ -7,11 +7,12 @@ import { fileURLToPath } from 'node:url';
 const root = join(dirname(fileURLToPath(import.meta.url)), '..');
 const registry = 'https://registry.npmjs.org';
 const cache = process.env.NPM_CACHE_DIR || join(process.env.TEMP || process.env.TMP || root, 'npm-cache-banana');
-const npm = process.platform === 'win32' ? 'npm.cmd' : 'npm';
+// Windows 上直接 spawn npm.cmd 会 EINVAL，统一用当前 node 跑 npm-cli.js
+const npmCli = join(dirname(process.execPath), 'node_modules', 'npm', 'bin', 'npm-cli.js');
 
 function run(args, cwd = root) {
-  process.stdout.write(`\n$ ${[npm, ...args].join(' ')}\n`);
-  execFileSync(npm, args, { cwd, stdio: 'inherit', env: { ...process.env } });
+  process.stdout.write(`\n$ npm ${args.join(' ')}\n`);
+  execFileSync(process.execPath, [npmCli, ...args], { cwd, stdio: 'inherit', env: { ...process.env } });
 }
 
 const rootPkg = JSON.parse(readFileSync(join(root, 'package.json'), 'utf8'));
@@ -21,7 +22,7 @@ run(['run', 'typecheck']);
 run(['test']);
 run(['run', 'build']);
 run(['run', 'gui:sync']);
-run(['node', 'scripts/check-gui-sync.mjs']);
+run(['run', 'gui:check']);
 execFileSync(process.execPath, [join(root, 'test', 'pack.test.mjs')], { cwd: root, stdio: 'inherit' });
 execFileSync(process.execPath, [join(root, 'gui', 'test', 'gui-package.test.mjs')], {
   cwd: join(root, 'gui'),

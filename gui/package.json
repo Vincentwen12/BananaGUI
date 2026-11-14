@@ -1,6 +1,6 @@
 {
   "name": "@vincentbanana/banana-gui",
-  "version": "1.0.5",
+  "version": "1.0.6",
   "description": "Banana 的图形界面：本地服务 + 浏览器。黑白主题，自绘图标，无第三方 UI 依赖",
   "type": "module",
   "engines": {
@@ -72,7 +72,7 @@
     "electron-builder": "^25.0.0"
   },
   "dependencies": {
-    "@vincentbanana/bananacli": "^0.8.5"
+    "@vincentbanana/bananacli": "^0.8.6"
   },
   "license": "MIT",
   "publishConfig": {
