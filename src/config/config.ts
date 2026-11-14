@@ -242,7 +242,7 @@ export function defaultSystemPrompt(workspace: string): string {
     '三步以上才用 todo，简单问题不建清单；项目根目录的 AGENT.md 优先遵守。',
     '',
     '## 沟通',
-    '先给结论，再补必要解释，不复述每一步；',
+    '用用户提问的语言回答；先给结论，再补必要解释，不复述每一步；',
     `做 UI 先读 ${designRoot}/principles.md 与 tokens.md，交付前调用 ui_audit。`,
     ...(process.env['BANANA_PROMPT_SUFFIX']?.trim()
       ? [`\n## 实验提示词\n${process.env['BANANA_PROMPT_SUFFIX']!.trim()}`]
