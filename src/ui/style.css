@@ -4201,3 +4201,102 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   .think-peek { display: none; }
   .think-len { margin-left: auto; }
 }
+
+/* ---------- 细节统一：更宽的内容区、更清楚的结构 ---------- */
+
+/* 内容宽度：主对话、输入区、计划卡、任务栏统一到同一列 */
+.msg { max-width: 900px; content-visibility: visible; }
+.composer,
+.composer-hint,
+.attachments { max-width: 900px; }
+.plan-card { max-width: 880px; }
+.todo-dock { max-width: 900px; }
+
+/* 正文节奏 */
+.msg-body { font-size: 14.5px; line-height: 1.7; }
+.msg-body p { margin-bottom: 12px; }
+.msg-body h1,
+.msg-body h2,
+.msg-body h3 { font-size: 14.5px; margin: 18px 0 8px; font-weight: 600; }
+.msg-role {
+  font-size: 10.5px;
+  letter-spacing: 0.09em;
+  margin-bottom: 6px;
+}
+.msg.user .msg-body {
+  background: var(--panel);
+  border-color: var(--line-strong);
+  padding: 10px 14px;
+}
+
+/* 工具与思考：同一套卡片结构，标题行更像分组头 */
+.work-group,
+.think {
+  background: var(--panel);
+  border-color: var(--line);
+}
+.work-group > summary,
+.think > summary {
+  min-height: 32px;
+  padding: 0 12px;
+  font-size: 12px;
+}
+.work-group > .tool-group-body { padding: 4px 6px 6px; }
+.work-group .tool-row { padding: 5px 8px; }
+.think-body { padding: 8px 12px 10px; font-size: 12.5px; }
+
+/* 计划卡：头部与正文分开，按钮区更清楚 */
+.plan-card {
+  padding: 12px 14px;
+  border-color: color-mix(in srgb, var(--accent-ink) 30%, var(--line));
+}
+.plan-head {
+  padding-bottom: 8px;
+  border-bottom: 1px solid color-mix(in srgb, var(--accent-ink) 16%, var(--line));
+  font-size: 12.5px;
+}
+.plan-list { margin-top: 8px; }
+.plan-item { font-size: 13px; line-height: 20px; }
+.plan-actions { margin-top: 10px; padding-top: 10px; }
+
+/* 任务栏：和输入框同一列，信息更紧凑 */
+.todo-dock {
+  background: var(--panel);
+  border-color: var(--line);
+}
+.todo-summary { height: 34px; padding: 0 12px; }
+.todo-title { font-size: 12px; }
+.todo-bar { height: 4px; }
+.todo-item { font-size: 12px; line-height: 19px; }
+
+/* 输入区：与聊天区同宽，工具栏与输入框分层 */
+.composer {
+  background: var(--panel);
+  border-color: var(--line-strong);
+  padding: 8px 10px 8px 14px;
+}
+.composer textarea { font-size: 14.5px; line-height: 1.6; }
+.composer-hint { text-align: left; padding-left: 2px; }
+.send-btn { width: 30px; height: 30px; }
+
+/* 侧栏：会话项有明确边界，当前项更醒目 */
+.session-list { padding: 6px 10px 12px; gap: 2px; }
+.session-item {
+  border: 1px solid transparent;
+  padding: 8px 11px;
+}
+.session-item:hover { border-color: var(--line); }
+.session-item.is-active {
+  background: var(--panel);
+  border-color: var(--line-strong);
+  box-shadow: inset 2px 0 0 var(--accent-ink);
+}
+.sb-search { border-radius: 8px; }
+.sidebar-foot { padding: 10px; gap: 8px; }
+
+/* 顶栏和聊天头部：少一点装饰，多一点边界 */
+.topbar { height: 50px; }
+.chat-head { height: 46px; }
+.chat-title { font-size: 13.5px; }
+.chat-card { box-shadow: var(--shadow-sm); }
+

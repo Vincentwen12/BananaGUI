@@ -36,7 +36,7 @@ A multi-provider AI agent for the terminal, with a local GUI. It can read and wr
   | |_) | (_| | | | | (_| | |_) | (_| | | | |
   |____/ \__,_|_| |_|\__,_|_.__/ \__,_|_| |_|
 
-          BananaCLI v0.8.10 · terminal + GUI
+          BananaCLI v0.8.11 · terminal + GUI
 ```
 
 - **No frontend framework**: the CLI uses Node built-ins only; runtime dependencies are `ws` and `@lydell/node-pty` (prebuilt native module).
