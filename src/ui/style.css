@@ -3,6 +3,7 @@
   --bg-deep: #fafafa;
   --bg: #ffffff;
   --panel: #f2f2f2;
+  --surface: #fbfbfb;
   --panel-2: #ededed;
   --panel-3: #e6e6e6;
   --line: rgba(0, 0, 0, 0.08);
@@ -73,6 +74,7 @@
     --bg-deep: #080808;
     --bg: #161616;
     --panel: #1e1e1e;
+    --surface: #1c1c1c;
     --panel-2: #242424;
     --panel-3: #2e2e2e;
     --line: rgba(255, 255, 255, 0.08);
@@ -106,6 +108,7 @@
   --bg-deep: #080808;
   --bg: #161616;
   --panel: #1e1e1e;
+  --surface: #1c1c1c;
   --panel-2: #242424;
   --panel-3: #2e2e2e;
   --line: rgba(255, 255, 255, 0.08);
@@ -4231,8 +4234,8 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .msg.assistant .msg-role::before { background: var(--accent-ink); opacity: 0.45; }
 .msg.assistant .msg-role { color: var(--text-3); }
 .msg.user .msg-body {
-  background: var(--panel);
-  border-color: var(--line-strong);
+  background: var(--surface);
+  border-color: var(--line);
   padding: 10px 14px;
 }
 
@@ -4278,8 +4281,8 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 
 /* 输入区：与聊天区同宽，工具栏与输入框分层 */
 .composer {
-  background: var(--panel);
-  border-color: var(--line-strong);
+  background: var(--surface);
+  border-color: var(--line);
   padding: 8px 10px 8px 14px;
 }
 .composer textarea { font-size: 14.5px; line-height: 1.6; }
@@ -4328,23 +4331,26 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 
 /* ---------- 灵动动效（测试功能，默认关闭） ---------- */
 :root[data-motion='1'] {
-  --motion-dur: 240ms;
-  --motion-dur-slow: 320ms;
-  --motion-spring: cubic-bezier(0.22, 1.16, 0.36, 1);
+  --motion-dur: 340ms;
+  --motion-dur-slow: 380ms;
+  --motion-spring: linear(0, 0.026 5%, 0.091 10%, 0.179 15%, 0.278 20%, 0.379 25%, 0.478 30%, 0.569 35%, 0.652 40%, 0.724 45%, 0.786 50%, 0.837 55%, 0.88 60%, 0.915 65%, 0.942 70%, 0.963 75%, 0.979 80%, 0.991 85%, 0.999 90%, 1.005 95%, 1 100%);
+  --motion-spring-panel: linear(0, 0.021 5%, 0.073 10%, 0.143 15%, 0.224 20%, 0.308 25%, 0.391 30%, 0.471 35%, 0.545 40%, 0.612 45%, 0.672 50%, 0.725 55%, 0.771 60%, 0.811 65%, 0.845 70%, 0.874 75%, 0.898 80%, 0.918 85%, 0.935 90%, 0.949 95%, 1 100%);
   --motion-shift: 7px;
   --motion-press: 0.96;
 }
 :root[data-motion='1'][data-motion-level='subtle'] {
-  --motion-dur: 180ms;
-  --motion-dur-slow: 250ms;
-  --motion-spring: cubic-bezier(0.28, 1.04, 0.5, 1);
+  --motion-dur: 260ms;
+  --motion-dur-slow: 300ms;
+  --motion-spring: linear(0, 0.019 5%, 0.068 10%, 0.135 15%, 0.211 20%, 0.291 25%, 0.37 30%, 0.446 35%, 0.517 40%, 0.582 45%, 0.641 50%, 0.694 55%, 0.74 60%, 0.781 65%, 0.816 70%, 0.846 75%, 0.872 80%, 0.894 85%, 0.913 90%, 0.928 95%, 1 100%);
+  --motion-spring-panel: linear(0, 0.018 5%, 0.062 10%, 0.123 15%, 0.193 20%, 0.267 25%, 0.34 30%, 0.412 35%, 0.479 40%, 0.541 45%, 0.599 50%, 0.65 55%, 0.696 60%, 0.737 65%, 0.774 70%, 0.805 75%, 0.833 80%, 0.857 85%, 0.878 90%, 0.896 95%, 1 100%);
   --motion-shift: 4px;
   --motion-press: 0.975;
 }
 :root[data-motion='1'][data-motion-level='playful'] {
-  --motion-dur: 300ms;
-  --motion-dur-slow: 380ms;
-  --motion-spring: cubic-bezier(0.2, 1.4, 0.34, 1);
+  --motion-dur: 420ms;
+  --motion-dur-slow: 460ms;
+  --motion-spring: linear(0, 0.041 5%, 0.143 10%, 0.278 15%, 0.424 20%, 0.567 25%, 0.696 30%, 0.806 35%, 0.895 40%, 0.962 45%, 1.011 50%, 1.042 55%, 1.06 60%, 1.067 65%, 1.067 70%, 1.062 75%, 1.053 80%, 1.044 85%, 1.034 90%, 1.024 95%, 1 100%);
+  --motion-spring-panel: linear(0, 0.024 5%, 0.085 10%, 0.167 15%, 0.26 20%, 0.356 25%, 0.449 30%, 0.537 35%, 0.617 40%, 0.688 45%, 0.749 50%, 0.802 55%, 0.847 60%, 0.883 65%, 0.913 70%, 0.937 75%, 0.956 80%, 0.971 85%, 0.982 90%, 0.99 95%, 1 100%);
   --motion-shift: 10px;
   --motion-press: 0.94;
 }
@@ -4355,7 +4361,7 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 }
 
 :root[data-motion='1'] .msg.enter,
-:root[data-motion='1'] .plan-card {
+:root[data-motion='1'] .plan-card.is-new {
   animation: motionIn var(--motion-dur-slow) var(--motion-spring) both;
 }
 
@@ -4369,14 +4375,15 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 }
 
 :root[data-motion='1'] .review.is-opening {
-  animation: reviewIn var(--motion-dur) var(--motion-spring) both;
+  animation: reviewIn var(--motion-dur) var(--motion-spring-panel) both;
 }
 :root[data-motion='1'] .model-pop,
-:root[data-motion='1'] .reasoning-pop {
-  animation: pop var(--motion-dur) var(--motion-spring) both;
+:root[data-motion='1'] .reasoning-pop,
+:root[data-motion='1'] .modal-card {
+  animation: pop var(--motion-dur) var(--motion-spring-panel) both;
 }
 :root[data-motion='1'] .sidebar {
-  transition-timing-function: var(--motion-spring);
+  transition-timing-function: var(--motion-spring-panel);
   transition-duration: var(--motion-dur);
 }
 
@@ -4394,5 +4401,4 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .topbar { height: 50px; }
 .chat-head { height: 46px; }
 .chat-title { font-size: 13.5px; }
-.chat-card { box-shadow: var(--shadow-sm); }
 

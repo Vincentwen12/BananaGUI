@@ -1963,7 +1963,9 @@ function renderThreadPlan() {
 function renderPendingPlan(plan) {
   THREAD.querySelector('.plan-card')?.remove();
   if (!plan || plan.status === 'cancelled') return;
-  THREAD.appendChild(planCardNode(plan));
+  const card = planCardNode(plan);
+  card.classList.add('is-new');
+  THREAD.appendChild(card);
   scrollToEnd();
 }
 
@@ -3596,10 +3598,14 @@ function renderAppearanceSettings(body) {
   section.appendChild(card);
 
   const lively = settingsCard();
+  const motionSuppressed =
+    document.documentElement.dataset.reduceMotion === '1' ||
+    window.matchMedia('(prefers-reduced-motion: reduce)').matches;
   lively.appendChild(
     settingsRow(
       '灵动动效',
-      '测试功能：消息、按钮和面板带自然弹力与阻尼；终端与代码区不受影响。',
+      '测试功能：消息、按钮和面板带自然弹力与阻尼；终端与代码区不受影响。' +
+        (motionSuppressed ? ' 当前“减少动效”已开启，开启后也不会生效。' : ''),
       settingsSwitch(motionOn(), (on) => {
         setMotion(on);
         renderSettings();

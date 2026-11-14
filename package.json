@@ -1,6 +1,6 @@
 {
   "name": "@vincentbanana/bananacli",
-  "version": "0.8.14",
+  "version": "0.8.15",
   "description": "A multi-provider AI agent for your terminal: file tools, shell, web search, persistent sessions, diff preview and undo",
   "type": "module",
   "engines": {

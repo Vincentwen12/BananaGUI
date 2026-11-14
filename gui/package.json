@@ -1,6 +1,6 @@
 {
   "name": "@vincentbanana/banana-gui",
-  "version": "1.0.14",
+  "version": "1.0.15",
   "description": "Banana 鐨勫浘褰㈢晫闈細鏈湴鏈嶅姟 + 娴忚鍣ㄣ€傞粦鐧戒富棰橈紝鑷粯鍥炬爣锛屾棤绗笁鏂?UI 渚濊禆",
   "type": "module",
   "engines": {
@@ -72,7 +72,7 @@
     "electron-builder": "^25.0.0"
   },
   "dependencies": {
-    "@vincentbanana/bananacli": "^0.8.14"
+    "@vincentbanana/bananacli": "^0.8.15"
   },
   "license": "MIT",
   "publishConfig": {
