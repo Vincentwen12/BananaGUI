@@ -274,7 +274,7 @@ function defaultConfig(workspace: string): AppConfig {
     sessionDir: defaultSessionDir(),
     workspace,
     systemPrompt: defaultSystemPrompt(workspace),
-    maxSteps: 16,
+    maxSteps: 24,
     maxContextChars: 160_000,
     allowOutsideWorkspace: false,
     showReasoning: true,

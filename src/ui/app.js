@@ -529,7 +529,7 @@ const state = {
   dock: { open: false, height: 280 },
   changes: null,
   changesFile: null,
-  todoOpen: true,
+  todoOpen: false,
   attachmentPath: '',
   trustPrompted: false,
 };
