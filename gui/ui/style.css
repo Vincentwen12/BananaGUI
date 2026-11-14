@@ -4301,6 +4301,31 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .sb-search { border-radius: 8px; }
 .sidebar-foot { padding: 10px; gap: 8px; }
 
+/* 任务入口：顶部一枚进度胶囊，点击打开右侧任务面板 */
+.todo-dock { display: none; }
+.task-chip {
+  height: 26px;
+  padding: 0 9px;
+  gap: 7px;
+  font-size: 11.5px;
+  font-variant-numeric: tabular-nums;
+}
+.task-chip[hidden] { display: none; }
+.task-chip-bar {
+  width: 40px;
+  height: 3px;
+  border-radius: 99px;
+  background: var(--line);
+  overflow: hidden;
+}
+.task-chip-bar i {
+  display: block;
+  width: 0;
+  height: 100%;
+  background: var(--accent-ink);
+  transition: width 200ms var(--ease);
+}
+
 /* 顶栏和聊天头部：少一点装饰，多一点边界 */
 .topbar { height: 50px; }
 .chat-head { height: 46px; }

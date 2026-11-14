@@ -1789,6 +1789,13 @@ function renderTodos() {
   $('todoSummary').setAttribute('aria-expanded', String(state.todoOpen));
   $('todoCount').textContent = `${done}/${todos.length}`;
   $('todoBarFill').style.width = todos.length ? `${Math.round((done / todos.length) * 100)}%` : '0%';
+  const chip = $('taskBtn');
+  if (chip) {
+    chip.hidden = todos.length === 0;
+    chip.title = `${t('todo.title')} ${done}/${todos.length}`;
+    $('taskChipText').textContent = `${t('todo.title')} ${done}/${todos.length}`;
+    $('taskChipFill').style.width = todos.length ? `${Math.round((done / todos.length) * 100)}%` : '0%';
+  }
   const list = $('todoList');
   list.innerHTML = '';
   todos.forEach((item) => {
@@ -5269,6 +5276,10 @@ function bind() {
       openReview(state.review.mode || 'changes');
       if (state.review.mode === 'changes') void loadChanges(true);
     }
+  });
+  $('taskBtn').addEventListener('click', () => {
+    if (state.review.open && state.review.mode === 'tasks') closeReview();
+    else openReview('tasks');
   });
   $('searchBtn').addEventListener('click', openCommandCenter);
   $('openSettingsFoot').addEventListener('click', () => openSettings());
