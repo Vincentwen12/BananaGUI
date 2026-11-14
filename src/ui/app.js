@@ -2375,8 +2375,8 @@ async function send() {
               if (!reasoningStarted) {
                 reasoningStarted = Date.now();
                 reasoning.hidden = false;
-                // 默认只显示一行实时摘要，点开才看全文。
-                reasoning.open = reasoning.dataset.user === '1';
+                // 思考时默认展开，开始回答后自动收起；用户手动操作过后尊重用户选择。
+                if (reasoning.dataset.user !== '1') reasoning.open = true;
               }
               reasoningText += event.chunk;
               scheduleReasoning();

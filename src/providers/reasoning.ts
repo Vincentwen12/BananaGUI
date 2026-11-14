@@ -9,14 +9,14 @@ export const REASONING_LABEL: Record<ReasoningLevel, string> = {
 };
 
 export const REASONING_HINT: Record<ReasoningLevel, string> = {
-  fast: '低推理，响应快、消耗少',
+  fast: '官方低强度思考，响应快、消耗少',
   standard: '日常默认，速度和准确率平衡',
-  deep: '高推理，更慢但更适合复杂任务',
+  deep: '高强度思考，更适合复杂任务',
 };
 
 /** Anthropic extended thinking 的预算（token）。 */
 export const REASONING_BUDGET: Record<ReasoningLevel, number> = {
-  fast: 2048,
+  fast: 1024,
   standard: 8192,
   deep: 24576,
 };
@@ -58,15 +58,14 @@ export function openAIReasoningBody(
   const id = model.toLowerCase();
   if (/^(o[1-9]|gpt-5)/.test(id)) return { reasoning_effort: effortFor(level) };
   if (name === 'deepseek' || id.includes('deepseek')) {
+    // 快 / 标准 / 深入都走官方思考接口，快模式用低强度而不是关掉思考。
     return {
-      thinking: { type: level === 'fast' ? 'disabled' : 'enabled' },
-      ...(level === 'fast' ? {} : { reasoning_effort: effortFor(level) }),
+      thinking: { type: 'enabled' },
+      reasoning_effort: effortFor(level),
     };
   }
   if (name === 'qwen' || /qwen3|qwq|thinking/.test(id)) {
-    return level === 'fast'
-      ? { enable_thinking: false }
-      : { enable_thinking: true, thinking_budget: REASONING_BUDGET[level] };
+    return { enable_thinking: true, thinking_budget: REASONING_BUDGET[level] };
   }
   return { reasoning_effort: effortFor(level) };
 }
