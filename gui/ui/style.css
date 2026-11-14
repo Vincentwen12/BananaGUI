@@ -48,7 +48,7 @@
 
   --shadow-sm: 0 1px 2px rgba(16, 16, 20, 0.05);
   --shadow-1: var(--shadow-sm);
-  --shadow-overlay: 0 12px 32px rgba(16, 16, 20, 0.14);
+  --shadow-overlay: 0 8px 24px rgba(16, 16, 20, 0.10);
   --shadow-lg: var(--shadow-overlay);
   --shadow-raised: var(--shadow-sm);
 
@@ -96,7 +96,7 @@
     --info: #82bdbd;
     --on-danger: #ffffff;
     --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-    --shadow-overlay: 0 16px 40px rgba(0, 0, 0, 0.55);
+    --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.40);
     --shadow-lg: var(--shadow-overlay);
     --shadow-raised: var(--shadow-sm);
   }
@@ -129,7 +129,7 @@
   --info: #82bdbd;
   --on-danger: #ffffff;
   --shadow-sm: 0 1px 2px rgba(0, 0, 0, 0.4);
-  --shadow-overlay: 0 16px 40px rgba(0, 0, 0, 0.55);
+  --shadow-overlay: 0 8px 24px rgba(0, 0, 0, 0.40);
   --shadow-lg: var(--shadow-overlay);
   --shadow-raised: var(--shadow-sm);
 }
@@ -4325,6 +4325,70 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   background: var(--accent-ink);
   transition: width 200ms var(--ease);
 }
+
+/* ---------- 灵动动效（测试功能，默认关闭） ---------- */
+:root[data-motion='1'] {
+  --motion-dur: 240ms;
+  --motion-dur-slow: 320ms;
+  --motion-spring: cubic-bezier(0.22, 1.16, 0.36, 1);
+  --motion-shift: 7px;
+  --motion-press: 0.96;
+}
+:root[data-motion='1'][data-motion-level='subtle'] {
+  --motion-dur: 180ms;
+  --motion-dur-slow: 250ms;
+  --motion-spring: cubic-bezier(0.28, 1.04, 0.5, 1);
+  --motion-shift: 4px;
+  --motion-press: 0.975;
+}
+:root[data-motion='1'][data-motion-level='playful'] {
+  --motion-dur: 300ms;
+  --motion-dur-slow: 380ms;
+  --motion-spring: cubic-bezier(0.2, 1.4, 0.34, 1);
+  --motion-shift: 10px;
+  --motion-press: 0.94;
+}
+
+@keyframes motionIn {
+  from { opacity: 0; transform: translateY(var(--motion-shift, 6px)) scale(0.996); }
+  to { opacity: 1; transform: none; }
+}
+
+:root[data-motion='1'] .msg.enter,
+:root[data-motion='1'] .plan-card {
+  animation: motionIn var(--motion-dur-slow) var(--motion-spring) both;
+}
+
+:root[data-motion='1'] .btn:active,
+:root[data-motion='1'] .icon-btn:active,
+:root[data-motion='1'] .chip-btn:active,
+:root[data-motion='1'] .send-btn:not(:disabled):active,
+:root[data-motion='1'] .session-item:active {
+  transform: scale(var(--motion-press));
+  transition-duration: 90ms;
+}
+
+:root[data-motion='1'] .review.is-opening {
+  animation: reviewIn var(--motion-dur) var(--motion-spring) both;
+}
+:root[data-motion='1'] .model-pop,
+:root[data-motion='1'] .reasoning-pop {
+  animation: pop var(--motion-dur) var(--motion-spring) both;
+}
+:root[data-motion='1'] .sidebar {
+  transition-timing-function: var(--motion-spring);
+  transition-duration: var(--motion-dur);
+}
+
+:root[data-motion='1'] .todo-bar i,
+:root[data-motion='1'] .task-chip-bar i {
+  transition: width var(--motion-dur) var(--motion-spring);
+}
+
+/* 去掉模板感：输入区和主卡片不再抬高 */
+.composer { box-shadow: none; }
+.composer:focus-within { box-shadow: none; }
+.chat-card { box-shadow: none; }
 
 /* 顶栏和聊天头部：少一点装饰，多一点边界 */
 .topbar { height: 50px; }

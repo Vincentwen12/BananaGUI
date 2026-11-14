@@ -555,6 +555,57 @@ function prefersReducedMotion() {
   );
 }
 
+// ---------------- 灵动动效 ----------------
+const MOTION_KEY = 'banana.motion';
+const MOTION_LEVEL_KEY = 'banana.motion.level';
+const MOTION_LEVELS = ['subtle', 'natural', 'playful'];
+
+function motionOn() {
+  try {
+    return localStorage.getItem(MOTION_KEY) === '1';
+  } catch {
+    return false;
+  }
+}
+
+function motionLevel() {
+  try {
+    const value = localStorage.getItem(MOTION_LEVEL_KEY);
+    return MOTION_LEVELS.includes(value) ? value : 'natural';
+  } catch {
+    return 'natural';
+  }
+}
+
+function motionEffective() {
+  return motionOn() && !prefersReducedMotion();
+}
+
+function applyMotion() {
+  const root = document.documentElement;
+  root.dataset.motion = motionEffective() ? '1' : '0';
+  root.dataset.motionLevel = motionLevel();
+}
+
+function setMotion(on) {
+  try {
+    localStorage.setItem(MOTION_KEY, on ? '1' : '0');
+  } catch {}
+  applyMotion();
+}
+
+function setMotionLevel(level) {
+  try {
+    localStorage.setItem(MOTION_LEVEL_KEY, MOTION_LEVELS.includes(level) ? level : 'natural');
+  } catch {}
+  applyMotion();
+}
+
+function motionScrollFactor() {
+  if (!motionEffective()) return 0.12;
+  return { subtle: 0.15, natural: 0.11, playful: 0.085 }[motionLevel()];
+}
+
 function stopCamera() {
   camera.running = false;
   if (camera.raf) cancelAnimationFrame(camera.raf);
@@ -581,7 +632,7 @@ function cameraTick() {
     stopCamera();
     return;
   }
-  const step = Math.min(64, Math.max(1, distance * 0.12));
+  const step = Math.min(64, Math.max(1, distance * motionScrollFactor()));
   THREAD.scrollTop = current + step;
   camera.lastTop = THREAD.scrollTop;
   camera.programmaticAt = Date.now();
@@ -3544,6 +3595,38 @@ function renderAppearanceSettings(body) {
   );
   section.appendChild(card);
 
+  const lively = settingsCard();
+  lively.appendChild(
+    settingsRow(
+      '灵动动效',
+      '测试功能：消息、按钮和面板带自然弹力与阻尼；终端与代码区不受影响。',
+      settingsSwitch(motionOn(), (on) => {
+        setMotion(on);
+        renderSettings();
+        toast(on ? '灵动动效已开启' : '灵动动效已关闭');
+      }),
+    ),
+  );
+  lively.appendChild(
+    settingsRow(
+      '动效强度',
+      '阻尼越大越收得住；大面板不会来回晃。',
+      settingsSeg(
+        [
+          { value: 'subtle', label: '克制' },
+          { value: 'natural', label: '自然' },
+          { value: 'playful', label: '明显' },
+        ],
+        motionLevel(),
+        (value) => {
+          setMotionLevel(value);
+          toast('动效强度：' + (value === 'subtle' ? '克制' : value === 'playful' ? '明显' : '自然'));
+        },
+      ),
+    ),
+  );
+  section.appendChild(lively);
+
   const motion = settingsCard();
   motion.appendChild(
     settingsRow('减少动效', '关闭大部分弹簧和入场动画，适合晕动或低性能设备。', settingsSwitch(
@@ -3552,6 +3635,7 @@ function renderAppearanceSettings(body) {
         if (on) document.documentElement.dataset.reduceMotion = '1';
         else delete document.documentElement.dataset.reduceMotion;
         localStorage.setItem('banana.reduceMotion', on ? '1' : '0');
+        applyMotion();
         toast(on ? '已减少动效' : '已恢复弹力动画');
       },
     )),
@@ -5584,6 +5668,7 @@ async function maybePromptProjectTrust() {
 async function boot() {
   bind();
   applyLanguage();
+  applyMotion();
   // 命令表来自服务端（与 CLI 同一份），拉不到也不影响对话
   try {
     const all = (await get('commands')).commands ?? [];

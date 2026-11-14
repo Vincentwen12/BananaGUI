@@ -17,7 +17,15 @@
   "radius": { "none": 0, "sm": 4, "md": 6, "lg": 8 },
   "shadow": {
     "sm": "0 1px 2px rgba(16,16,20,0.05)",
-    "overlay": "0 12px 32px rgba(16,16,20,0.14)"
+    "overlay": "0 8px 24px rgba(16,16,20,0.10)"
+  },
+  "motion": {
+    "default": "off",
+    "levels": {
+      "subtle": { "label": "克制", "duration": 180, "shift": 4, "press": 0.975, "spring": "cubic-bezier(0.28,1.04,0.5,1)", "scroll": 0.15 },
+      "natural": { "label": "自然", "duration": 240, "shift": 7, "press": 0.96, "spring": "cubic-bezier(0.22,1.16,0.36,1)", "scroll": 0.11 },
+      "playful": { "label": "明显", "duration": 300, "shift": 10, "press": 0.94, "spring": "cubic-bezier(0.2,1.4,0.34,1)", "scroll": 0.085 }
+    }
   },
   "spacing": { "unit": 4, "scale": [4, 8, 12, 16, 24, 32, 40, 48] },
   "typography": {
