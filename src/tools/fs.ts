@@ -221,7 +221,7 @@ function lineNumbered(text: string, startLine: number): string {
 export const readFileTool: Tool = {
   name: 'read_file',
   description:
-    '读取文件内容，返回带行号的文本。默认读整个文件；可用 offset/limit 分段读大文件。相对路径基于工作区根目录。',
+    '读取文件内容，返回带行号的文本。单次最多返回约 2.4 万字符；大文件先用 grep 定位，再用 offset/limit 分段读。相对路径基于工作区根目录。',
   parameters: {
     type: 'object',
     properties: {
@@ -256,7 +256,7 @@ export const readFileTool: Tool = {
       const limit = Number(input.limit) || lines.length;
       const slice = lines.slice(offset - 1, offset - 1 + limit);
       const header = `${toDisplay(ctx, target)} | 共 ${lines.length} 行, ${info.size} 字节 | 从第 ${offset} 行起显示 ${slice.length} 行`;
-      const body = truncateMiddle(lineNumbered(slice.join('\n'), offset), 60_000);
+      const body = truncateMiddle(lineNumbered(slice.join('\n'), offset), 24_000);
       return ok(
         `${header}\n\n${body}`,
         `读取 ${toDisplay(ctx, target)}（${slice.length} 行${lines.length > slice.length ? ` / 共 ${lines.length} 行` : ''}）`,

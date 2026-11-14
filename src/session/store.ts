@@ -124,7 +124,7 @@ export class SessionStore {
       facts: [],
       unknowns: [],
       mode: 'build',
-      reasoning: 'standard',
+      reasoning: 'fast',
       titleSource: 'auto',
     };
   }
