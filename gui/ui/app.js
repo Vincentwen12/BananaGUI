@@ -157,6 +157,7 @@ const STRINGS = {
     'time.days': '天前',
     'time.today': '今天',
     'time.yesterday': '昨天',
+    'msg.you': '你',
   },
   en: {
     'sidebar.toggle': 'Conversations (Ctrl+B)',
@@ -234,6 +235,7 @@ const STRINGS = {
     'time.days': 'd ago',
     'time.today': 'Today',
     'time.yesterday': 'Yesterday',
+    'msg.you': 'You',
   },
 };
 
@@ -1189,7 +1191,7 @@ function renderMessage(message) {
   node.className = `msg ${message.role}`;
   const role = document.createElement('div');
   role.className = 'msg-role';
-  role.textContent = message.role === 'user' ? '你' : 'Banana';
+  role.textContent = message.role === 'user' ? t('msg.you') : 'Banana';
   const body = document.createElement('div');
   body.className = 'msg-body';
   if (message.role === 'user') {

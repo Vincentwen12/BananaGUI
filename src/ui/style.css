@@ -4219,10 +4219,17 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .msg-body h2,
 .msg-body h3 { font-size: 14.5px; margin: 18px 0 8px; font-weight: 600; }
 .msg-role {
+  display: flex;
+  align-items: center;
+  gap: 6px;
   font-size: 10.5px;
   letter-spacing: 0.09em;
   margin-bottom: 6px;
 }
+.msg.user .msg-role { justify-content: flex-end; }
+.msg.user .msg-role::before { display: none; }
+.msg.assistant .msg-role::before { background: var(--accent-ink); opacity: 0.45; }
+.msg.assistant .msg-role { color: var(--text-3); }
 .msg.user .msg-body {
   background: var(--panel);
   border-color: var(--line-strong);
