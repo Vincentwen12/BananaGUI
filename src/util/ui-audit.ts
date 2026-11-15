@@ -212,11 +212,13 @@ export function auditPaths(
 }
 
 export function formatViolations(violations: UiViolation[]): string {
-  if (!violations.length) return 'UI 审计通过。';
-  return violations
-    .map(
-      (item) =>
-        `${item.severity === 'fail' ? '✗' : '!'} ${item.file}:${item.line} [${item.rule}] ${item.message}`,
-    )
-    .join('\n');
+  if (!violations.length) return 'UI 审计通过：没有发现禁用项。';
+  return (
+    violations
+      .map(
+        (item) =>
+          `${item.severity === 'fail' ? '✗' : '!'} ${item.file}:${item.line} [${item.rule}] ${item.message}`,
+      )
+      .join('\n') + '\n\n参考合格示例：docs/design/examples/good/pricing-page.html（配套 .css）'
+  );
 }

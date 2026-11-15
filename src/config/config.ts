@@ -244,7 +244,7 @@ export function defaultSystemPrompt(workspace: string): string {
     '',
     '## 沟通',
     '用用户提问的语言回答；先给结论，再补必要解释，不复述每一步；',
-    `做 UI 先读 ${designRoot}/principles.md 与 tokens.md，交付前调用 ui_audit。`,
+    `做 UI 先读 ${designRoot}/principles.md、tokens.md，并参考 ${designRoot}/examples/good/ 的完整示例；交付前调用 ui_audit。`,
     ...(process.env['BANANA_PROMPT_SUFFIX']?.trim()
       ? [`\n## 实验提示词\n${process.env['BANANA_PROMPT_SUFFIX']!.trim()}`]
       : []),

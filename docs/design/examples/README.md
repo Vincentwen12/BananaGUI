@@ -1,5 +1,7 @@
 # UI 示例
 
+Agent 做 UI 时默认参考 `good/` 里的完整示例；`ui_audit` 失败时也会给出这个路径。`good/pricing-page.png` 是真实渲染截图。
+
 ## good
 
 `good/pricing-page.html` + `good/pricing-page.css`
