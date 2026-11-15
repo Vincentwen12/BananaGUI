@@ -37,7 +37,10 @@ const MIME: Record<string, string> = {
   '.css': 'text/css; charset=utf-8',
   '.js': 'text/javascript; charset=utf-8',
   '.svg': 'image/svg+xml',
+  '.woff2': 'font/woff2',
 };
+// 随界面一起打包的本地字体，不走依赖解析
+const LOCAL_VENDOR_FILES = new Set(['inter.woff2']);
 const VENDOR_FILES: Record<string, string> = {
   'xterm.js': '@xterm/xterm/lib/xterm.js',
   'xterm.css': '@xterm/xterm/css/xterm.css',
@@ -585,7 +588,9 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
     // 终端与语法高亮的本地资源：只放行固定文件，避免任意路径读取
     if (path.startsWith('/vendor/')) {
       const name = path.slice('/vendor/'.length);
-      if (Object.hasOwn(VENDOR_FILES, name)) return sendFile(res, `vendor/${name}`);
+      if (Object.hasOwn(VENDOR_FILES, name) || LOCAL_VENDOR_FILES.has(name)) {
+        return sendFile(res, `vendor/${name}`);
+      }
       return notFound(res);
     }
 

@@ -1,18 +1,26 @@
+@font-face {
+  font-family: "Inter";
+  src: url("vendor/inter.woff2") format("woff2");
+  font-weight: 100 900;
+  font-style: normal;
+  font-display: swap;
+}
+
 :root {
   /* 唯一一套设计令牌：颜色、间距、字号、圆角、阴影、动效。 */
-  --bg-deep: #fafafa;
+  --bg-deep: #f7f7f5;
   --bg: #ffffff;
-  --panel: #f2f2f2;
-  --surface: #fbfbfb;
-  --panel-2: #ededed;
-  --panel-3: #e6e6e6;
-  --line: rgba(0, 0, 0, 0.08);
-  --line-strong: rgba(0, 0, 0, 0.16);
-  --text: #161616;
-  --text-2: #5c5c5c;
-  --text-3: #6b6b73;
-  --text-placeholder: #b3b3b3;
-  --inverse: #161616;
+  --panel: #f6f6f4;
+  --surface: #fbfbf9;
+  --panel-2: #f0f0ed;
+  --panel-3: #e9e9e5;
+  --line: rgba(0, 0, 0, 0.07);
+  --line-strong: rgba(0, 0, 0, 0.13);
+  --text: #1a1a1a;
+  --text-2: #666666;
+  --text-3: #8a8a8a;
+  --text-placeholder: #b8b8b8;
+  --inverse: #1a1a1a;
   --accent: #dcde8d;
   --accent-ink: #8a6d12;
   --accent-soft: #f7f7dd;
@@ -65,7 +73,7 @@
   --dur-3: 240ms;
   --sidebar: 344px;
   --mono: "IBM Plex Mono", "JetBrains Mono", "SFMono-Regular", Consolas, "Microsoft YaHei", monospace;
-  --sans: "Inter", -apple-system, BlinkMacSystemFont, "Segoe UI", "PingFang SC", "Microsoft YaHei", sans-serif;
+  --sans: "Inter", "SF Pro Text", -apple-system, BlinkMacSystemFont, "Segoe UI", "MiSans", "HarmonyOS Sans SC", "PingFang SC", "Noto Sans SC", "Microsoft YaHei", sans-serif;
 }
 
 /* 深色令牌：系统主题与手动 data-theme 共用同一组属性。 */
@@ -158,8 +166,9 @@ html, body {
   background: var(--bg);
   color: var(--text);
   font-family: var(--sans);
-  font-size: 15px;
+  font-size: 14px;
   line-height: 1.62;
+  letter-spacing: -0.005em;
   -webkit-font-smoothing: antialiased;
 }
 
@@ -4216,7 +4225,7 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .todo-dock { max-width: 900px; }
 
 /* 正文节奏 */
-.msg-body { font-size: 14.5px; line-height: 1.7; }
+.msg-body { font-size: 14px; line-height: 1.68; }
 .msg-body p { margin-bottom: 12px; }
 .msg-body h1,
 .msg-body h2,
@@ -4333,6 +4342,7 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 :root[data-motion='1'] {
   --motion-dur: 340ms;
   --motion-dur-slow: 380ms;
+  --motion-dur-msg: 260ms;
   --motion-spring: linear(0, 0.026 5%, 0.091 10%, 0.179 15%, 0.278 20%, 0.379 25%, 0.478 30%, 0.569 35%, 0.652 40%, 0.724 45%, 0.786 50%, 0.837 55%, 0.88 60%, 0.915 65%, 0.942 70%, 0.963 75%, 0.979 80%, 0.991 85%, 0.999 90%, 1.005 95%, 1 100%);
   --motion-spring-panel: linear(0, 0.021 5%, 0.073 10%, 0.143 15%, 0.224 20%, 0.308 25%, 0.391 30%, 0.471 35%, 0.545 40%, 0.612 45%, 0.672 50%, 0.725 55%, 0.771 60%, 0.811 65%, 0.845 70%, 0.874 75%, 0.898 80%, 0.918 85%, 0.935 90%, 0.949 95%, 1 100%);
   --motion-shift: 7px;
@@ -4341,6 +4351,7 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 :root[data-motion='1'][data-motion-level='subtle'] {
   --motion-dur: 260ms;
   --motion-dur-slow: 300ms;
+  --motion-dur-msg: 200ms;
   --motion-spring: linear(0, 0.019 5%, 0.068 10%, 0.135 15%, 0.211 20%, 0.291 25%, 0.37 30%, 0.446 35%, 0.517 40%, 0.582 45%, 0.641 50%, 0.694 55%, 0.74 60%, 0.781 65%, 0.816 70%, 0.846 75%, 0.872 80%, 0.894 85%, 0.913 90%, 0.928 95%, 1 100%);
   --motion-spring-panel: linear(0, 0.018 5%, 0.062 10%, 0.123 15%, 0.193 20%, 0.267 25%, 0.34 30%, 0.412 35%, 0.479 40%, 0.541 45%, 0.599 50%, 0.65 55%, 0.696 60%, 0.737 65%, 0.774 70%, 0.805 75%, 0.833 80%, 0.857 85%, 0.878 90%, 0.896 95%, 1 100%);
   --motion-shift: 4px;
@@ -4349,6 +4360,7 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 :root[data-motion='1'][data-motion-level='playful'] {
   --motion-dur: 420ms;
   --motion-dur-slow: 460ms;
+  --motion-dur-msg: 320ms;
   --motion-spring: linear(0, 0.041 5%, 0.143 10%, 0.278 15%, 0.424 20%, 0.567 25%, 0.696 30%, 0.806 35%, 0.895 40%, 0.962 45%, 1.011 50%, 1.042 55%, 1.06 60%, 1.067 65%, 1.067 70%, 1.062 75%, 1.053 80%, 1.044 85%, 1.034 90%, 1.024 95%, 1 100%);
   --motion-spring-panel: linear(0, 0.024 5%, 0.085 10%, 0.167 15%, 0.26 20%, 0.356 25%, 0.449 30%, 0.537 35%, 0.617 40%, 0.688 45%, 0.749 50%, 0.802 55%, 0.847 60%, 0.883 65%, 0.913 70%, 0.937 75%, 0.956 80%, 0.971 85%, 0.982 90%, 0.99 95%, 1 100%);
   --motion-shift: 10px;
@@ -4359,8 +4371,14 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   from { opacity: 0; transform: translateY(var(--motion-shift, 6px)) scale(0.996); }
   to { opacity: 1; transform: none; }
 }
+@keyframes msgIn {
+  from { opacity: 0; transform: scale(0.985); }
+  to { opacity: 1; transform: none; }
+}
 
-:root[data-motion='1'] .msg.enter,
+:root[data-motion='1'] .msg.enter {
+  animation: msgIn var(--motion-dur-msg) var(--motion-spring-panel) both;
+}
 :root[data-motion='1'] .plan-card.is-new {
   animation: motionIn var(--motion-dur-slow) var(--motion-spring) both;
 }

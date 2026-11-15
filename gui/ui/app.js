@@ -251,6 +251,226 @@ function t(key) {
   return STRINGS[uiLang]?.[key] ?? STRINGS.zh[key] ?? key;
 }
 
+// 界面静态文案的中英对照：设置、弹窗、命令中心等由 DOM 层统一替换，
+// 避免每个渲染函数都写一遍双语分支。
+const UI_EN = {
+  '设置': 'Settings',
+  '模型、外观、终端、工作区、插件': 'Model, appearance, terminal, workspace, plugins',
+  '插件': 'Plugins',
+  '关于': 'About',
+  '模型': 'Model',
+  '选择 provider、模型和密钥。CLI 与 GUI 共用同一份配置。': 'Choose a provider, model and key. CLI and GUI share the same config.',
+  '切换后新消息使用这个 provider。': 'New messages use this provider.',
+  '模型名，例如 deepseek-chat': 'Model name, e.g. deepseek-chat',
+  '保存': 'Save',
+  '请填写模型名': 'Enter a model name',
+  '模型已更新': 'Model updated',
+  '保存后立即生效。': 'Takes effect after saving.',
+  '已保存，留空表示不修改': 'Saved; leave blank to keep unchanged',
+  '粘贴 API Key': 'Paste API key',
+  '留空表示不修改': 'Leave blank to keep unchanged',
+  'API Key 已保存': 'API key saved',
+  '未设置': 'Not set',
+  '更安全的做法是使用环境变量，不要把 key 写进仓库。': 'Prefer environment variables; do not commit keys.',
+  '显示思考过程': 'Show reasoning',
+  '推理模型会展示思考内容；关闭后只保留最终回答。': 'Reasoning models show their thinking; off keeps only the final answer.',
+  '已显示思考过程': 'Reasoning shown',
+  '已隐藏思考过程': 'Reasoning hidden',
+  '系统提示词': 'System prompt',
+  '给模型的长期指令，会影响所有对话。': 'Long-lived instructions that affect every conversation.',
+  '例如：回答尽量简洁，优先给可执行命令。': 'e.g. Be concise; prefer runnable commands.',
+  '恢复默认': 'Restore defaults',
+  '已清空，使用内置系统提示词': 'Cleared; using the built-in system prompt',
+  '保存提示词': 'Save prompt',
+  '系统提示词已保存': 'System prompt saved',
+  '联网搜索': 'Web search',
+  '免费源开箱即用；填入 Key 后自动升级到更稳定的搜索 API。': 'Free sources work out of the box; a key upgrades to a more stable search API.',
+  '自动（有 Key 用 API，否则免费源）': 'Auto (API when keyed)',
+  '只用免费源': 'Free sources only',
+  '搜索方式已更新': 'Search mode updated',
+  '搜索方式': 'Search mode',
+  '自动模式优先用已配置的 Key；API 失败时会回退到免费源。': 'Auto mode prefers configured keys and falls back to free sources.',
+  '清除': 'Clear',
+  '深度搜索': 'Deep search',
+  '开启后每次搜索会自动读前 3 页正文，答案更准，但会多花几秒。默认关闭；对话里也可以临时要求 deep。': 'Reads the first 3 pages for each search; more accurate but slower. Off by default.',
+  '已开启深度搜索': 'Deep search on',
+  '已关闭深度搜索': 'Deep search off',
+  '结果语言': 'Result language',
+  '英文/技术优先会更多命中官方文档、GitHub 和 Stack Overflow；自动会跟随问题语言。': 'English/technical prefers official docs, GitHub and Stack Overflow; Auto follows the question.',
+  '英文/技术优先': 'English/technical first',
+  '自动': 'Auto',
+  '中文优先': 'Chinese first',
+  '搜索语言偏好已更新': 'Search language updated',
+  '外观': 'Appearance',
+  '黑白主题，柔和对比。切换会同步终端和代码高亮。': 'Black-and-white theme with soft contrast; terminal and code highlighting follow.',
+  '界面语言 / Language': 'Language',
+  '切换后立即生效，只影响当前浏览器。': 'Applies immediately in this browser only.',
+  '中文': 'Chinese',
+  '主题': 'Theme',
+  '跟随系统最省心；也可以固定浅色或深色。': 'Follow the system, or pin light/dark.',
+  '跟随系统': 'System',
+  '浅色': 'Light',
+  '深色': 'Dark',
+  '灵动动效': 'Lively motion',
+  '测试功能：消息、按钮和面板带自然弹力与阻尼；终端与代码区不受影响。': 'Experimental: natural spring and damping for messages, buttons and panels; terminal and code are untouched.',
+  ' 当前“减少动效”已开启，开启后也不会生效。': ' Reduce motion is on, so this will not take effect.',
+  '灵动动效已开启': 'Lively motion on',
+  '灵动动效已关闭': 'Lively motion off',
+  '动效强度': 'Motion strength',
+  '阻尼越大越收得住；大面板不会来回晃。': 'Higher damping settles faster; large panels do not bounce.',
+  '克制': 'Subtle',
+  '自然': 'Natural',
+  '明显': 'Playful',
+  '减少动效': 'Reduce motion',
+  '关闭大部分弹簧和入场动画，适合晕动或低性能设备。': 'Disables most spring and entrance animations.',
+  '已减少动效': 'Reduced motion on',
+  '已恢复弹力动画': 'Spring animations restored',
+  '终端': 'Terminal',
+  '真实 PTY，支持 PowerShell、cmd、Git Bash 和 WSL。关面板不会杀进程。': 'Real PTY with PowerShell, cmd, Git Bash and WSL; closing the panel keeps it running.',
+  '字号': 'Font size',
+  '只影响终端显示，不改变 shell 行为。': 'Display only; shell behavior is unchanged.',
+  '默认 Shell': 'Default shell',
+  '新建终端标签时使用。': 'Used for new terminal tabs.',
+  '收起终端': 'Hide terminal',
+  '打开终端': 'Open terminal',
+  '终端面板': 'Terminal panel',
+  '在底部 dock 打开，不会挡住输入框。快捷键 Ctrl+`。': 'Opens in the bottom dock without covering the composer. Shortcut Ctrl+`.',
+  '常用快捷键': 'Shortcuts',
+  '打开 / 收起终端工作台': 'Toggle terminal workbench',
+  '全局命令中心': 'Command center',
+  '打开文件工作台': 'Open file workbench',
+  '查看本会话改动': 'View changes in this session',
+  '关闭最上层；在终端里留给 shell': 'Close topmost layer; in the terminal it goes to the shell',
+  '发送 / 换行': 'Send / newline',
+  '引用项目文件': 'Reference project files',
+  '打开命令面板': 'Open command palette',
+  '工作区': 'Workspace',
+  '文件工具和命令都只能在这个目录下执行。': 'File tools and commands run only inside this directory.',
+  '切换': 'Switch',
+  '请填写目录路径': 'Enter a directory path',
+  '当前工作区': 'Current workspace',
+  '切换后插件也会重新加载项目目录。': 'Plugins reload for the project directory after switching.',
+  '检测到未信任的项目级配置/插件/AGENT.md；信任后才会加载。': 'Untrusted project config/plugins/AGENT.md found; trust to load.',
+  '未找到 AGENT.md；可在项目根目录创建，或运行 /env 查看模板。': 'No AGENT.md found; create one at the project root or run /env for a template.',
+  '项目规则 AGENT.md': 'Project rules (AGENT.md)',
+  '用户确认过的环境、路径、命令和限制会直接采用，不再重复探测。': 'Confirmed environment, paths, commands and limits are reused without re-probing.',
+  '权限': 'Permissions',
+  '不确定就保持「每次问」。改动会立刻保存，CLI 和 GUI 共用。': 'When unsure keep Ask; changes save immediately and are shared by CLI and GUI.',
+  '执行命令': 'Run commands',
+  '运行 npm test、git status 等命令。': 'Run npm test, git status and similar.',
+  '写入文件': 'Write files',
+  '新建或修改文件，可用左下角撤销回滚。': 'Create or modify files; undo from the bottom-left.',
+  '联网': 'Network',
+  '搜索和抓取网页。': 'Search and fetch web pages.',
+  '每次问': 'Ask every time',
+  '允许': 'Allow',
+  '禁止': 'Block',
+  '插件工坊': 'Plugin workshop',
+  '插件就是 .mjs 文件。可以生成模板、查看错误、试运行和启用停用。': 'Plugins are .mjs files; create templates, inspect errors, test and toggle them.',
+  '重新加载': 'Reload',
+  '插件已重新加载': 'Plugins reloaded',
+  '新建模板': 'New template',
+  '打开全局目录': 'Open global folder',
+  '打开项目目录': 'Open project folder',
+  '还没有插件。点「新建模板」生成第一个，或把 .mjs 放进插件目录。': 'No plugins yet. Create a template or drop an .mjs into the plugin folder.',
+  '已停用': 'Disabled',
+  '已加载': 'Loaded',
+  '加载失败': 'Failed to load',
+  '没有填写说明。': 'No description.',
+  '插件文件存在错误，模型暂时无法调用。': 'The plugin has an error; the model cannot call it.',
+  '试运行': 'Test',
+  '运行': 'Run',
+  '运行中…': 'Running…',
+  '(无输出)': '(no output)',
+  '输入 JSON，然后点运行。': 'Enter JSON, then Run.',
+  '关于 Banana': 'About Banana',
+  '一个把 CLI 内核完整搬进图形界面的本地 agent。': 'A local agent with the full CLI core inside a graphical shell.',
+  'CLI 版本': 'CLI version',
+  'CLI 与 GUI 使用同一套 agent 循环和工具。': 'CLI and GUI share the same agent loop and tools.',
+  '工具数量': 'Tools',
+  '平台': 'Platform',
+  '命令中心': 'Command center',
+  '按 Ctrl+K 搜索会话、文件、动作和设置。': 'Press Ctrl+K to search sessions, files, actions and settings.',
+  '打开': 'Open',
+  '项目文件': 'Project files',
+  '代码支持行号、全屏查看和选中后问 AI。': 'Code view supports line numbers, fullscreen and ask-AI on selection.',
+  '还没有会话。': 'No conversations yet.',
+};
+
+const LOCALIZE_SKIP = '.msg, .thread, pre, code, textarea';
+
+function translateTextNode(node) {
+  const raw = node.nodeValue;
+  const key = raw.trim();
+  if (!key) return;
+  if (uiLang === 'en') {
+    let next = UI_EN[key];
+    if (next == null) {
+      const env = key.match(/^也可以只设置环境变量 (.+?)，当前(.+?)。$/);
+      if (env) {
+        const current = UI_EN[env[2]] ?? env[2];
+        next = `Or set the environment variable ${env[1]}; currently ${current.toLowerCase()}.`;
+      }
+    }
+    const shifted = key.match(/^已切换到 (.+)$/);
+    if (next == null && shifted) next = `Switched to ${shifted[1]}`;
+    if (next == null) return;
+    if (node.__zhText == null) node.__zhText = raw;
+    node.nodeValue = raw.replace(key, next);
+  } else if (node.__zhText != null) {
+    node.nodeValue = node.__zhText;
+    delete node.__zhText;
+  }
+}
+
+function translateAttrs(el) {
+  for (const attr of ['title', 'placeholder', 'aria-label']) {
+    const value = el.getAttribute(attr);
+    if (!value) continue;
+    const key = value.trim();
+    const store = `__zh${attr.replace('-', '')}`;
+    if (uiLang === 'en') {
+      if (!Object.hasOwn(UI_EN, key)) continue;
+      if (el[store] == null) el[store] = value;
+      el.setAttribute(attr, UI_EN[key]);
+    } else if (el[store] != null) {
+      el.setAttribute(attr, el[store]);
+      delete el[store];
+    }
+  }
+}
+
+function localizeUi(root = document.body) {
+  if (!root) return;
+  const walker = document.createTreeWalker(root, NodeFilter.SHOW_TEXT | NodeFilter.SHOW_ELEMENT);
+  while (walker.nextNode()) {
+    const node = walker.currentNode;
+    if (node.nodeType === Node.TEXT_NODE) {
+      const parent = node.parentElement;
+      if (!parent || parent.closest(LOCALIZE_SKIP)) continue;
+      translateTextNode(node);
+    } else if (node.nodeType === Node.ELEMENT_NODE) {
+      if (node.closest(LOCALIZE_SKIP)) continue;
+      translateAttrs(node);
+    }
+  }
+}
+
+let localizeObserver = null;
+function watchLocalization() {
+  if (localizeObserver) return;
+  localizeObserver = new MutationObserver((records) => {
+    if (uiLang !== 'en') return;
+    for (const record of records) {
+      for (const node of record.addedNodes) {
+        if (node.nodeType === Node.ELEMENT_NODE) localizeUi(node);
+        else if (node.nodeType === Node.TEXT_NODE) translateTextNode(node);
+      }
+    }
+  });
+  localizeObserver.observe(document.body, { subtree: true, childList: true });
+}
+
 function applyLanguage() {
   document.documentElement.lang = uiLang === 'en' ? 'en' : 'zh-CN';
   const setTitle = (id, key) => {
@@ -304,6 +524,7 @@ function setLanguage(lang) {
     renderHeader();
     renderThread();
   }
+  localizeUi(document.body);
 }
 
 // ---------------- Markdown（够用即可） ----------------
@@ -5675,6 +5896,8 @@ async function boot() {
   bind();
   applyLanguage();
   applyMotion();
+  watchLocalization();
+  localizeUi(document.body);
   // 命令表来自服务端（与 CLI 同一份），拉不到也不影响对话
   try {
     const all = (await get('commands')).commands ?? [];
