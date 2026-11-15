@@ -24,6 +24,7 @@
 - [Stripe](refs/stripe.md)
 - [GitHub Primer](refs/github-primer.md)
 - [GOV.UK](refs/govuk.md)
+- [开源项目清单](refs/open-source.md)
 
 ## 示例
 
