@@ -4414,6 +4414,10 @@ input:focus-visible, textarea:focus-visible { outline: none; }
 .composer { box-shadow: none; }
 .composer:focus-within { box-shadow: none; }
 .chat-card { box-shadow: none; }
+.modal-card,
+.sheet-panel,
+.think,
+.work-group { box-shadow: none; }
 
 /* 顶栏和聊天头部：少一点装饰，多一点边界 */
 .topbar { height: 50px; }

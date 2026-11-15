@@ -395,6 +395,36 @@ const UI_EN = {
   '项目文件': 'Project files',
   '代码支持行号、全屏查看和选中后问 AI。': 'Code view supports line numbers, fullscreen and ask-AI on selection.',
   '还没有会话。': 'No conversations yet.',
+  '取消': 'Cancel',
+  '确定': 'Confirm',
+  '删除': 'Delete',
+  '清空': 'Clear',
+  '关闭': 'Close',
+  '重命名会话': 'Rename conversation',
+  '输入新的标题': 'Enter a new title',
+  '标题不能为空': 'Title cannot be empty',
+  '删除这个会话？': 'Delete this conversation?',
+  '清空当前对话？': 'Clear this conversation?',
+  '消息、任务清单和计划都会被清空，这个操作无法撤回。': 'Messages, tasks and the plan will be cleared. This cannot be undone.',
+  '删除对话？': 'Delete conversation?',
+  '切换工作目录？': 'Switch working directory?',
+  '匹配到的对话会被删除，无法恢复。': 'Matching conversations will be deleted permanently.',
+  'agent 的文件工具范围会切换到新目录。': 'The agent will work inside the new directory.',
+  '发现项目级配置': 'Project-level config found',
+  '信任并加载': 'Trust and load',
+  '新建对话': 'New conversation',
+  '开始一个干净的会话': 'Start with a clean conversation',
+  '打开项目文件': 'Open project files',
+  '浏览、全屏查看、引用文件': 'Browse, view fullscreen and reference files',
+  '按文件查看增删行，审阅 agent 的修改': 'Review additions and deletions per file',
+  '底部 dock，不遮挡输入框': 'Bottom dock without covering the composer',
+  '打开控制中心': 'Open control center',
+  '模型、外观、终端、工作区、插件': 'Model, appearance, terminal, workspace, plugins',
+  '启用、停用、生成模板、试运行插件': 'Enable, disable, scaffold and test plugins',
+  '切换主题': 'Switch theme',
+  '浅色 / 深色 / 跟随系统': 'Light / dark / system',
+  '撤销上一轮改动': 'Undo the last turn',
+  '把文件恢复到上一轮对话之前': 'Restore files to before the last turn',
 };
 
 const LOCALIZE_SKIP = '.msg, .thread, pre, code, textarea';
@@ -414,6 +444,10 @@ function translateTextNode(node) {
     }
     const shifted = key.match(/^已切换到 (.+)$/);
     if (next == null && shifted) next = `Switched to ${shifted[1]}`;
+    const deleted = key.match(/^「(.+?)」会从本地删除，无法恢复。$/);
+    if (next == null && deleted) next = `“${deleted[1]}” will be deleted locally. This cannot be undone.`;
+    const trust = key.match(/^这个工作区包含(.+?)。只有信任后才会加载；不信任时会被忽略。$/);
+    if (next == null && trust) next = `This workspace contains ${trust[1]}. It loads only after you trust it; otherwise it is ignored.`;
     if (next == null) return;
     if (node.__zhText == null) node.__zhText = raw;
     node.nodeValue = raw.replace(key, next);
