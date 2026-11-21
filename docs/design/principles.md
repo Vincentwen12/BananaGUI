@@ -9,7 +9,7 @@
 | `no-gradient` | 装饰性渐变 | `background: linear-gradient(...)` | `background: var(--panel)` |
 | `no-neon-glow` | 霓虹发光 | `text-shadow: 0 0 18px #8b5cf6` | 无 `text-shadow`，用字重/颜色分层 |
 | `no-glass` | 玻璃拟态 | `backdrop-filter: blur(18px)` | 半透明实色 `rgba(16,16,20,.32)` |
-| `no-ai-palette` | 紫蓝 AI 配色 | `#6366F1` / `#8B5CF6` / `#A855F7` | 记号黄 `#ffc400` + 冷灰中性 |
+| `no-ai-palette` | 紫蓝 AI 配色 | `#6366F1` / `#8B5CF6` / `#A855F7` | 香蕉黄 `#dcde8d` + 黑白暖中性 |
 | `no-big-radius` | 矩形圆角 > 8px | `border-radius: 16px` | `border-radius: var(--radius)` |
 | `no-heavy-shadow` | 多层重阴影 | `0 1px 2px ..., 0 24px 48px ...` | 单层 `var(--shadow-sm)` 或 `var(--shadow-overlay)` |
 | `no-emoji` | emoji 图标 | `💾 保存` | 内联 SVG |

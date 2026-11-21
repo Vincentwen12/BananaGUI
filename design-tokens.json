@@ -1,26 +1,24 @@
 {
   "color": {
-    "bg": "#f4f7fa",
+    "bg": "#fafafa",
     "bgDeep": "#ffffff",
-    "panel": "#ffffff",
-    "surface": "#ffffff",
-    "panel2": "#eef2f6",
-    "border": "rgba(0,0,0,0.09)",
-    "borderStrong": "rgba(0,0,0,0.18)",
-    "text": "#1a1a1a",
-    "text2": "#5a6472",
-    "text3": "#8a94a3",
-    "accent": "#ffc400",
-    "accentInk": "#6f5200",
-    "accentSoft": "#fff4cc",
-    "onAccent": "#241c00",
+    "panel": "#f2f2f2",
+    "surface": "#fbfbfb",
+    "panel2": "#ededed",
+    "border": "rgba(0,0,0,0.08)",
+    "borderStrong": "rgba(0,0,0,0.16)",
+    "text": "#161616",
+    "text2": "#5c5c5c",
+    "text3": "#6b6b73",
+    "accent": "#dcde8d",
+    "accentInk": "#8a6d12",
     "danger": "#c9564a",
     "success": "#2f7d50"
   },
-  "radius": { "none": 0, "sm": 4, "md": 6, "lg": 6 },
+  "radius": { "none": 0, "sm": 4, "md": 6, "lg": 8 },
   "shadow": {
-    "sm": "none",
-    "overlay": "none"
+    "sm": "0 1px 2px rgba(16,16,20,0.05)",
+    "overlay": "0 8px 24px rgba(16,16,20,0.10)"
   },
   "motion": {
     "default": "off",
@@ -32,11 +30,11 @@
   },
   "spacing": { "unit": 4, "scale": [4, 8, 12, 16, 24, 32, 40, 48] },
   "typography": {
-    "xs": 10,
+    "xs": 11,
     "sm": 12,
-    "md": 12,
-    "base": 13,
-    "lg": 15,
+    "md": 13,
+    "base": 14,
+    "lg": 16,
     "xl": 20,
     "xxl": 28
   },
