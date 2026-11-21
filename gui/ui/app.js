@@ -1535,6 +1535,7 @@ function renderEmpty() {
     `<div class="home-wordmark" aria-hidden="true">
        <span class="wm-text">Banana</span>
        <svg class="wm-leaf" viewBox="0 0 72 72"><path d="M14 42c2-16 14-27 34-28 0 18-8 31-24 35"/><path d="M14 58c8-15 18-24 32-31"/><path d="M44 14c-3 7-4 13-3 20"/></svg>
+       <span class="wm-badge">预览版</span>
      </div>`;
 
   const tips = $('homeTips');
@@ -4394,7 +4395,7 @@ function initShell() {
     if (dh) state.dock.height = Math.max(120, Math.min(dh, window.innerHeight * 0.6));
     const openSidebar = localStorage.getItem(SHELL_STORAGE.sidebarOpen);
     // 历史栏默认收起：顶部标签才是主入口
-    state.sidebar.open = openSidebar === '1';
+    state.sidebar.open = openSidebar !== '0';
   } catch {
     applySidebarWidth(344);
     applyReviewWidth(520);
@@ -5626,6 +5627,15 @@ function bind() {
     if (state.review.open && state.review.mode === 'tasks') closeReview();
     else openReview('tasks');
   });
+  $('sidePlugins').addEventListener('click', () => openSettings('plugins'));
+  $('sideTasks').addEventListener('click', () => openReview('tasks'));
+  $('sideMore').addEventListener('click', () => $('searchBtn').click());
+  $('sideWorkspace').addEventListener('click', () => openSettings('workspace'));
+  $('homeWorkspace').addEventListener('click', () => openSettings('workspace'));
+  $('homeMode').addEventListener('click', () => {
+    const plan = !$('modeSwitch')?.querySelector('[data-mode="plan"]')?.classList.contains('is-on');
+    $('modeSwitch')?.querySelector(`[data-mode="${plan ? 'plan' : 'build'}"]`)?.click();
+  });
   $('searchBtn').addEventListener('click', openCommandCenter);
   $('openSettingsFoot').addEventListener('click', () => openSettings());
   $('newTab').addEventListener('click', () => $('newChat').click());
@@ -5960,6 +5970,15 @@ function updateHomeMode() {
   card.classList.toggle('home-mode', empty);
   const tips = $('homeTips');
   if (tips) tips.hidden = !empty;
+  const workspace = state.info?.workspace ?? '';
+  const name = workspace.split(/[\\/]/).filter(Boolean).pop() || workspace || '未选择';
+  for (const id of ['workspaceLabel', 'sideWorkspaceName', 'homeWorkspaceName']) {
+    const node = $(id);
+    if (node) node.textContent = name;
+  }
+  const mode = state.info?.session?.mode === 'plan' ? 'Plan 模式' : '标准模式';
+  const homeMode = $('homeMode');
+  if (homeMode) homeMode.textContent = mode;
 }
 
 boot().catch((error) => toast('加载失败：' + error.message));

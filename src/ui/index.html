@@ -45,6 +45,18 @@
             </div>
             <button class="icon-btn" id="newChat" title="新建对话" aria-label="新建对话"></button>
           </div>
+          <nav class="side-nav">
+            <button class="side-nav-item" id="sidePlugins" type="button"><span class="side-ico" data-icon="plug"></span>插件</button>
+            <button class="side-nav-item" id="sideTasks" type="button"><span class="side-ico" data-icon="listCheck"></span>任务</button>
+            <button class="side-nav-item" id="sideMore" type="button"><span class="side-ico" data-icon="sliders"></span>更多</button>
+          </nav>
+          <div class="side-section">
+            <span>工作区</span>
+            <button class="side-workspace" id="sideWorkspace" type="button">
+              <span class="side-ico" data-icon="folder"></span>
+              <span id="sideWorkspaceName">—</span>
+            </button>
+          </div>
           <label class="sb-search">
             <span class="sb-search-ico" data-icon="search"></span>
             <input id="sessionSearch" autocomplete="off" spellcheck="false" placeholder="搜索会话" />
@@ -95,6 +107,12 @@
                   <div class="todo-list" id="todoList"></div>
                 </div>
                 <div class="attachments" id="attachments" hidden></div>
+                <div class="home-meta" id="homeMeta">
+                  <button class="home-meta-chip" id="homeWorkspace" type="button">
+                    <span class="side-ico" data-icon="folder"></span><span id="homeWorkspaceName">—</span>
+                  </button>
+                  <button class="home-meta-chip" id="homeMode" type="button">标准模式</button>
+                </div>
                 <form class="composer" id="composer">
                   <div class="command-palette" id="commandPalette" hidden></div>
                   <textarea id="input" rows="1" aria-label="给 Banana 发消息" placeholder="说点什么，Banana 来动手；输入 / 调命令，@ 引文件"></textarea>
