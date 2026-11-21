@@ -1154,10 +1154,12 @@ function renderSidebar() {
     if (value >= start - 86_400_000) return t('time.yesterday');
     return uiLang === 'en' ? 'Earlier' : '更早';
   };
-  const sessions = state.sessions.filter((item) => {
-    const q = state.sessionQuery.trim().toLowerCase();
-    return !q || String(item.title ?? '').toLowerCase().includes(q);
-  });
+  const sessions = state.sessions
+    .filter((item) => {
+      const q = state.sessionQuery.trim().toLowerCase();
+      return !q || String(item.title ?? '').toLowerCase().includes(q);
+    })
+    .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime());
   if (!sessions.length) {
     const hint = document.createElement('div');
     hint.className = 'sb-empty';
@@ -1532,9 +1534,9 @@ function renderEmpty() {
   wrap.className = 'empty';
   // 新会话：只保留 wordmark，操作提示放到 composer 下方，和 opencode 的首页一致
   wrap.innerHTML =
-    `<div class="home-wordmark" aria-hidden="true">
-       <span class="wm-text">Banana</span>
-       <svg class="wm-leaf" viewBox="0 0 72 72"><path d="M14 42c2-16 14-27 34-28 0 18-8 31-24 35"/><path d="M14 58c8-15 18-24 32-31"/><path d="M44 14c-3 7-4 13-3 20"/></svg>
+    `<div class="home-brand" aria-hidden="true">
+       <svg class="home-logo" viewBox="0 0 24 24"><path d="M5 14c1-6 6-10 14-10 0 8-4 13-10 13"/><path d="M5 21c3-6 7-9 12-11"/></svg>
+       <span class="home-title">Banana</span>
        <span class="wm-badge">预览版</span>
      </div>`;
 
@@ -5630,8 +5632,13 @@ function bind() {
   $('sidePlugins').addEventListener('click', () => openSettings('plugins'));
   $('sideTasks').addEventListener('click', () => openReview('tasks'));
   $('sideMore').addEventListener('click', () => $('searchBtn').click());
-  $('sideWorkspace').addEventListener('click', () => openSettings('workspace'));
-  $('homeWorkspace').addEventListener('click', () => openSettings('workspace'));
+  $('newSessionBig').addEventListener('click', () => $('newChat').click());
+  $('sideSquare').addEventListener('click', () => openSettings());
+  $('sideWorkspaceSearch').addEventListener('click', () => $('sessionSearch').focus());
+  $('sideWorkspaceNew').addEventListener('click', switchWorkspaceDialog);
+  $('permChip').addEventListener('click', () => openSettings('permissions'));
+  $('sideWorkspace').addEventListener('click', switchWorkspaceDialog);
+  $('homeWorkspace').addEventListener('click', switchWorkspaceDialog);
   $('homeMode').addEventListener('click', () => {
     const plan = !$('modeSwitch')?.querySelector('[data-mode="plan"]')?.classList.contains('is-on');
     $('modeSwitch')?.querySelector(`[data-mode="${plan ? 'plan' : 'build'}"]`)?.click();
@@ -5979,6 +5986,29 @@ function updateHomeMode() {
   const mode = state.info?.session?.mode === 'plan' ? 'Plan 模式' : '标准模式';
   const homeMode = $('homeMode');
   if (homeMode) homeMode.textContent = mode;
+}
+
+async function switchWorkspaceDialog() {
+  const current = state.info?.workspace ?? '';
+  const value = await openAppDialog({
+    title: '切换工作区',
+    body: '输入工作区绝对路径，之后的新会话会使用这个目录。',
+    value: current,
+    placeholder: 'D:\\project',
+    confirmLabel: '切换',
+  });
+  if (value === null || !String(value).trim() || value === current) return;
+  try {
+    const result = await post('session', { action: 'workspace', value: String(value).trim() });
+    if (result?.info) state.info = result.info;
+    if (result?.sessions) state.sessions = result.sessions;
+    renderHeader();
+    renderSidebar();
+    updateHomeMode();
+    toast('工作区已切换');
+  } catch (error) {
+    toast('切换失败：' + (error?.message ?? error));
+  }
 }
 
 boot().catch((error) => toast('加载失败：' + error.message));

@@ -4533,3 +4533,129 @@ input:focus-visible, textarea:focus-visible { outline: none; }
   --on-accent: #141414;
 }
 
+/* 侧栏品牌与主按钮 */
+.brand-logo { display: inline-grid; place-items: center; width: 20px; height: 20px; }
+.brand-logo svg { width: 20px; height: 20px; fill: none; stroke: var(--text); stroke-width: 1.6; stroke-linecap: round; stroke-linejoin: round; }
+.brand-badge {
+  padding: 1px 5px;
+  border-radius: 4px;
+  background: var(--text);
+  color: var(--bg);
+  font-size: 8.5px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+}
+.side-primary { display: flex; gap: 8px; padding: 0 10px 10px; }
+.new-session-btn {
+  flex: 1;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 8px;
+  height: 38px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: var(--panel-2);
+  color: var(--text);
+  font-size: 13px;
+  font-weight: 550;
+  cursor: pointer;
+}
+.new-session-btn:hover { background: var(--panel-3); }
+.side-square { width: 38px; height: 38px; border: 1px solid var(--line); }
+.side-section { display: flex; align-items: center; justify-content: space-between; }
+.side-section-actions { display: inline-flex; gap: 2px; }
+.side-mini {
+  display: inline-grid;
+  place-items: center;
+  width: 22px;
+  height: 22px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--text-3);
+  cursor: pointer;
+}
+.side-mini:hover { background: var(--panel-2); color: var(--text); }
+.side-mini svg { width: 13px; height: 13px; fill: none; stroke: currentColor; stroke-width: 1.6; }
+
+/* 首页标题：品牌图标 + 标语 + 预览版 */
+.home-brand {
+  display: inline-flex;
+  align-items: center;
+  gap: 12px;
+}
+.home-logo { width: 34px; height: 34px; fill: none; stroke: var(--text); stroke-width: 1.5; stroke-linecap: round; stroke-linejoin: round; }
+.home-title { font-size: 26px; font-weight: 600; letter-spacing: -0.01em; color: var(--text); }
+
+/* 首页不堆提示，只留输入 */
+.chat-card.home-mode .empty .suggest,
+.chat-card.home-mode .home-tips:not([hidden]),
+.chat-card.home-mode .empty-tips { display: none; }
+.chat-card.home-mode .composer { background: var(--panel-2); }
+.send-btn { border-radius: 50%; }
+
+/* 纯白底 + 720 内容宽度 */
+:root {
+  --bg-deep: #ffffff;
+  --bg: #ffffff;
+  --panel: #ffffff;
+  --surface: #ffffff;
+  --panel-2: #f6f6f6;
+  --panel-3: #ededed;
+}
+.msg,
+.composer,
+.composer-hint,
+.attachments,
+.home-meta { max-width: 720px; }
+.plan-card { max-width: 700px; }
+.todo-dock { max-width: 720px; }
+.chat-card.home-mode .composer {
+  max-width: 720px;
+  min-height: 120px;
+  padding: 16px 16px 12px;
+  background: var(--bg);
+}
+.chat-card.home-mode .composer textarea { min-height: 64px; }
+.chat-card.home-mode .composer-toolbar { padding-top: 10px; }
+.composer { padding: 10px 12px 10px 14px; }
+.composer textarea { min-height: 30px; }
+.home-title { font-size: 30px; }
+
+/* 会话列表作为工作区下的从属列表 */
+.session-list {
+  margin-left: 12px;
+  padding-left: 6px;
+  border-left: 1px solid var(--line);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root:not([data-theme='light']) {
+    --bg-deep: #0d0d0d;
+    --bg: #121212;
+    --panel: #171717;
+    --surface: #1c1c1c;
+    --panel-2: #202020;
+    --panel-3: #262626;
+    --line: rgba(255, 255, 255, 0.07);
+    --line-strong: rgba(255, 255, 255, 0.14);
+    --text: #ececec;
+    --text-2: #b4b4b4;
+    --text-3: #8a8a8a;
+  }
+}
+:root[data-theme='dark'] {
+  --bg-deep: #0d0d0d;
+  --bg: #121212;
+  --panel: #171717;
+  --surface: #1c1c1c;
+  --panel-2: #202020;
+  --panel-3: #262626;
+  --line: rgba(255, 255, 255, 0.07);
+  --line-strong: rgba(255, 255, 255, 0.14);
+  --text: #ececec;
+  --text-2: #b4b4b4;
+  --text-3: #8a8a8a;
+}
+
