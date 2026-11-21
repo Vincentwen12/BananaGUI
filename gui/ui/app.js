@@ -781,6 +781,9 @@ const state = {
   review: { open: false, mode: 'changes', width: 520 },
   sidebar: { open: true, width: 344 },
   sessionQuery: '',
+  workspaceCollapsed: new Set(),
+  threadLimit: 120,
+  threadSessionId: null,
   status: '',
   stickToBottom: true,
   dock: { open: false, height: 280 },
@@ -1167,15 +1170,37 @@ function renderSidebar() {
     list.appendChild(hint);
     return;
   }
-  sessions.forEach((item, index) => {
-    const label = dayOf(item.updatedAt);
-    if (label !== group) {
-      group = label;
-      const head = document.createElement('div');
-      head.className = 'sb-group';
-      head.textContent = label;
-      list.appendChild(head);
-    }
+  const byWorkspace = new Map();
+  for (const item of sessions) {
+    const key = item.workspace || state.info?.workspace || '未分组';
+    if (!byWorkspace.has(key)) byWorkspace.set(key, []);
+    byWorkspace.get(key).push(item);
+  }
+  const ordered = [...byWorkspace.entries()].sort((a, b) => {
+    const at = new Date(a[1][0]?.updatedAt ?? 0).getTime();
+    const bt = new Date(b[1][0]?.updatedAt ?? 0).getTime();
+    return bt - at;
+  });
+  let index = 0;
+  for (const [workspace, items] of ordered) {
+    const name = workspace.split(/[\\/]/).filter(Boolean).pop() || workspace;
+    const collapsed = state.workspaceCollapsed.has(workspace);
+    const head = document.createElement('div');
+    head.className = 'sb-workspace';
+    head.innerHTML =
+      `<button class="sb-ws-caret" type="button" aria-label="展开工作区">${svg(collapsed ? 'chevron' : 'chevronDown')}</button>` +
+      `<button class="sb-ws-name" type="button">${escapeHtml(name)}</button>` +
+      `<span class="sb-ws-count">${items.length}</span>`;
+    head.querySelector('.sb-ws-caret').addEventListener('click', (event) => {
+      event.stopPropagation();
+      if (collapsed) state.workspaceCollapsed.delete(workspace);
+      else state.workspaceCollapsed.add(workspace);
+      renderSidebar();
+    });
+    head.querySelector('.sb-ws-name').addEventListener('click', () => switchWorkspaceTo(workspace));
+    list.appendChild(head);
+    if (collapsed) continue;
+    for (const item of items) {
     const active = item.id === state.info?.session?.id ? ' is-active' : '';
     const node = document.createElement('div');
     node.className = `session-item${active}`;
@@ -1258,7 +1283,9 @@ function renderSidebar() {
       openSessionMenu(item, node);
     });
     list.appendChild(node);
-  });
+    index += 1;
+    }
+  }
 }
 
 /** 会话操作菜单：切换 / 重命名 / 导出 Markdown / 导出 JSON */
@@ -1577,7 +1604,25 @@ function renderThread() {
   THREAD.innerHTML = '';
   setCameraFollow(true);
   $('jumpLatest').hidden = true;
-  const messages = state.info?.session?.messages ?? [];
+  const sessionId = state.info?.session?.id ?? null;
+  if (state.threadSessionId !== sessionId) {
+    state.threadSessionId = sessionId;
+    state.threadLimit = 120;
+  }
+  const allMessages = state.info?.session?.messages ?? [];
+  const hidden = Math.max(0, allMessages.length - state.threadLimit);
+  const messages = hidden ? allMessages.slice(hidden) : allMessages;
+  if (hidden) {
+    const more = document.createElement('button');
+    more.className = 'thread-more';
+    more.type = 'button';
+    more.textContent = `加载更早的 ${hidden} 条`;
+    more.addEventListener('click', () => {
+      state.threadLimit += 120;
+      renderThread();
+    });
+    THREAD.appendChild(more);
+  }
   if (messages.length === 0) THREAD.appendChild(renderEmpty());
   else {
     const divider = document.createElement('div');
@@ -5986,6 +6031,21 @@ function updateHomeMode() {
   const mode = state.info?.session?.mode === 'plan' ? 'Plan 模式' : '标准模式';
   const homeMode = $('homeMode');
   if (homeMode) homeMode.textContent = mode;
+}
+
+async function switchWorkspaceTo(path) {
+  if (!path || path === state.info?.workspace) return;
+  try {
+    const result = await post('session', { action: 'workspace', value: path });
+    if (result?.info) state.info = result.info;
+    if (result?.sessions) state.sessions = result.sessions;
+    renderHeader();
+    renderSidebar();
+    updateHomeMode();
+    toast('工作区已切换');
+  } catch (error) {
+    toast('切换失败：' + (error?.message ?? error));
+  }
 }
 
 async function switchWorkspaceDialog() {

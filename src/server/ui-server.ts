@@ -505,6 +505,7 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
     title: item.title,
     updatedAt: item.updatedAt,
     turns: item.turns,
+    workspace: item.workspace ?? config.workspace,
   }));
 
   // ---------- 插件：本地插件工坊 ----------
@@ -601,6 +602,7 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
     if (!session) {
       // 没有会话时用一个不落盘的草稿承接界面状态；发第一条消息才保存。
       if (!blank) blank = store.create();
+      blank.workspace ??= config.workspace;
       session = blank;
       activeId = null;
     } else if (session !== blank) {
@@ -696,6 +698,7 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
       if (body.action === 'new') {
         blank = null;
         session = store.create(body.title?.trim() || '新对话');
+        session.workspace = config.workspace;
         // 用户明确指定了标题，后续自动标题不要覆盖它。
         if (body.title?.trim()) session.titleSource = 'user';
         await store.save(session);
@@ -732,6 +735,7 @@ export async function startUiServer(options: UiServerOptions): Promise<UiServerH
               blank = null;
             } else {
               session = store.create();
+              session.workspace = config.workspace;
               blank = session;
               activeId = null;
             }

@@ -32,6 +32,8 @@ export interface Session {
   updatedAt: string;
   provider?: string;
   model?: string;
+  /** 会话所属工作区（绝对路径），用于侧栏分组 */
+  workspace?: string;
   messages: UMessage[];
   /** 任务清单（todo_* 工具维护）。 */
   todos?: TodoItem[];
@@ -60,6 +62,7 @@ export interface SessionSummary {
   createdAt: string;
   turns: number;
   preview: string;
+  workspace?: string;
 }
 
 function pad(value: number): string {
@@ -105,6 +108,7 @@ export class SessionStore {
       createdAt: session.createdAt ?? '',
       turns: messages.filter((message) => message.role === 'user').length,
       preview: (lastUser?.content ?? '').replace(/\s+/g, ' ').slice(0, 80),
+      workspace: session.workspace,
     };
   }
 

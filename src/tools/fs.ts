@@ -43,6 +43,8 @@ export const IGNORED_DIRS = new Set([
 
 const MAX_READ_BYTES = 2_000_000;
 const MAX_TEXT_BYTES = 4_000_000;
+// 同一进程内按 mtime+size 缓存读取结果，重复读同一文件不再走 IO
+const readCache = new Map<string, ToolResult>();
 const DEFAULT_IGNORES = `默认忽略: ${[...IGNORED_DIRS].join(', ')}`;
 
 /** 解析目标路径上最近的已存在祖先，用于识别符号链接/短路径等真实位置。 */
@@ -240,6 +242,12 @@ export const readFileTool: Tool = {
       const info = await describe(target);
       if (info.isDirectory) return fail(`${target} 是目录，用 list_dir 查看内容。`);
 
+      const offset = Math.max(1, Number(input.offset) || 1);
+      const limitInput = Number(input.limit) || 0;
+      const cacheKey = `${target}|${info.modified}|${info.size}|${offset}|${limitInput}`;
+      const cached = readCache.get(cacheKey);
+      if (cached) return cached;
+
       const buffer = await readFile(target);
       if (buffer.byteLength > MAX_READ_BYTES) {
         return fail(
@@ -252,15 +260,17 @@ export const readFileTool: Tool = {
 
       const all = buffer.toString('utf8');
       const lines = all.split(/\r?\n/);
-      const offset = Math.max(1, Number(input.offset) || 1);
-      const limit = Number(input.limit) || lines.length;
+      const limit = limitInput || lines.length;
       const slice = lines.slice(offset - 1, offset - 1 + limit);
       const header = `${toDisplay(ctx, target)} | 共 ${lines.length} 行, ${info.size} 字节 | 从第 ${offset} 行起显示 ${slice.length} 行`;
       const body = truncateMiddle(lineNumbered(slice.join('\n'), offset), 24_000);
-      return ok(
+      const result = ok(
         `${header}\n\n${body}`,
         `读取 ${toDisplay(ctx, target)}（${slice.length} 行${lines.length > slice.length ? ` / 共 ${lines.length} 行` : ''}）`,
       );
+      if (readCache.size > 60) readCache.clear();
+      readCache.set(cacheKey, result);
+      return result;
     } catch (error) {
       return toolError(error);
     }
