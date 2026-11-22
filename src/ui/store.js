@@ -56,12 +56,13 @@ export function setLang(language) {
 export function workspaces() {
   const map = new Map();
   const active = store.session?.workspace || store.info?.workspace || '';
-  if (active) map.set(active, []);
   for (const session of store.sessions) {
     const workspace = session.workspace || active || '';
     if (!map.has(workspace)) map.set(workspace, []);
     map.get(workspace).push(session);
   }
+  // 当前工作区没有会话时补一个空组，但不要把它插到最前面，避免点击会话时整组跳到顶部
+  if (active && !map.has(active)) map.set(active, []);
   if (!map.size) map.set('', []);
   return [...map.entries()].map(([workspace, sessions]) => ({
     workspace,

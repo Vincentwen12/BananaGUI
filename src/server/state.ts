@@ -180,7 +180,6 @@ export class GuiState {
     this.session.workspace = workspace;
     this.session.mode = this.session.mode === 'plan' ? 'plan' : 'build';
     if (!this.session.reasoning) this.session.reasoning = 'standard';
-    await this.store.save(this.session);
     return this.session;
   }
 
