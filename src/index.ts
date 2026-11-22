@@ -15,7 +15,6 @@ import { createProvider } from './providers/index.ts';
 import { SessionStore } from './session/store.ts';
 import { allTools } from './tools/index.ts';
 import { loadPluginTools } from './tools/plugins.ts';
-import { startUiServer, openBrowser } from './server/ui-server.ts';
 import { join } from 'node:path';
 import { startRepl } from './cli/repl.ts';
 import { runSetupWizard } from './cli/setup.ts';
@@ -44,8 +43,8 @@ ${'🍌'} BananaCLI v${ui.version} - 终端里的多 provider AI agent
       --no-tools         不给 agent 任何工具（纯对话）
       --no-reasoning     不显示推理模型的思考过程
       --setup            运行/重新运行配置向导（配置 API key、模型、权限）
-      --ui               启动图形界面（本地服务 + 浏览器），不开终端对话
-      --port <端口>      指定 GUI 端口（默认随机端口）
+      --ui               启动图形界面（本地服务 + 浏览器）
+      --port <端口>      指定 GUI 端口（默认随机）
       --no-open          启动 GUI 时不自动打开浏览器
   -h, --help             显示帮助
   -v, --version          显示版本
@@ -86,6 +85,15 @@ interface Resolved {
   launchBrowser: boolean;
   firstRun: boolean;
   missingKey: boolean;
+}
+
+function parsePort(raw: string | undefined): number | undefined {
+  if (raw === undefined) return undefined;
+  const port = Number(raw);
+  if (!Number.isInteger(port) || port < 0 || port > 65535) {
+    throw new Error(`--port 需要 0–65535 的整数，收到 "${raw}"。`);
+  }
+  return port;
 }
 
 async function resolve(argv: string[]): Promise<Resolved> {
@@ -202,8 +210,8 @@ async function resolve(argv: string[]): Promise<Resolved> {
     trustProject: Boolean(values['trust-project']),
     setup: Boolean(values.setup),
     ui: Boolean(values.ui),
-    port: values.port ? Number(values.port) : undefined,
-    launchBrowser: values['no-open'] !== true,
+    port: parsePort(values.port),
+    launchBrowser: !values['no-open'],
     firstRun: !existsSync(configPath()),
     missingKey,
   };
@@ -238,7 +246,8 @@ async function main(): Promise<void> {
   }
 
   // 首次启动 / 缺少 key / --setup 时进入配置向导
-  const needsWizard = resolved.setup || (interactive && (resolved.firstRun || resolved.missingKey));
+  // --ui 首次启动不进入终端向导；留空的 key 由界面设置页处理。
+  const needsWizard = resolved.setup || (!resolved.ui && interactive && (resolved.firstRun || resolved.missingKey));
   let wizardRan = false;
   if (needsWizard) {
     if (!interactive) {
@@ -318,22 +327,41 @@ async function main(): Promise<void> {
     }
   }
 
-  // GUI 模式：本地服务 + 浏览器，不进入终端对话（不需要先有可用 provider）
+
+  // GUI 模式：启动本地服务后常驻，所有 agent 能力通过 HTTP/WebSocket 暴露。
   if (resolved.ui) {
-    const handle = await startUiServer({ config, store, tools, pluginTools, port: resolved.port });
-    ui.line();
-    ui.ok(`GUI 已启动：${handle.url}`);
-    ui.hint('只监听 127.0.0.1，URL 里的 token 是访问凭证，不要分享。按 Ctrl+C 退出。');
-    if (resolved.launchBrowser) openBrowser(handle.url);
-    await new Promise<void>((resolvePromise) => {
-      process.on('SIGINT', () => {
-        void handle.close().finally(() => resolvePromise());
+    try {
+      const { startUiServer } = await import('./server/ui-server.ts');
+      const gui = await startUiServer({
+        config,
+        store,
+        session,
+        provider,
+        tools,
+        port: resolved.port,
+        launchBrowser: resolved.launchBrowser,
       });
-    });
-    return;
+      ui.line(`BananaGUI 已启动：${gui.url}`);
+      ui.hint('  按 Ctrl+C 停止服务。URL 里的 token 用于保护本地接口，请不要分享。');
+      await new Promise<void>((resolve) => {
+        const stop = (): void => {
+          process.off('SIGINT', stop);
+          process.off('SIGTERM', stop);
+          resolve();
+        };
+        process.on('SIGINT', stop);
+        process.on('SIGTERM', stop);
+      });
+      await gui.close();
+      return;
+    } catch (error) {
+      ui.error(`GUI 启动失败: ${error instanceof Error ? error.message : String(error)}`);
+      process.exitCode = 1;
+      return;
+    }
   }
 
-  // 走到这里说明 provider 可用（GUI 分支已在上方返回）
+  // 走到这里说明 provider 可用
   const outcome = await startRepl({
     config,
     store,
