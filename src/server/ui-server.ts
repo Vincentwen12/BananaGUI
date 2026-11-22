@@ -38,10 +38,10 @@ class HttpError extends Error {
 export function resolveAssetsDir(explicit?: string): string {
   const candidates = [
     explicit,
+    join(process.cwd(), 'dist', 'ui'),
     join(UI_ROOT, '..', 'ui'),
     join(UI_ROOT, '..', '..', 'src', 'ui'),
     join(process.cwd(), 'src', 'ui'),
-    join(process.cwd(), 'dist', 'ui'),
   ].filter((candidate): candidate is string => Boolean(candidate));
   for (const candidate of candidates) {
     try {
