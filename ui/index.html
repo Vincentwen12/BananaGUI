@@ -2,23 +2,22 @@
 <html lang="zh-CN" data-theme="light">
   <head>
     <meta charset="utf-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1" />
+    <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
     <meta name="color-scheme" content="light dark" />
-    <title>BananaUI</title>
+    <title>Banana</title>
     <link rel="icon" href="/favicon.svg" type="image/svg+xml" />
     <link rel="stylesheet" href="/vendor/xterm.css" />
-    <link rel="stylesheet" href="/src/styles.css" />
-    <script>
-      try {
-        var t = localStorage.getItem('banana-theme');
-        if (t === 'dark' || t === 'light') document.documentElement.dataset.theme = t;
-      } catch {}
-    </script>
+    <link rel="stylesheet" href="/src/styles/tokens.css" />
+    <link rel="stylesheet" href="/src/styles/base.css" />
+    <link rel="stylesheet" href="/src/styles/app.css" />
+    <link rel="stylesheet" href="/src/styles/components.css" />
+    <link rel="stylesheet" href="/src/styles/chat.css" />
   </head>
   <body>
     <div id="root"></div>
     <script src="/vendor/xterm.js"></script>
     <script src="/vendor/addon-fit.js"></script>
+    <script src="/vendor/highlight.min.js"></script>
     <script type="module" src="/src/main.tsx"></script>
   </body>
 </html>

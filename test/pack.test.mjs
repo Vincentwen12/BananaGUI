@@ -1,6 +1,6 @@
 // 发布包完整性测试：打完包后确认 tarball 里真的有界面资源。
 //
-// 之前踩过的坑：源码运行时能找到 src/ui，一切正常；但 npm publish 只带 dist/，
+// 之前踩过的坑：源码运行时能找到界面，一切正常；但 npm publish 只带 dist/，
 // 装到用户机器上就没有 ui/，打开页面直接 404。所以必须在"发布形态"下测。
 import { execFileSync } from 'node:child_process';
 import { existsSync, mkdtempSync, readFileSync, rmSync, writeFileSync } from 'node:fs';
@@ -25,7 +25,11 @@ function check(name, condition, detail = '') {
 const temp = mkdtempSync(join(root, '.tmp-pack-'));
 
 try {
-  execFileSync('node', ['scripts/copy-ui.mjs'], { cwd: root, stdio: 'pipe' });
+  execFileSync('npm', ['run', 'build:ui'], {
+    cwd: root,
+    stdio: 'pipe',
+    shell: process.platform === 'win32',
+  });
   const raw = execFileSync('npm', ['pack', '--json', '--pack-destination', temp], {
     cwd: root,
     stdio: 'pipe',
@@ -38,8 +42,8 @@ try {
   const files = parsed[0].files.map((file) => file.path);
 
   check('包内包含界面页面', files.includes('dist/ui/index.html'), files.filter((f) => f.includes('ui')).join(','));
-  check('包内包含界面脚本', files.includes('dist/ui/app.js'));
-  check('包内包含样式', files.includes('dist/ui/style.css'));
+  check('包内包含界面脚本', files.some((file) => /^dist\/ui\/assets\/index-.*\.js$/.test(file)), files.filter((f) => f.includes('ui/assets')).join(','));
+  check('包内包含样式', files.some((file) => /^dist\/ui\/assets\/index-.*\.css$/.test(file)), files.filter((f) => f.includes('ui/assets')).join(','));
   check('包内包含 CLI 入口', files.includes('dist/index.js'));
   check('包内包含 GUI 服务', files.includes('dist/server/ui-server.js'));
   check('包内包含终端资源', files.includes('dist/ui/vendor/xterm.js') && files.includes('dist/ui/vendor/xterm.css') && files.includes('dist/ui/vendor/addon-fit.js'));
@@ -86,8 +90,8 @@ try {
     console.log(JSON.stringify({
       dir,
       index: existsSync(join(dir, 'index.html')),
-      app: existsSync(join(dir, 'app.js')),
-      css: existsSync(join(dir, 'style.css')),
+      app: existsSync(join(dir, 'assets')),
+      css: existsSync(join(dir, 'assets')),
       xterm: existsSync(join(dir, 'vendor', 'xterm.js')),
       fit: existsSync(join(dir, 'vendor', 'addon-fit.js')),
       highlight: existsSync(join(dir, 'vendor', 'highlight.min.js')),

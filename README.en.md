@@ -382,8 +382,8 @@ src/                  CLI core
   server/             local GUI server and terminal PTY
   session/            session storage, backups, /undo
   cli/                REPL, slash commands, completion, setup wizard, terminal UI
-  ui/                 browser UI (HTML/CSS/JS, no frontend framework)
-gui/                  standalone GUI package (launchers, Electron shell, synced ui/)
+  ui/                 browser UI (SolidJS + Vite, modular components and tokens)
+gui/                  standalone GUI package (launchers, Electron shell, built ui/)
 docs/design/          UI principles, tokens, components, states, accessibility, checklist, reference cards
 docs/failures.md      failure library
 docs/prompt-versions.md  prompt and knowledge-pack version log
@@ -401,8 +401,8 @@ npm run build       # compile to dist/ (for publishing)
 npm run ui:check    # anti-AI UI scan only
 npm run eval        # contract eval (prompt/knowledge pack/key behavior)
 npm run ab          # contract A/B for two prompt suffixes
-npm run gui:sync    # src/ui -> gui/ui
-npm run gui:check   # verify both UI copies match
+npm run gui:sync    # dist/ui -> gui/ui (Electron package)
+npm run gui:check   # verify build output and gui/ui match
 ```
 
 Comment convention:

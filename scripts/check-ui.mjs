@@ -1,4 +1,4 @@
-// UI 反 AI 味扫描：默认扫 src/ui；也可以传任意目录/文件。
+// UI 反 AI 味扫描：默认扫 ui/src；也可以传任意目录/文件。
 // 规则与 src/util/ui-audit.ts 共用，文档见 docs/design/。
 import { existsSync } from 'node:fs';
 import { dirname, join } from 'node:path';
@@ -10,7 +10,7 @@ const args = process.argv.slice(2);
 const json = args.includes('--json');
 const strictTokens = args.includes('--strict-tokens');
 const paths = args.filter((arg) => !arg.startsWith('--'));
-const targets = paths.length ? paths : [join(root, 'src', 'ui')];
+const targets = paths.length ? paths : [join(root, 'ui', 'src')];
 
 for (const target of targets) {
   if (!existsSync(target)) {

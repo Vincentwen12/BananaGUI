@@ -4,13 +4,14 @@
 
 | 文档 | 规则 |
 |---|---|
+| [geist-adoption.md](geist-adoption.md) | **设计基准**：ChatGPT 布局 + DeepSeek 对话细节 + 扁平化 |
 | [principles.md](principles.md) | 9 条硬禁用 + 6 条正向要求 |
 | [tokens.md](tokens.md) | `design-tokens.json` 令牌契约 |
-| [components.md](components.md) | 按钮/输入/卡片/弹窗/计划卡/任务栏 |
+| [components.md](components.md) | 按钮/输入/弹窗/计划卡/任务栏 |
 | [states.md](states.md) | 交互八态 |
 | [accessibility.md](accessibility.md) | 对比度、焦点、aria、键盘 |
 | [typography-spacing.md](typography-spacing.md) | 字号、行高、间距、栅格 |
-| [layout.md](layout.md) | 桌面/窄屏/侧栏/Review/终端 |
+| [layout.md](layout.md) | 桌面/窄屏/侧栏/右栏/终端 |
 | [forms.md](forms.md) | 表单、校验、错误、危险确认 |
 | [data-display.md](data-display.md) | 表格、diff、空状态 |
 | [motion.md](motion.md) | 时长、缓动、减少动效 |
@@ -19,12 +20,12 @@
 
 ## 参考卡
 
-- [Linear](refs/linear.md)
-- [Notion](refs/notion.md)
-- [Stripe](refs/stripe.md)
-- [GitHub Primer](refs/github-primer.md)
-- [GOV.UK](refs/govuk.md)
-- [开源项目清单](refs/open-source.md)
+界面基准是两套成熟对话产品：
+
+- **ChatGPT**：左侧会话栏、居中对话列、助手无气泡、悬浮输入框、hover 操作。
+- **DeepSeek**：思考折叠条、工具调用分组、克制的灰白层级、蓝色聚焦态。
+
+品牌仍是 Banana 的香蕉黄，但只用于 logo 圆点、链接与终端光标。
 
 ## 示例
 

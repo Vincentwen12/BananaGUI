@@ -4,7 +4,7 @@
 
 - 按钮、输入、卡片、弹窗、计划卡、任务栏必须有明确状态和令牌。
 - 主按钮用 `--accent` + `--on-accent`；次按钮用 `--panel-2`；幽灵按钮透明。
-- 卡片背景 `--bg`/`--panel`，边框 `--line`，圆角 ≤ 8px，阴影最多 `--shadow-sm`。
+- 卡片背景 `--bg`/`--panel`，边框 `--line`，圆角 ≤ 10px，阴影最多 `--shadow-sm`。
 - 弹窗遮罩用半透明实色，不用模糊；圆角 8px，阴影 `--shadow-overlay`。
 - 计划卡只在 pending 时显示操作；批准后由验证页签推进阶段。
 - 任务栏只显示 pending / in_progress；全部完成或取消后收起。

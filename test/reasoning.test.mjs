@@ -7,7 +7,7 @@ import {
   processStatusFromStop,
   stripReasoningSignature,
   summaryOf,
-} from '../src/ui/reasoning-utils.js';
+} from '../ui/src/lib/reasoning.ts';
 
 let passed = 0;
 const failures = [];

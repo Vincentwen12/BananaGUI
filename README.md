@@ -380,8 +380,8 @@ src/                  CLI 内核
   server/             GUI 本地服务、终端 PTY
   session/            会话落盘、备份与 /undo
   cli/                REPL、slash 命令、补全、配置向导、终端输出
-  ui/                 浏览器界面（HTML/CSS/JS，无前端框架）
-gui/                  独立 GUI 包（启动器、Electron 桌面壳、同步的 ui/）
+  ui/                浏览器界面（SolidJS + Vite，模块化组件与设计令牌）
+gui/                  独立 GUI 包（启动器、Electron 桌面壳、构建产物 ui/）
 docs/design/          UI 原则、令牌、组件、状态、无障碍、自检清单、参考卡、good/bad 示例
 design-tokens.json    唯一设计令牌源
 docs/failures.md      失败案例库
@@ -397,12 +397,12 @@ npm run typecheck   # tsc --noEmit
 npm test            # 类型检查 + UI 扫描 + 全量测试
 npm run dev         # node --watch
 npm run build       # 编译到 dist/（发布用）
-npm run ui:check    # 只跑 UI 反 AI 味扫描（默认 src/ui）
+npm run ui:check    # 只跑 UI 反 AI 味扫描（默认 ui/src）
 node scripts/check-ui.mjs path/to/ui   # 扫描任意 UI 文件/目录
 npm run eval        # 契约评测（提示词/知识包/关键行为）
 npm run ab          # 两组提示词后缀的契约 A/B
-npm run gui:sync    # src/ui -> gui/ui
-npm run gui:check   # 校验两套 UI 一致
+npm run gui:sync    # dist/ui -> gui/ui（Electron 包）
+npm run gui:check   # 校验构建产物与 gui/ui 一致
 ```
 
 注释约定：

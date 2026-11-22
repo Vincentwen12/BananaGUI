@@ -65,7 +65,7 @@ writeFileSync(
 const server = await startUiServer({
   port: 0,
   authToken: 'gui-test-token',
-  assetsDir: join(root, 'src', 'ui'),
+  assetsDir: join(root, 'ui'),
   launchBrowser: false,
   workspace,
 });
@@ -165,14 +165,14 @@ try {
   check('token URL 设置 cookie 并重定向', tokenRedirect.status === 302 && Boolean(tokenRedirect.headers.get('set-cookie')));
   const page = await http('/index.html');
   const pageText = await page.text();
-  check('界面页面可访问', page.status === 200 && pageText.includes('探索香蕉之境'));
+  check('界面页面可访问', page.status === 200 && pageText.includes('Banana'));
   check('页面带 CSP', Boolean(page.headers.get('content-security-policy')));
   const bootstrap = await json('/api/bootstrap');
   check('bootstrap 返回会话和模型信息', Boolean(bootstrap.session?.id && bootstrap.info?.currentProvider));
   check('bootstrap 不泄露 API key', !JSON.stringify(bootstrap).includes('sk-gui-test-secret'));
   check('bootstrap 标记 provider 已有 key', bootstrap.info.providers.some((provider) => provider.hasKey));
 
-  const uiAudit = auditPaths([join(root, 'src', 'ui')], { strictTokens: true });
+  const uiAudit = auditPaths([join(root, 'ui', 'src')], { strictTokens: true });
   check('界面通过反 AI 味扫描', uiAudit.violations.every((item) => item.severity !== 'fail'));
 
   process.stdout.write('\n会话与文件\n');

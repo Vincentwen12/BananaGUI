@@ -40,8 +40,6 @@ export function resolveAssetsDir(explicit?: string): string {
     explicit,
     join(process.cwd(), 'dist', 'ui'),
     join(UI_ROOT, '..', 'ui'),
-    join(UI_ROOT, '..', '..', 'src', 'ui'),
-    join(process.cwd(), 'src', 'ui'),
   ].filter((candidate): candidate is string => Boolean(candidate));
   for (const candidate of candidates) {
     try {
@@ -50,7 +48,7 @@ export function resolveAssetsDir(explicit?: string): string {
       // 继续找
     }
   }
-  throw new Error('找不到 GUI 界面资源：需要 src/ui/index.html 或 dist/ui/index.html。');
+  throw new Error('找不到 GUI 界面资源：需要 dist/ui/index.html。先运行 npm run build:ui。');
 }
 
 const MIME: Record<string, string> = {
