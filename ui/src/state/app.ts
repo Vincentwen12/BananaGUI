@@ -316,6 +316,22 @@ export function createAppState() {
       const data = await api.create({ title });
       setState('session', data.session);
       setState('messages', []);
+      // 先在侧栏占位，避免刷新期间新对话看起来“没保存”。
+      setState('sessions', (list) => {
+        if (list.some((item) => item.id === data.session.id)) return list;
+        return [
+          {
+            id: data.session.id,
+            title: data.session.title || title,
+            updatedAt: data.session.updatedAt ?? new Date().toISOString(),
+            createdAt: data.session.createdAt ?? new Date().toISOString(),
+            turns: 0,
+            preview: '',
+            workspace: data.session.workspace,
+          },
+          ...list,
+        ];
+      });
       await refresh();
       setState({ pluginsOpen: false });
       if (window.innerWidth <= 840) setState('sidebarOpen', false);

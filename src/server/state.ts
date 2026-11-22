@@ -185,7 +185,7 @@ export class GuiState {
 
   async createSession(title = '新对话'): Promise<Session> {
     const session = this.store.create(cleanTitle(title) || '新对话');
-    session.workspace = this.config.workspace;
+    session.workspace = this.session.workspace || this.config.workspace;
     session.mode = 'build';
     session.reasoning = 'standard';
     session.titleSource = title === '新对话' ? 'auto' : 'user';
