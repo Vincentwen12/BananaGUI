@@ -184,7 +184,7 @@ try {
   });
   check('重命名会话', renamed.session?.title === '改名后的会话');
   const list = await json('/api/sessions');
-  check('会话列表包含新会话', list.sessions.some((session) => session.id === created.session.id));
+  check('空白会话不进列表', !list.sessions.some((session) => session.id === created.session.id));
   const files = await json('/api/files?q=note');
   check('@ 文件补全能找到文件', files.files.some((file) => file.path === 'note.txt'));
   const tree = await json('/api/file/tree');
@@ -208,6 +208,8 @@ try {
   check('回合正常结束', turnEnd.stopReason === 'done', JSON.stringify(turnEnd));
   const saved = await json(`/api/sessions/${created.session.id}`);
   check('会话落盘包含 user/assistant/tool', ['user', 'assistant', 'tool'].every((role) => saved.session.messages.some((message) => message.role === role)));
+  const afterTurn = await json('/api/sessions');
+  check('发过消息后进入列表', afterTurn.sessions.some((session) => session.id === created.session.id));
 
   process.stdout.write('\n审批\n');
   const shellCreated = await json('/api/sessions', { method: 'POST', body: JSON.stringify({ title: '审批会话' }) });

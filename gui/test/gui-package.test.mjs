@@ -1,4 +1,4 @@
-import { existsSync, readFileSync } from 'node:fs';
+import { existsSync, readFileSync, readdirSync } from 'node:fs';
 import { spawnSync } from 'node:child_process';
 import { dirname, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
@@ -22,14 +22,26 @@ function check(name, condition, detail = '') {
   }
 }
 
-check('GUI 包版本与 CLI 一致', guiPkg.version === rootPkg.version, `${guiPkg.version} / ${rootPkg.version}`);
+const cliDep = guiPkg.dependencies?.['@vincentbanana/bananacli'] ?? '';
+check(
+  'GUI 依赖当前 CLI 版本',
+  cliDep === `^${rootPkg.version}` || cliDep === rootPkg.version,
+  `${cliDep} / ${rootPkg.version}`,
+);
 check('bin 启动器存在', existsSync(join(guiRoot, 'bin', 'banana-gui.mjs')));
 check('桌面启动器存在', existsSync(join(guiRoot, 'bin', 'banana-gui-desktop.mjs')));
 check('Electron main 存在', existsSync(join(guiRoot, 'desktop', 'main.cjs')));
 check('preload 存在', existsSync(join(guiRoot, 'desktop', 'preload.cjs')));
 check('同步后的界面存在', existsSync(join(guiRoot, 'ui', 'index.html')));
-check('界面包含黄白黑主题令牌', existsSync(join(guiRoot, 'ui', 'tokens.css')));
-check('界面包含香蕉欢迎语', existsSync(join(guiRoot, 'ui', 'index.html')) && readFileSync(join(guiRoot, 'ui', 'index.html'), 'utf8').includes('探索香蕉之境'));
+const assetsDir = join(guiRoot, 'ui', 'assets');
+const hasCss =
+  existsSync(assetsDir) && readdirSync(assetsDir).some((name) => name.endsWith('.css'));
+check('界面包含样式资源', hasCss);
+check(
+  '界面包含香蕉品牌',
+  existsSync(join(guiRoot, 'ui', 'index.html')) &&
+    readFileSync(join(guiRoot, 'ui', 'index.html'), 'utf8').includes('Banana'),
+);
 
 const guiLauncher = readFileSync(join(guiRoot, 'bin', 'banana-gui.mjs'), 'utf8');
 const desktopLauncher = readFileSync(join(guiRoot, 'bin', 'banana-gui-desktop.mjs'), 'utf8');

@@ -316,22 +316,6 @@ export function createAppState() {
       const data = await api.create({ title });
       setState('session', data.session);
       setState('messages', []);
-      // 先在侧栏占位，避免刷新期间新对话看起来“没保存”。
-      setState('sessions', (list) => {
-        if (list.some((item) => item.id === data.session.id)) return list;
-        return [
-          {
-            id: data.session.id,
-            title: data.session.title || title,
-            updatedAt: data.session.updatedAt ?? new Date().toISOString(),
-            createdAt: data.session.createdAt ?? new Date().toISOString(),
-            turns: 0,
-            preview: '',
-            workspace: data.session.workspace,
-          },
-          ...list,
-        ];
-      });
       await refresh();
       setState({ pluginsOpen: false });
       if (window.innerWidth <= 840) setState('sidebarOpen', false);
@@ -652,6 +636,26 @@ export function createAppState() {
       ...list,
       { role: 'user', content: value, images: images.length ? images : undefined },
     ]);
+    // 首次发送后才把对话放进侧栏列表。
+    const current = state.session;
+    if (current) {
+      setState('sessions', (list) => {
+        if (list.some((item) => item.id === current.id)) return list;
+        const flat = value.replace(/\s+/g, ' ').trim();
+        return [
+          {
+            id: current.id,
+            title: flat.length > 42 ? `${flat.slice(0, 42)}…` : flat,
+            updatedAt: new Date().toISOString(),
+            createdAt: current.createdAt ?? new Date().toISOString(),
+            turns: 1,
+            preview: flat.slice(0, 80),
+            workspace: current.workspace,
+          },
+          ...list,
+        ];
+      });
+    }
     setState({ draft: '', images: [], running: true, status: '正在处理' });
     setScrollTick((n) => n + 1);
     setFocusTick((n) => n + 1);

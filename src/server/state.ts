@@ -555,14 +555,16 @@ export class GuiState {
   async bootstrap(isDesktop: boolean): Promise<Bootstrap> {
     return {
       info: this.publicInfo(isDesktop),
-      sessions: await this.store.list(),
+      sessions: await this.sessionSummaries(),
       session: this.session,
       ...(this.config.agentDoc ? { agentDoc: this.config.agentDoc } : {}),
     };
   }
 
   async sessionSummaries(): Promise<SessionSummary[]> {
-    return this.store.list();
+    const sessions = await this.store.list();
+    // 还没有发过消息的空白对话不进侧栏，避免每次新建都留下“新对话”。
+    return sessions.filter((item) => item.turns > 0);
   }
 
   hasProvider(): boolean {
