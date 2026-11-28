@@ -337,7 +337,7 @@ export function Settings(props: { app: AppState }) {
                 </select>
               </SettingRow>
               <p class="settings-desc">
-                {['openai', 'anthropic', 'gemini', 'qwen'].includes(state.info?.currentProvider ?? '')
+                {['openai', 'anthropic', 'gemini', 'qwen', 'deepseek'].includes(state.info?.currentProvider ?? '')
                   ? '当前模型支持官方内置搜索，按次计费。'
                   : '当前模型没有官方搜索，会自动降级到 Brave / Tavily，都没有时使用免费源。'}
               </p>

@@ -241,13 +241,14 @@ async function searchBrave(
 
 /* ---------- 官方内置搜索 ---------- */
 
-type NativeKind = 'openai' | 'anthropic' | 'gemini' | 'qwen';
+type NativeKind = 'openai' | 'anthropic' | 'gemini' | 'qwen' | 'deepseek';
 
 function nativeKind(config: NonNullable<ToolContext['nativeSearch']>): NativeKind | null {
   if (config.provider === 'openai') return 'openai';
   if (config.provider === 'anthropic' || config.protocol === 'anthropic') return 'anthropic';
   if (config.provider === 'gemini') return 'gemini';
   if (config.provider === 'qwen') return 'qwen';
+  if (config.provider === 'deepseek' || /deepseek\.com/i.test(config.baseUrl)) return 'deepseek';
   return null;
 }
 
@@ -421,6 +422,44 @@ async function searchGemini(
       title: chunk.web?.title ?? chunk.web?.uri ?? '',
       url: chunk.web?.uri ?? '',
       snippet: String(supports[index]?.segment?.text ?? text).slice(0, 500),
+    })),
+  ).slice(0, count);
+}
+
+async function searchDeepSeek(
+  query: string,
+  count: number,
+  ctx: ToolContext,
+  config: NonNullable<ToolContext['nativeSearch']>,
+  options: SearchOptions,
+): Promise<SearchHit[]> {
+  const base = config.baseUrl.replace(/\/+$/, '');
+  const response = await fetchWithTimeout(
+    `${base}/tools/search`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${config.apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        query: scopedQuery(query, options.site),
+        count: Math.min(Math.max(count, 1), 20),
+        need_content: options.deep,
+      }),
+    },
+    ctx,
+    SEARCH_TIMEOUT_MS,
+  );
+  if (!response.ok) throw new Error(`DeepSeek 搜索 HTTP ${response.status}`);
+  const payload = (await response.json()) as {
+    results?: Array<Record<string, unknown>>;
+  };
+  return dedupeHits(
+    (payload.results ?? []).map((item) => ({
+      title: String(item['title'] ?? item['url'] ?? ''),
+      url: String(item['url'] ?? ''),
+      snippet: String(item['summary'] ?? item['snippet'] ?? item['content'] ?? '').slice(0, 500),
     })),
   ).slice(0, count);
 }
@@ -770,7 +809,7 @@ export const webSearchTool: Tool = {
   name: 'web_search',
   description: [
     '联网搜索，返回标题、链接和摘要。',
-    '默认优先使用当前 provider 的官方内置搜索（OpenAI / Claude / Gemini / Qwen）；',
+    '默认优先使用当前 provider 的官方内置搜索（OpenAI / DeepSeek / Claude / Gemini / Qwen）；',
     '官方不可用时降级到 Tavily / Brave，需要先在设置里配置 Key。',
     'depth=deep 时会读取前几页正文，适合查文档、对比方案；日常事实核对用默认的 quick 即可。',
     '搜不到就换关键词再试，别靠猜。',
@@ -853,7 +892,9 @@ export const webSearchTool: Tool = {
                 ? await searchAnthropic(query, count, ctx, nativeConfig, options)
                 : kind === 'gemini'
                   ? await searchGemini(query, count, ctx, nativeConfig, options)
-                  : await searchQwen(query, count, ctx, nativeConfig, options);
+                  : kind === 'deepseek'
+                    ? await searchDeepSeek(query, count, ctx, nativeConfig, options)
+                    : await searchQwen(query, count, ctx, nativeConfig, options);
           if (hits.length) engines.push({ engine: `官方 · ${nativeConfig.provider}`, hits });
           else problems.push(`官方搜索: 没有结果`);
         } catch (error) {
