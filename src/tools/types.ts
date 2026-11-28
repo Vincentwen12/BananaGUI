@@ -56,6 +56,16 @@ export interface ToolContext {
   recordChange?: (path: string, before: string | null) => Promise<void>;
   /** 联网搜索配置（Key 已从配置/环境变量解析前的原始配置）。 */
   search?: SearchConfig;
+  /** 当前 provider 的官方联网搜索参数（含 Key，仅在本轮内存里使用）。 */
+  nativeSearch?: NativeSearchConfig;
+}
+
+export interface NativeSearchConfig {
+  provider: string;
+  protocol: 'openai' | 'anthropic';
+  baseUrl: string;
+  apiKey: string;
+  model: string;
 }
 
 export interface ToolResult {

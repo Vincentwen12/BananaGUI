@@ -1,6 +1,6 @@
 import { randomBytes } from 'node:crypto';
 import { join } from 'node:path';
-import { bananaHome, formatPreferences } from '../config/config.ts';
+import { bananaHome, formatPreferences, resolveProvider } from '../config/config.ts';
 import { runTurn } from '../agent/loop.ts';
 import type { UMessage } from '../providers/types.ts';
 import { estimateTokens } from '../agent/context.ts';
@@ -242,6 +242,21 @@ export async function runGuiTurn(
         facts: state.session.facts ?? [],
         unknowns: state.session.unknowns ?? [],
         search: state.config.search,
+        nativeSearch: (() => {
+          try {
+            const resolved = resolveProvider(state.config.current, state.config);
+            if (!resolved.apiKey) return undefined;
+            return {
+              provider: state.config.current,
+              protocol: resolved.config.protocol,
+              baseUrl: resolved.config.baseUrl,
+              apiKey: resolved.apiKey,
+              model: resolved.config.model,
+            };
+          } catch {
+            return undefined;
+          }
+        })(),
         budget: state.config.budget,
         uiGuard: state.config.uiGuard,
         reasoning: state.reasoning(),

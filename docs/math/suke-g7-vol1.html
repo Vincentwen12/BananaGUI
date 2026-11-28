@@ -1,0 +1,947 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>苏科版数学七年级上册 · 思维导图与知识点总结</title>
+<style>
+/* 颜色/间距取自项目 design-tokens.json，此处集中声明为变量，页面内不再出现裸色值 */
+:root{
+  --bg:#ffffff;
+  --panel2:#f2f2ef;
+  --border:#e7e7e2;
+  --border-strong:#d6d6cf;
+  --text:#1b1b19;
+  --text2:#5d5d57;
+  --text3:#8b8b83;
+  --link:#2f62d8;
+  --success:#2f7d50;
+  --warning:#946200;
+  --danger:#c93a2e;
+  --brand:#f5c518;
+  --radius:6px;
+  --gap:16px;
+}
+
+*{box-sizing:border-box}
+html{scroll-behavior:auto}
+body{
+  margin:0;
+  background:var(--bg);
+  color:var(--text);
+  font:14px/1.75 -apple-system,BlinkMacSystemFont,"Segoe UI","Microsoft YaHei","PingFang SC","Hiragino Sans GB",sans-serif;
+  -webkit-font-smoothing:antialiased;
+}
+
+/* ---------- 布局 ---------- */
+.layout{display:grid;grid-template-columns:236px minmax(0,1fr);min-height:100vh}
+
+.sidebar{
+  position:sticky;top:0;align-self:start;height:100vh;overflow-y:auto;
+  padding:24px 16px 32px;
+  border-right:1px solid var(--border);
+  background:var(--bg);
+}
+.sidebar .brand{
+  font-size:13px;font-weight:600;letter-spacing:.02em;
+  padding-bottom:12px;margin-bottom:12px;
+  border-bottom:1px solid var(--border);
+}
+.sidebar .brand small{display:block;font-weight:400;color:var(--text3);font-size:11.5px;margin-top:2px}
+.toc{list-style:none;margin:0;padding:0}
+.toc li{margin:0}
+.toc a{
+  display:block;padding:5px 8px;border-radius:4px;
+  color:var(--text2);text-decoration:none;font-size:13px;
+  border-left:2px solid transparent;
+}
+.toc a:hover{background:var(--panel2);color:var(--text)}
+.toc a.active{color:var(--text);font-weight:600;border-left-color:var(--text);background:var(--panel2)}
+.toc .sub a{font-size:12.5px;color:var(--text3);padding-left:20px}
+
+main{padding:40px 48px 96px;max-width:920px}
+
+/* ---------- 页头 ---------- */
+.page-head{margin-bottom:36px;padding-bottom:20px;border-bottom:1px solid var(--border)}
+.page-head h1{font-size:24px;line-height:1.4;margin:0 0 8px;letter-spacing:.01em}
+.page-head .meta{color:var(--text3);font-size:12.5px;margin:0}
+.note{
+  margin:16px 0 0;padding:10px 12px;
+  border:1px solid var(--border);border-left:3px solid var(--warning);
+  border-radius:0 var(--radius) var(--radius) 0;
+  background:var(--panel2);
+  color:var(--text2);font-size:12.5px;
+}
+.note b{color:var(--text)}
+
+/* ---------- 通用标题 ---------- */
+h2.sec{
+  font-size:19px;margin:44px 0 6px;padding-top:8px;
+  letter-spacing:.01em;
+}
+h2.sec .idx{color:var(--text3);font-size:13px;font-weight:400;margin-right:8px}
+.sec-lead{color:var(--text2);margin:0 0 18px;font-size:13px}
+h3{font-size:14.5px;margin:24px 0 8px;color:var(--text)}
+h3::before{content:"";display:inline-block;width:6px;height:6px;background:var(--text);margin-right:8px;vertical-align:2px;border-radius:1px}
+p{margin:8px 0}
+
+/* ---------- 思维导图 ---------- */
+.map{
+  display:grid;grid-template-columns:150px minmax(0,1fr);
+  gap:28px;align-items:center;
+  padding:20px 0 4px;
+}
+.map-root{
+  border:1px solid var(--text);border-radius:var(--radius);
+  padding:16px 12px;text-align:center;font-weight:600;line-height:1.5;font-size:13.5px;
+  background:var(--bg);
+}
+.map-root small{display:block;font-weight:400;color:var(--text3);font-size:11.5px;margin-top:4px}
+.map-branches{
+  position:relative;display:flex;flex-direction:column;gap:10px;
+  padding-left:26px;
+}
+.map-branches::before{
+  content:"";position:absolute;left:11px;top:26px;bottom:26px;
+  border-left:1px solid var(--border-strong);
+}
+.branch{position:relative;border:1px solid var(--border);border-radius:var(--radius);background:var(--bg)}
+.branch::before{
+  content:"";position:absolute;left:-15px;top:23px;width:15px;
+  border-top:1px solid var(--border-strong);
+}
+.branch-head{
+  display:flex;align-items:baseline;gap:10px;
+  padding:9px 12px;background:var(--panel2);
+  border-bottom:1px solid var(--border);
+  cursor:pointer;user-select:none;
+  border-radius:var(--radius) var(--radius) 0 0;
+}
+.branch-head .num{
+  font-size:11.5px;color:var(--text3);font-variant-numeric:tabular-nums;
+  border:1px solid var(--border-strong);border-radius:3px;padding:0 5px;line-height:1.6;
+}
+.branch-head .name{font-weight:600;font-size:13.5px}
+.branch-head .toggle{margin-left:auto;color:var(--text3);font-size:12px}
+.leaves{
+  list-style:none;margin:0;padding:10px 12px;
+  display:flex;flex-wrap:wrap;gap:6px;
+}
+.leaves li{
+  font-size:12.5px;color:var(--text2);
+  border:1px solid var(--border);border-radius:4px;
+  padding:2px 8px;background:var(--bg);
+}
+.branch.collapsed .leaves{display:none}
+.branch.collapsed .branch-head{border-bottom-color:transparent;border-radius:var(--radius)}
+
+/* ---------- 章节卡 ---------- */
+.chapter{
+  border:1px solid var(--border);border-radius:var(--radius);
+  padding:22px 24px 26px;margin:22px 0;
+  break-inside:avoid;
+}
+.chapter > .ch-head{display:flex;align-items:baseline;gap:10px;border-bottom:1px solid var(--border);padding-bottom:10px}
+.ch-num{
+  font-size:11.5px;color:var(--text3);border:1px solid var(--border-strong);
+  border-radius:3px;padding:0 6px;font-variant-numeric:tabular-nums;
+}
+.ch-head h2{font-size:17px;margin:0}
+.ch-lead{color:var(--text2);font-size:12.5px;margin:12px 0 0}
+
+/* ---------- 表格 ---------- */
+table{border-collapse:collapse;width:100%;margin:10px 0 4px;font-size:13px}
+th,td{border:1px solid var(--border);padding:6px 10px;text-align:left;vertical-align:top}
+th{background:var(--panel2);font-weight:600;color:var(--text);white-space:nowrap}
+td code,p code,li code{
+  font-family:"SFMono-Regular",Consolas,"Liberation Mono",monospace;
+  font-size:12.5px;background:var(--panel2);border-radius:3px;padding:1px 4px;
+}
+.formula{font-family:Georgia,"Times New Roman",serif;font-style:italic}
+.formula sup{font-style:normal}
+
+/* ---------- 列表 ---------- */
+ul.plain,ol.plain{margin:8px 0;padding-left:20px}
+ul.plain li,ol.plain li{margin:4px 0}
+ul.warn{list-style:none;margin:8px 0;padding:0}
+ul.warn li{
+  position:relative;padding-left:16px;margin:5px 0;font-size:13px;color:var(--text2);
+}
+ul.warn li::before{
+  content:"";position:absolute;left:2px;top:10px;width:5px;height:5px;
+  background:var(--danger);border-radius:1px;
+}
+ul.warn li b{color:var(--text)}
+
+/* ---------- 例题 ---------- */
+.eg{border:1px solid var(--border);border-radius:var(--radius);padding:12px 14px;margin:12px 0;background:var(--bg)}
+.eg .q{margin:0 0 6px;font-size:13px}
+.eg .q .tag{
+  display:inline-block;font-size:11px;color:var(--text3);border:1px solid var(--border-strong);
+  border-radius:3px;padding:0 5px;margin-right:6px;vertical-align:1px;
+}
+details{border-top:1px dashed var(--border);padding-top:6px}
+details summary{
+  cursor:pointer;font-size:12.5px;color:var(--link);list-style:none;outline:none;
+}
+details summary::-webkit-details-marker{display:none}
+details summary::before{content:"＋ "}
+details[open] summary::before{content:"－ "}
+details .a{margin:6px 0 0;font-size:13px;color:var(--text2)}
+details .a b{color:var(--text)}
+
+/* ---------- 速查表区 ---------- */
+.quick{border:1px solid var(--border);border-radius:var(--radius);padding:20px 22px;margin:18px 0;break-inside:avoid}
+.quick h3:first-child{margin-top:0}
+
+footer{
+  margin-top:48px;padding-top:16px;border-top:1px solid var(--border);
+  color:var(--text3);font-size:12px;
+}
+footer p{margin:4px 0}
+
+/* ---------- 响应式 ---------- */
+@media (max-width:900px){
+  .layout{grid-template-columns:minmax(0,1fr)}
+  .sidebar{position:static;height:auto;border-right:0;border-bottom:1px solid var(--border);padding:16px}
+  .sidebar .brand{border-bottom:0;margin-bottom:8px;padding-bottom:0}
+  .toc{display:flex;flex-wrap:wrap;gap:4px}
+  .toc a{border-left:0;border:1px solid var(--border);padding:3px 8px}
+  .toc a.active{border-color:var(--text)}
+  .toc .sub{display:none}
+  main{padding:24px 18px 64px}
+  .map{grid-template-columns:minmax(0,1fr);gap:16px}
+  .map-branches{padding-left:0}
+  .map-branches::before,.branch::before{display:none}
+  .chapter{padding:18px 16px 20px}
+  table{display:block;overflow-x:auto}
+}
+
+/* ---------- 打印 ---------- */
+@media print{
+  .sidebar{display:none}
+  .layout{display:block}
+  main{max-width:none;padding:0}
+  .chapter,.quick,.eg{break-inside:avoid;page-break-inside:avoid}
+  details{border-top:0}
+  details summary{display:none}
+  details .a{margin-top:4px}
+  body{font-size:11pt;line-height:1.6}
+}
+</style>
+</head>
+<body>
+<div class="layout">
+
+<aside class="sidebar">
+  <div class="brand">苏科版 · 七年级上册数学
+    <small>思维导图与知识点总结</small>
+  </div>
+  <ul class="toc">
+    <li><a href="#map">总览 思维导图</a></li>
+    <li><a href="#ch1">第 1 章 数学与我们同行</a></li>
+    <li><a href="#ch2">第 2 章 有理数</a></li>
+    <li><a href="#ch3">第 3 章 代数式</a></li>
+    <li><a href="#ch4">第 4 章 一元一次方程</a></li>
+    <li><a href="#ch5">第 5 章 走进图形世界</a></li>
+    <li><a href="#ch6">第 6 章 平面图形的认识（一）</a></li>
+    <li><a href="#quick">速查表</a></li>
+    <li><a href="#plan">复习路径</a></li>
+  </ul>
+</aside>
+
+<main>
+
+<div class="page-head">
+  <h1>苏科版数学七年级上册：思维导图与知识点总结</h1>
+  <p class="meta">六章 · 概念 / 法则 / 易错 / 例题 / 速查 · 纸质打印友好</p>
+  <p class="note">
+    <b>版本说明：</b>本页按苏科版七上的通行结构编排：第 1 章 数学与我们同行、第 2 章 有理数、第 3 章 代数式、第 4 章 一元一次方程、第 5 章 走进图形世界、第 6 章 平面图形的认识（一）。新旧修订版的小节编号与顺序可能略有调整（例如个别活动课、阅读材料的增删），<b>复习时以你手上的教材目录为准</b>，内容本身是通用的。
+  </p>
+</div>
+
+<!-- ================= 思维导图 ================= -->
+<h2 class="sec" id="map"><span class="idx">总览</span>思维导图</h2>
+<p class="sec-lead">点击每个分支的标题可折叠/展开；打印时自动全部展开。</p>
+
+<div class="map">
+  <div class="map-root">苏科版数学<br>七年级上册<small>6 章 · 3 大板块</small></div>
+
+  <div class="map-branches">
+
+    <div class="branch">
+      <div class="branch-head"><span class="num">01</span><span class="name">数学与我们同行</span><span class="toggle">折叠</span></div>
+      <ul class="leaves">
+        <li>生活 · 数学</li>
+        <li>活动 · 思考</li>
+        <li>观察与实验</li>
+        <li>归纳与猜想</li>
+        <li>用数学眼光看世界</li>
+      </ul>
+    </div>
+
+    <div class="branch">
+      <div class="branch-head"><span class="num">02</span><span class="name">有理数</span><span class="toggle">折叠</span></div>
+      <ul class="leaves">
+        <li>正数与负数</li>
+        <li>有理数与无理数</li>
+        <li>数轴（三要素）</li>
+        <li>相反数</li>
+        <li>绝对值</li>
+        <li>有理数大小比较</li>
+        <li>加、减法</li>
+        <li>乘、除法 · 倒数</li>
+        <li>乘方 · 幂的符号</li>
+        <li>混合运算顺序</li>
+        <li>运算律（交换 / 结合 / 分配）</li>
+      </ul>
+    </div>
+
+    <div class="branch">
+      <div class="branch-head"><span class="num">03</span><span class="name">代数式</span><span class="toggle">折叠</span></div>
+      <ul class="leaves">
+        <li>用字母表示数</li>
+        <li>代数式的书写规范</li>
+        <li>列代数式</li>
+        <li>代数式的值 · 整体代入</li>
+        <li>单项式：系数、次数</li>
+        <li>多项式：项、次数</li>
+        <li>同类项 · 合并同类项</li>
+        <li>去括号法则</li>
+        <li>整式的加减</li>
+        <li>规律探索</li>
+      </ul>
+    </div>
+
+    <div class="branch">
+      <div class="branch-head"><span class="num">04</span><span class="name">一元一次方程</span><span class="toggle">折叠</span></div>
+      <ul class="leaves">
+        <li>方程 · 方程的解</li>
+        <li>一元一次方程的定义</li>
+        <li>等式性质 1、2</li>
+        <li>解方程五步</li>
+        <li>去分母 · 去括号</li>
+        <li>移项 · 合并 · 系数化 1</li>
+        <li>列方程解应用题</li>
+        <li>行程 / 工程 / 销售 / 配套 / 数字 / 年龄</li>
+      </ul>
+    </div>
+
+    <div class="branch">
+      <div class="branch-head"><span class="num">05</span><span class="name">走进图形世界</span><span class="toggle">折叠</span></div>
+      <ul class="leaves">
+        <li>常见的几何体</li>
+        <li>点 · 线 · 面 · 体</li>
+        <li>图形的运动（平移 / 旋转 / 翻折）</li>
+        <li>展开与折叠</li>
+        <li>正方体 11 种展开图</li>
+        <li>三视图（主 / 左 / 俯）</li>
+        <li>由三视图想象几何体</li>
+      </ul>
+    </div>
+
+    <div class="branch">
+      <div class="branch-head"><span class="num">06</span><span class="name">平面图形的认识（一）</span><span class="toggle">折叠</span></div>
+      <ul class="leaves">
+        <li>线段 · 射线 · 直线</li>
+        <li>两点确定一条直线</li>
+        <li>两点之间线段最短</li>
+        <li>线段的中点</li>
+        <li>角 · 角的表示</li>
+        <li>度分秒换算</li>
+        <li>角的平分线</li>
+        <li>余角 · 补角</li>
+        <li>对顶角</li>
+        <li>平行 · 平行公理</li>
+        <li>垂直 · 垂线段最短</li>
+        <li>点到直线的距离</li>
+      </ul>
+    </div>
+
+  </div>
+</div>
+
+<!-- ================= 第 1 章 ================= -->
+<h2 class="sec" id="ch1"><span class="idx">第 1 章</span>数学与我们同行</h2>
+<p class="sec-lead">全册的“方法启蒙”章：不考难题，但决定了后面五章怎么学。</p>
+
+<section class="chapter">
+  <div class="ch-head"><span class="ch-num">第 1 章</span><h2>数学与我们同行</h2></div>
+  <p class="ch-lead">主线：从生活现象出发 → 观察、实验 → 归纳、猜想 → 用数学语言表达 → 验证。</p>
+
+  <h3>核心知识点</h3>
+  <table>
+    <thead><tr><th>要点</th><th>具体内容</th></tr></thead>
+    <tbody>
+      <tr><td>生活 数学</td><td>数学源于生活：测量、估计、图案、统计、编码（身份证号、条形码）中的数学；用数学解决实际问题的一般过程：实际问题 → 数学问题 → 求解 → 检验 → 回到实际。</td></tr>
+      <tr><td>活动 思考</td><td>数学活动的基本方法：动手操作（折、剪、拼、量）、画图实验、数据记录、类比与归纳。</td></tr>
+      <tr><td>观察与实验</td><td>观察要有顺序、有目的；实验可以“先猜后验”，用反例否定猜想。</td></tr>
+      <tr><td>归纳与猜想</td><td>从特殊到一般：找出图形数、数列的变化规律，用含 n 的代数式表示（这一思路在第 3 章“规律探索”中正式使用）。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>易错提醒</h3>
+  <ul class="warn">
+    <li><b>“看起来相等”不等于“相等”：</b>凭眼睛判断长度、面积、角度常常出错，必须测量或推理。</li>
+    <li><b>归纳出的规律要检验：</b>只验证前 2 个数就下结论，容易出错；至少多验证几组。</li>
+    <li><b>结论要写完整：</b>说“面积变大”不如说“边长每增加 1 cm，面积增加多少”，能量化才叫数学。</li>
+  </ul>
+
+  <h3>典型例题</h3>
+  <div class="eg">
+    <p class="q"><span class="tag">例</span>把一张长方形纸片对折 1 次得 2 层，对折 2 次得 4 层……对折 n 次得多少层？对折 10 次大约多少层？</p>
+    <details><summary>看解答</summary>
+      <p class="a">每对折一次层数翻倍，对折 n 次得 <b>2<sup>n</sup></b> 层。对折 10 次为 2<sup>10</sup> = <b>1024</b> 层。</p>
+    </details>
+  </div>
+</section>
+
+<!-- ================= 第 2 章 ================= -->
+<h2 class="sec" id="ch2"><span class="idx">第 2 章</span>有理数</h2>
+<p class="sec-lead">全册计算的地基。这一章的符号错误会一路带到方程和整式，必须练到“稳”。</p>
+
+<section class="chapter">
+  <div class="ch-head"><span class="ch-num">第 2 章</span><h2>有理数</h2></div>
+  <p class="ch-lead">结构：数的扩充（为什么要有负数）→ 有理数的表示（数轴）→ 有理数的“两把尺子”（相反数、绝对值）→ 四则运算与乘方。</p>
+
+  <h3>一、数的分类</h3>
+  <table>
+    <thead><tr><th>分类方式</th><th>结果</th></tr></thead>
+    <tbody>
+      <tr>
+        <td>按定义</td>
+        <td>有理数 = 整数（正整数、0、负整数）+ 分数（正分数、负分数）；有限小数和无限循环小数都可写成分数，所以也是有理数。</td>
+      </tr>
+      <tr>
+        <td>按符号</td>
+        <td>有理数 = 正有理数（正整数、正分数）+ 0 + 负有理数（负整数、负分数）。</td>
+      </tr>
+      <tr>
+        <td>无理数</td>
+        <td>无限不循环小数，如 π、0.1010010001…；<b>它不是有理数</b>，本章只需识别，不必运算。</td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h3>二、数轴、相反数、绝对值</h3>
+  <table>
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>数轴</td><td>规定了<b>原点、正方向、单位长度</b>的直线（三要素缺一不可）。任何一个有理数都可以用数轴上的一个点表示，但数轴上的点不都是有理数。</td></tr>
+      <tr><td>相反数</td><td>只有符号不同的两个数互为相反数，a 的相反数是 −a；<b>0 的相反数是 0</b>。几何意义：关于原点对称。若 a、b 互为相反数，则 a + b = 0。</td></tr>
+      <tr><td>绝对值</td><td>数轴上表示数 a 的点到原点的<b>距离</b>，记作 |a|。必然有 <span class="formula">|a| ≥ 0</span>；<br>|a| = a（a ≥ 0），|a| = −a（a ≤ 0）。</td></tr>
+      <tr><td>比大小</td><td>数轴上右边的数总比左边的大：正数 &gt; 0 &gt; 负数；两个负数比较，<b>绝对值大的反而小</b>。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>三、四则运算与乘方</h3>
+  <table>
+    <thead><tr><th>运算</th><th>法则</th></tr></thead>
+    <tbody>
+      <tr><td>加法</td><td>同号相加：取相同的符号，绝对值相加。异号相加：取绝对值较大的加数的符号，用较大绝对值减去较小绝对值。互为相反数相加得 0；任何数加 0 仍是它本身。</td></tr>
+      <tr><td>减法</td><td>减去一个数，等于<b>加上这个数的相反数</b>：a − b = a + (−b)。</td></tr>
+      <tr><td>乘法</td><td>两数相乘，同号得正、异号得负，绝对值相乘；任何数乘 0 得 0。多个不为 0 的数相乘：<b>负因数有奇数个则积为负，偶数个则为正</b>。</td></tr>
+      <tr><td>除法</td><td>除以一个<b>不为 0</b> 的数，等于乘这个数的倒数：a ÷ b = a × 1/b（b ≠ 0）。两数相除，同号得正、异号得负。</td></tr>
+      <tr><td>乘方</td><td>求 n 个相同因数的积的运算。a<sup>n</sup> 中 a 是底数、n 是指数、结果叫幂。<b>正数的任何次幂都是正数；负数的奇次幂是负、偶次幂是正</b>；0 的正整数次幂为 0。</td></tr>
+      <tr><td>混合运算</td><td>顺序：<b>先乘方，再乘除，最后加减；同级运算从左到右；有括号先算括号里的（小括号 → 中括号 → 大括号）</b>。能用法算律（交换律、结合律、分配律）简算时优先用。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>四、常见“数”的小结论</h3>
+  <ul class="plain">
+    <li>最小的正整数是 1，最大的负整数是 −1，绝对值最小的数是 0。</li>
+    <li>相反数等于它本身的数是 <b>0</b>；倒数等于它本身的数是 <b>1 和 −1</b>；平方等于它本身的数是 <b>0 和 1</b>；立方等于它本身的数是 <b>0、1、−1</b>。</li>
+    <li>若 |a| = |b|，则 a = b 或 a = −b；若 |a| + |b| = 0，则 a = b = 0。</li>
+  </ul>
+
+  <h3>易错提醒</h3>
+  <ul class="warn">
+    <li><b>−a 不一定是负数。</b>当 a ≤ 0 时，−a 是正数或 0。判断符号要看字母本身的取值。</li>
+    <li><b>(−3)<sup>2</sup> 与 −3<sup>2</sup> 完全不同：</b>前者是 (−3)×(−3) = 9，后者是 −(3×3) = −9。指数管到谁，看括号。</li>
+    <li><b>“减负”变“加正”：</b>3 − (−5) = 3 + 5 = 8，别算成 −2。</li>
+    <li><b>分配律漏乘：</b>−2(x − 3) = −2x <b>+ 6</b>，括号里每项都要乘，符号跟着走。</li>
+    <li><b>绝对值化简先看符号：</b>|a − 3| 在 a &lt; 3 时等于 3 − a，不是 a − 3。</li>
+    <li><b>0 不能作除数，0 没有倒数。</b></li>
+    <li>科学记数法（a × 10<sup>n</sup>，1 ≤ |a| &lt; 10）在不同修订版中出现的册次不同，以教材为准；若本册已学，注意 n 的确定方法（整数位数减 1）。</li>
+  </ul>
+
+  <h3>典型例题</h3>
+  <div class="eg">
+    <p class="q"><span class="tag">例 1</span>计算：−2<sup>2</sup> + (−3)<sup>2</sup> × (1/3 − 1/2) ÷ (−1/6)</p>
+    <details><summary>看解答</summary>
+      <p class="a">−2<sup>2</sup> = −4；1/3 − 1/2 = −1/6；(−3)<sup>2</sup> = 9。<br>
+      原式 = −4 + 9 × (−1/6) ÷ (−1/6) = −4 + 9 × (−1/6) × (−6) = −4 + 9 = <b>5</b>。<br>
+      注意 9 × (−1/6) = −3/2，再除以 −1/6 得 9 —— 同级运算从左到右，不能先算后面的除法。</p>
+    </details>
+  </div>
+  <div class="eg">
+    <p class="q"><span class="tag">例 2</span>已知 |a| = 3，|b| = 2，且 a &lt; b，求 a + b 的值。</p>
+    <details><summary>看解答</summary>
+      <p class="a">a = ±3，b = ±2。由 a &lt; b 排除掉 a = 3 的两种情况，剩：<br>
+      a = −3，b = 2 → a + b = −1；a = −3，b = −2 → a + b = −5。<br>
+      所以 a + b = <b>−1 或 −5</b>（两个答案，不能漏）。</p>
+    </details>
+  </div>
+  <div class="eg">
+    <p class="q"><span class="tag">例 3</span>计算：(−1/2 + 2/3 − 3/4) × (−24)</p>
+    <details><summary>看解答</summary>
+      <p class="a">用分配律：(−1/2)×(−24) + (2/3)×(−24) + (−3/4)×(−24) = 12 − 16 + 18 = <b>14</b>。<br>
+      直接通分也能做，但分配律更快，且要注意每一项都带括号、符号一并乘。</p>
+    </details>
+  </div>
+</section>
+
+<!-- ================= 第 3 章 ================= -->
+<h2 class="sec" id="ch3"><span class="idx">第 3 章</span>代数式</h2>
+<p class="sec-lead">从“算数”走向“算式”。核心只有两件事：会表示、会化简。</p>
+
+<section class="chapter">
+  <div class="ch-head"><span class="ch-num">第 3 章</span><h2>代数式</h2></div>
+  <p class="ch-lead">主线：用字母表示数 → 列代数式 → 求代数式的值 → 整式（单项式 + 多项式）→ 合并同类项与去括号。</p>
+
+  <h3>一、用字母表示数与书写规范</h3>
+  <table>
+    <thead><tr><th>情形</th><th>规范写法</th></tr></thead>
+    <tbody>
+      <tr><td>数与字母、字母与字母相乘</td><td>乘号省略或写成“·”：a × b 写作 ab；2 × a 写作 2a</td></tr>
+      <tr><td>系数是 1 或 −1</td><td>1·a 写作 a；−1·a 写作 −a</td></tr>
+      <tr><td>带分数与字母相乘</td><td>化为假分数：1½ × a 写作 (3/2)a，不能写成 1½a</td></tr>
+      <tr><td>除法</td><td>写成分数形式：a ÷ b 写作 a/b</td></tr>
+      <tr><td>带单位</td><td>和差形式要加括号：(a + b) 元；积商形式可省：(ab) 元或 ab 元</td></tr>
+    </tbody>
+  </table>
+
+  <h3>二、整式的相关概念</h3>
+  <table>
+    <thead><tr><th>概念</th><th>定义与要点</th></tr></thead>
+    <tbody>
+      <tr><td>代数式</td><td>用运算符号（加、减、乘、除、乘方）把数和表示数的字母连接起来的式子，单独一个数或一个字母也是代数式。<b>含等号、不等号的不叫代数式。</b></td></tr>
+      <tr><td>单项式</td><td>数与字母的<b>积</b>；单独一个数或字母也是单项式。系数包含前面的符号；次数 = 所有字母的指数之和（1/x 不是单项式）。</td></tr>
+      <tr><td>多项式</td><td>几个单项式的<b>和</b>。每个单项式叫项，不含字母的项叫常数项；次数 = 次数最高的项的次数。</td></tr>
+      <tr><td>整式</td><td>单项式和多项式统称整式。</td></tr>
+      <tr><td>同类项</td><td><b>所含字母相同，并且相同字母的指数也相同</b>。与系数无关，与字母排列顺序无关（2x²y 与 −yx² 是同类项）。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>三、两条运算规则</h3>
+  <ul class="plain">
+    <li><b>合并同类项：</b>系数相加，所得结果作为系数，<b>字母和字母的指数不变</b>。3x² − 8x² = (3 − 8)x² = −5x²。</li>
+    <li><b>去括号：</b>括号前是“+”，去掉括号后各项符号都不变；括号前是“−”，去掉括号后<b>各项都改变符号</b>。多层括号由内向外，或由外向内（外括号前的符号要乘到内层每一项）。</li>
+    <li><b>整式的加减 = 去括号 + 合并同类项</b>，结果通常按字母次数从高到低（降幂）排列。</li>
+    <li><b>求代数式的值：</b>先化简再代入；能整体代入时不要拆（如已知 a − 2b = 3，求 5 − 2a + 4b）。</li>
+  </ul>
+
+  <h3>易错提醒</h3>
+  <ul class="warn">
+    <li><b>系数别丢符号：</b>−3x²y 的系数是 −3，次数是 3。</li>
+    <li><b>多项式次数看“最高次项”，不看项数；</b>常数项要连符号一起说。</li>
+    <li><b>2x 与 2x² 不是同类项；</b>3ab 与 3ac 也不是（字母不同）。</li>
+    <li><b>去括号别只变第一项：</b>−(2a − 3b + 1) = −2a <b>+ 3b − 1</b>。</li>
+    <li><b>“合并”不要动指数：</b>x² + x² = 2x²，不是 2x⁴。</li>
+    <li><b>写结果别留括号：</b>最后要化到最简，如 2(x − 1) − (x − 3) 应写成 x + 1。</li>
+  </ul>
+
+  <h3>典型例题</h3>
+  <div class="eg">
+    <p class="q"><span class="tag">例 1</span>化简：3(2x² − xy) − 2(3x² + xy − 1)</p>
+    <details><summary>看解答</summary>
+      <p class="a">去括号：6x² − 3xy − 6x² − 2xy + 2；合并同类项：x² 项抵消，xy 项为 −5xy。<br>
+      结果：<b>−5xy + 2</b>。</p>
+    </details>
+  </div>
+  <div class="eg">
+    <p class="q"><span class="tag">例 2</span>已知 a − 2b = 3，求 5 − 2a + 4b 的值。</p>
+    <details><summary>看解答</summary>
+      <p class="a">整体代入：5 − 2a + 4b = 5 − 2(a − 2b) = 5 − 2 × 3 = <b>−1</b>。<br>
+      看到“−2a + 4b”，先提取 −2 凑出已知式，是这一章最常用的技巧。</p>
+    </details>
+  </div>
+  <div class="eg">
+    <p class="q"><span class="tag">例 3</span>用棋子摆三角形：第 1 个用 3 枚，第 2 个用 6 枚，第 3 个用 9 枚……第 n 个用多少枚？第 20 个呢？</p>
+    <details><summary>看解答</summary>
+      <p class="a">每增加一层就多 3 枚，是 3 的倍数：第 n 个用 <b>3n</b> 枚；n = 20 时为 60 枚。<br>
+      规律探索三步：写出前几个数 → 找每次的增量 → 用含 n 的式子表示并回代检验。</p>
+    </details>
+  </div>
+</section>
+
+<!-- ================= 第 4 章 ================= -->
+<h2 class="sec" id="ch4"><span class="idx">第 4 章</span>一元一次方程</h2>
+<p class="sec-lead">全册的重点与难点，也是初中“建模”的起点：把文字变成方程，再解回来。</p>
+
+<section class="chapter">
+  <div class="ch-head"><span class="ch-num">第 4 章</span><h2>一元一次方程</h2></div>
+  <p class="ch-lead">主线：什么是方程 → 等式性质（解方程的合法依据）→ 五步解法 → 列方程解应用题。</p>
+
+  <h3>一、基本概念</h3>
+  <table>
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>方程</td><td>含有未知数的<b>等式</b>。</td></tr>
+      <tr><td>方程的解</td><td>使方程左右两边相等的未知数的值；只含一个未知数的方程的解也叫根。</td></tr>
+      <tr><td>解方程</td><td>求方程解的过程（是过程，不是结果）。</td></tr>
+      <tr><td>一元一次方程</td><td>只含<b>一个</b>未知数，未知数的次数都是 <b>1</b>，且等号两边都是<b>整式</b>。一般形式 ax + b = 0（a ≠ 0）。</td></tr>
+      <tr><td>等式性质 1</td><td>等式两边加（或减）同一个数（或式），结果仍相等。</td></tr>
+      <tr><td>等式性质 2</td><td>等式两边乘同一个数，或除以同一个<b>不为 0</b> 的数，结果仍相等。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>二、解一元一次方程五步</h3>
+  <table>
+    <thead><tr><th>步骤</th><th>做法</th><th>依据</th></tr></thead>
+    <tbody>
+      <tr><td>1. 去分母</td><td>两边同乘各分母的<b>最小公倍数</b>，不含分母的项也要乘；分子是多项式时先加括号。</td><td>等式性质 2</td></tr>
+      <tr><td>2. 去括号</td><td>按去括号法则，注意括号前是“−”时逐项变号。</td><td>分配律</td></tr>
+      <tr><td>3. 移项</td><td>把含未知数的项移到一边、常数项移到另一边，<b>移项必须变号</b>。</td><td>等式性质 1</td></tr>
+      <tr><td>4. 合并同类项</td><td>化为 ax = b 的形式。</td><td>合并同类项</td></tr>
+      <tr><td>5. 系数化为 1</td><td>两边同除以 a（a ≠ 0），得 x = b/a。</td><td>等式性质 2</td></tr>
+    </tbody>
+  </table>
+  <p>解完养成习惯：把解代回原方程口头检验一遍。</p>
+
+  <h3>三、列方程解应用题</h3>
+  <ol class="plain">
+    <li><b>审：</b>读题，圈出已知量、未知量、关键语句（“是……的几倍”“比……多/少”“相等”）。</li>
+    <li><b>设：</b>设未知数并写清单位（直接设或间接设）。</li>
+    <li><b>找：</b>找等量关系——这是整道题的核心。</li>
+    <li><b>列：</b>把等量关系翻译成方程。</li>
+    <li><b>解：</b>按五步求解。</li>
+    <li><b>验：</b>既要检验方程的解，也要检验是否符合实际意义（人数不能是小数、时间不能为负）。</li>
+  </ol>
+
+  <table>
+    <thead><tr><th>常见类型</th><th>核心等量关系</th></tr></thead>
+    <tbody>
+      <tr><td>行程</td><td>路程 = 速度 × 时间。相遇：两者路程和 = 总路程；追及：路程差 = 初始距离；顺水 v<sub>顺</sub> = v<sub>船</sub> + v<sub>水</sub>，逆水 v<sub>逆</sub> = v<sub>船</sub> − v<sub>水</sub>。</td></tr>
+      <tr><td>工程</td><td>工作量 = 工作效率 × 工作时间；常把总工作量设为 1，两队合作效率相加。</td></tr>
+      <tr><td>销售</td><td>利润 = 售价 − 进价；利润率 = 利润 ÷ 进价 × 100%；打折售价 = 标价 × 折扣 ÷ 10。</td></tr>
+      <tr><td>配套</td><td>按“配套比例”列等式（如 1 个桌面配 4 条腿）。</td></tr>
+      <tr><td>数字</td><td>两位数 = 10 × 十位数字 + 个位数字；换位后重新表示。</td></tr>
+      <tr><td>年龄</td><td>两人年龄差始终不变，n 年后每人都加 n。</td></tr>
+      <tr><td>比赛积分</td><td>总场数 = 胜 + 平 + 负；总积分 = 各场得分之和。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>易错提醒</h3>
+  <ul class="warn">
+    <li><b>去分母漏乘：</b>两边同乘公分母时，不含分母的项（如常数 1）也必须乘。</li>
+    <li><b>分子是多项式不加括号：</b>去分母后 (x − 1)/2 应变成 (x − 1)，否则符号全错。</li>
+    <li><b>移项不变号：</b>从等号一边搬到另一边，符号必须改变；只有“移”才变号，同一个数在一边内换位置不变号。</li>
+    <li><b>系数化为 1 时符号丢掉：</b>−3x = 6 得 x = −2，别写成 2。</li>
+    <li><b>乱用性质 2：</b>两边同除以的必须是同一个不为 0 的数；含有未知数的式子不能随便除。</li>
+    <li><b>答案不合实际：</b>人数、件数为整数，速度、长度为正，算出来先回头检查。</li>
+  </ul>
+
+  <h3>典型例题</h3>
+  <div class="eg">
+    <p class="q"><span class="tag">例 1</span>解方程：(x − 1)/2 − (2x + 1)/3 = 1</p>
+    <details><summary>看解答</summary>
+      <p class="a">去分母（两边同乘 6）：3(x − 1) − 2(2x + 1) = 6<br>
+      去括号：3x − 3 − 4x − 2 = 6<br>
+      合并：−x − 5 = 6；移项：−x = 11；系数化为 1：<b>x = −11</b>。<br>
+      检验：左边 = (−12)/2 − (−21)/3 = −6 + 7 = 1 ✓</p>
+    </details>
+  </div>
+  <div class="eg">
+    <p class="q"><span class="tag">例 2</span>某商品进价 200 元，标价 300 元，若要求售出后利润率达到 5%，应打几折？</p>
+    <details><summary>看解答</summary>
+      <p class="a">设打 x 折，则售价 = 300 × x/10 = 30x（元）。<br>
+      利润 = 售价 − 进价 = 30x − 200，又利润 = 200 × 5% = 10，<br>
+      所以 30x − 200 = 10，解得 x = 7。答：<b>打七折</b>。</p>
+    </details>
+  </div>
+  <div class="eg">
+    <p class="q"><span class="tag">例 3</span>一项工程甲队单独做需 12 天，乙队单独做需 18 天。甲先做 3 天后乙加入，还需几天完成？</p>
+    <details><summary>看解答</summary>
+      <p class="a">设总工作量为 1，甲效率 1/12，乙效率 1/18，再合作 x 天。<br>
+      3 × 1/12 + x(1/12 + 1/18) = 1 → 1/4 + x × 5/36 = 1 → x × 5/36 = 3/4 → x = 27/5 = <b>5.4 天</b>。<br>
+      （若题目要求整天数，需说明“约 6 天”并解释取整的实际含义。）</p>
+    </details>
+  </div>
+</section>
+
+<!-- ================= 第 5 章 ================= -->
+<h2 class="sec" id="ch5"><span class="idx">第 5 章</span>走进图形世界</h2>
+<p class="sec-lead">从立体到平面、从平面到立体：画图与想象能力章，考点集中在展开图和三视图。</p>
+
+<section class="chapter">
+  <div class="ch-head"><span class="ch-num">第 5 章</span><h2>走进图形世界</h2></div>
+  <p class="ch-lead">主线：认识立体图形 → 图形的运动与生成 → 展开与折叠 → 三视图。</p>
+
+  <h3>一、常见的几何体</h3>
+  <table>
+    <thead><tr><th>类别</th><th>说明</th></tr></thead>
+    <tbody>
+      <tr><td>柱体</td><td>圆柱（两底面是平面圆、侧面是曲面）、棱柱（两底面是全等多边形、侧面都是长方形）。</td></tr>
+      <tr><td>锥体</td><td>圆锥（底面圆、侧面曲面、有顶点）、棱锥（底面多边形、侧面都是三角形）。</td></tr>
+      <tr><td>球体</td><td>只有曲面，没有顶点和棱。</td></tr>
+      <tr><td>面、棱、顶点</td><td>n 棱柱：面 n + 2 个，棱 3n 条，顶点 2n 个；n 棱锥：面 n + 1 个，棱 2n 条，顶点 n + 1 个。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>二、图形的运动与生成</h3>
+  <ul class="plain">
+    <li>三种基本运动：<b>平移</b>（方向、距离）、<b>旋转</b>（中心、角度）、<b>翻折</b>（沿一条直线，得到轴对称关系）。</li>
+    <li>点动成线，线动成面，面动成体：长方形绕一边旋转一周得圆柱，直角三角形绕一条直角边旋转一周得圆锥，半圆绕直径旋转一周得球。</li>
+    <li>面与面相交成线，线与线相交成点。</li>
+  </ul>
+
+  <h3>三、展开与折叠</h3>
+  <ul class="plain">
+    <li>正方体表面展开图共 <b>11 种</b>：1-4-1 型 6 种、2-3-1 型 3 种、2-2-2 型 1 种、3-3 型 1 种。</li>
+    <li>判断口诀：<b>“一线不过四，田凹应弃之”</b>——一条直线上最多 4 个正方形；出现“田”字或“凹”字形一定不能折成正方体。</li>
+    <li>找相对面：在展开图中<b>同一行（列）隔一个</b>的两个面是相对面；“Z”字形两端的两面也是相对面。</li>
+    <li>圆柱侧面展开是长方形（长 = 底面周长，宽 = 高）；圆锥侧面展开是扇形。</li>
+  </ul>
+
+  <h3>四、三视图</h3>
+  <table>
+    <thead><tr><th>视图</th><th>观察方向</th><th>反映的量</th></tr></thead>
+    <tbody>
+      <tr><td>主视图</td><td>从正面看</td><td>长与高</td></tr>
+      <tr><td>左视图</td><td>从左面看</td><td>宽与高</td></tr>
+      <tr><td>俯视图</td><td>从上面看</td><td>长与宽</td></tr>
+    </tbody>
+  </table>
+  <p>规律：<b>主俯长对正，主左高平齐，俯左宽相等</b>。画三视图时，看得见的轮廓线画实线，看不见的画虚线。</p>
+
+  <h3>易错提醒</h3>
+  <ul class="warn">
+    <li><b>棱柱与圆柱别混：</b>棱柱侧面是长方形（平面），圆柱侧面是曲面。</li>
+    <li><b>“展开图”不等于“随便画 6 个正方形”：</b>必须能折成封闭正方体，注意口诀排除法。</li>
+    <li><b>左视图方向搞反：</b>左视图是从左往右看，得到的图形在纸上放在主视图右边。</li>
+    <li><b>俯视图画成底面积：</b>俯视图是平面图形，只表示轮廓与位置，不是立体图。</li>
+    <li><b>由三视图数小立方体个数：</b>俯视图上的数字表示该位置叠了几层，最多/最少问题要分别讨论。</li>
+  </ul>
+
+  <h3>典型例题</h3>
+  <div class="eg">
+    <p class="q"><span class="tag">例 1</span>一个棱柱共有 12 个顶点，它是几棱柱？有几个面、几条棱？</p>
+    <details><summary>看解答</summary>
+      <p class="a">n 棱柱顶点数 2n = 12，得 n = 6，是<b>六棱柱</b>。<br>
+      面数 = 6 + 2 = <b>8</b> 个，棱数 = 3 × 6 = <b>18</b> 条。</p>
+    </details>
+  </div>
+  <div class="eg">
+    <p class="q"><span class="tag">例 2</span>将一个长 6 cm、宽 4 cm 的长方形绕它的一条长边旋转一周，得到的几何体是什么？体积是多少（π 取 3.14）？</p>
+    <details><summary>看解答</summary>
+      <p class="a">绕长边旋转，得到底面半径 4 cm、高 6 cm 的<b>圆柱</b>。<br>
+      V = πr²h = 3.14 × 16 × 6 = <b>301.44 cm³</b>。<br>
+      （体积公式属于后续学期内容，这里能说出“圆柱”并描述底面与高即可。）</p>
+    </details>
+  </div>
+</section>
+
+<!-- ================= 第 6 章 ================= -->
+<h2 class="sec" id="ch6"><span class="idx">第 6 章</span>平面图形的认识（一）</h2>
+<p class="sec-lead">几何证明的起点：从“看图形”转向“用依据说话”。</p>
+
+<section class="chapter">
+  <div class="ch-head"><span class="ch-num">第 6 章</span><h2>平面图形的认识（一）</h2></div>
+  <p class="ch-lead">主线：线段、射线、直线 → 角 → 余角、补角、对顶角 → 平行 → 垂直。</p>
+
+  <h3>一、线段、射线、直线</h3>
+  <table>
+    <thead><tr><th>名称</th><th>端点</th><th>可否度量</th><th>表示方法</th><th>基本事实</th></tr></thead>
+    <tbody>
+      <tr><td>直线</td><td>0 个</td><td>不能</td><td>直线 AB（或直线 BA），也可用一个小写字母</td><td><b>两点确定一条直线</b></td></tr>
+      <tr><td>射线</td><td>1 个</td><td>不能</td><td>射线 OA（<b>端点字母必须写在前面</b>）</td><td>—</td></tr>
+      <tr><td>线段</td><td>2 个</td><td>能</td><td>线段 AB（或线段 BA）</td><td><b>两点之间，线段最短</b></td></tr>
+    </tbody>
+  </table>
+  <ul class="plain">
+    <li>两点之间的距离：连接两点的<b>线段的长度</b>（是一个数值，不是线段本身）。</li>
+    <li>线段的中点：点 M 在线段 AB 上且 AM = MB，则 AM = MB = ½AB，AB = 2AM。</li>
+    <li>线段的和差与比较：可用度量法或叠合法；线段上有 n 个点时，线段条数为 n(n−1)/2。</li>
+  </ul>
+
+  <h3>二、角</h3>
+  <table>
+    <thead><tr><th>要点</th><th>内容</th></tr></thead>
+    <tbody>
+      <tr><td>表示方法</td><td>三个大写字母（顶点字母在中间，如 ∠AOB）；顶点处只有一个角时可用顶点字母（∠O）；也可用数字或希腊字母（∠1、∠α）。</td></tr>
+      <tr><td>单位换算</td><td><b>1° = 60′，1′ = 60″</b>（六十进制）。例：32.5° = 32°30′；45°15′36″ = 45.26°。</td></tr>
+      <tr><td>分类</td><td>锐角（0° &lt; α &lt; 90°）、直角（90°）、钝角（90° &lt; α &lt; 180°）、平角（180°）、周角（360°）。</td></tr>
+      <tr><td>角平分线</td><td>从角的顶点出发，把角分成两个相等角的射线：∠AOC = ∠BOC = ½∠AOB。</td></tr>
+      <tr><td>余角</td><td>两角之和为 <b>90°</b>，互为余角（互余）。同角或等角的余角相等。</td></tr>
+      <tr><td>补角</td><td>两角之和为 <b>180°</b>，互为补角（互补）。同角或等角的补角相等。</td></tr>
+      <tr><td>对顶角</td><td>两条直线相交形成的、有公共顶点且两边互为反向延长线的两个角，<b>对顶角相等</b>。</td></tr>
+    </tbody>
+  </table>
+  <p>常用关系：一个角为 x，则它的余角为 90° − x，补角为 180° − x；<b>同角的补角比余角大 90°</b>。</p>
+
+  <h3>三、平行与垂直</h3>
+  <table>
+    <thead><tr><th>概念</th><th>要点</th></tr></thead>
+    <tbody>
+      <tr><td>平行</td><td>同一平面内<b>不相交</b>的两条直线叫平行线，记作 a ∥ b。<b>平行公理：</b>经过直线外一点，有且只有一条直线与这条直线平行。<b>推论：</b>如果两条直线都与第三条直线平行，那么这两条直线也互相平行。</td></tr>
+      <tr><td>垂直</td><td>两条直线相交成直角时互相垂直，记作 a ⊥ b，交点叫垂足。<b>垂线的唯一性：</b>在同一平面内，过一点有且只有一条直线与已知直线垂直。</td></tr>
+      <tr><td>垂线段</td><td>从直线外一点向直线作垂线，这点与垂足之间的线段叫垂线段；<b>垂线段最短</b>。</td></tr>
+      <tr><td>点到直线的距离</td><td>直线外一点到这条直线的<b>垂线段的长度</b>（是数值）。</td></tr>
+    </tbody>
+  </table>
+
+  <h3>易错提醒</h3>
+  <ul class="warn">
+    <li><b>“距离”是长度，不是线段：</b>回答“点 A 到直线 l 的距离是 3 cm”，不能说“是垂线段 PD”。</li>
+    <li><b>射线表示顺序不能颠倒：</b>射线 OA 与射线 AO 不是同一条。</li>
+    <li><b>度分秒是六十进制：</b>0.5° = 30′，不是 50′；计算时先化成同单位再加减，借位按 60。</li>
+    <li><b>余角、补角是“两角关系”：</b>必须成对出现，单个角不能说“是余角”。</li>
+    <li><b>对顶角要“两边互为反向延长线”：</b>只是顶点相同、看起来相等，不算对顶角。</li>
+    <li><b>平行、垂直都在“同一平面内”前提下讨论。</b></li>
+    <li><b>书写要有依据：</b>写“因为 ∠1 + ∠2 = 90°，所以 ∠1 与 ∠2 互余”，而不是只写结论。</li>
+  </ul>
+
+  <h3>典型例题</h3>
+  <div class="eg">
+    <p class="q"><span class="tag">例 1</span>一个角的补角比它的余角的 2 倍还多 30°，求这个角。</p>
+    <details><summary>看解答</summary>
+      <p class="a">设这个角为 x°，则补角 180 − x，余角 90 − x。<br>
+      180 − x = 2(90 − x) + 30<br>
+      180 − x = 180 − 2x + 30 → −x + 2x = 30 → x = <b>30</b>。<br>
+      答：这个角是 30°。检验：补角 150°，余角 60°，2 × 60 + 30 = 150 ✓</p>
+    </details>
+  </div>
+  <div class="eg">
+    <p class="q"><span class="tag">例 2</span>线段 AB = 10 cm，点 C 在 AB 上，M、N 分别是 AC、BC 的中点，求 MN 的长。</p>
+    <details><summary>看解答</summary>
+      <p class="a">MN = MC + CN = ½AC + ½BC = ½(AC + BC) = ½AB = <b>5 cm</b>。<br>
+      结论：不管 C 在 AB 上什么位置，MN 恒为 AB 的一半——这就是“用式子代替图形”的好处。</p>
+    </details>
+  </div>
+  <div class="eg">
+    <p class="q"><span class="tag">例 3</span>已知 ∠AOB = 80°，OC 平分 ∠AOB，OD 平分 ∠BOC，求 ∠AOD。</p>
+    <details><summary>看解答</summary>
+      <p class="a">OC 平分 ∠AOB → ∠BOC = 40°；OD 平分 ∠BOC → ∠BOD = 20°。<br>
+      ∠AOD = ∠AOB − ∠BOD = 80° − 20° = <b>60°</b>。</p>
+    </details>
+  </div>
+</section>
+
+<!-- ================= 速查表 ================= -->
+<h2 class="sec" id="quick"><span class="idx">附表</span>速查表</h2>
+<p class="sec-lead">考前 20 分钟只看这一节。</p>
+
+<div class="quick">
+  <h3>1. 有理数运算的符号规则</h3>
+  <table>
+    <thead><tr><th>运算</th><th>符号规律</th><th>绝对值</th></tr></thead>
+    <tbody>
+      <tr><td>同号相加</td><td>取相同符号</td><td>相加</td></tr>
+      <tr><td>异号相加</td><td>取绝对值大的数的符号</td><td>大减小</td></tr>
+      <tr><td>乘法 / 除法</td><td>同号得正，异号得负</td><td>相乘 / 相除</td></tr>
+      <tr><td>乘方</td><td>负数的奇次幂为负，偶次幂为正</td><td>底数绝对值的幂</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<div class="quick">
+  <h3>2. 解一元一次方程五步</h3>
+  <p>去分母 → 去括号 → 移项 → 合并同类项 → 系数化为 1。</p>
+  <p>四个“必须”：分母项全乘、多项式加括号、移项必变号、除法不为 0。</p>
+</div>
+
+<div class="quick">
+  <h3>3. 整式运算两条规则</h3>
+  <ul class="plain">
+    <li>合并同类项：系数相加，字母与指数不变。</li>
+    <li>去括号：前“+”号不变号，前“−”号全变号。</li>
+  </ul>
+</div>
+
+<div class="quick">
+  <h3>4. 图形与几何常用关系</h3>
+  <table>
+    <thead><tr><th>对象</th><th>关系式</th></tr></thead>
+    <tbody>
+      <tr><td>线段中点</td><td>AM = MB = ½AB，AB = 2AM</td></tr>
+      <tr><td>角平分线</td><td>∠AOC = ∠BOC = ½∠AOB</td></tr>
+      <tr><td>互余 / 互补</td><td>x + y = 90° / x + y = 180°</td></tr>
+      <tr><td>度分秒</td><td>1° = 60′，1′ = 60″</td></tr>
+      <tr><td>棱柱（n 棱）</td><td>面 n + 2，棱 3n，顶点 2n</td></tr>
+      <tr><td>三视图</td><td>长对正、高平齐、宽相等</td></tr>
+    </tbody>
+  </table>
+</div>
+
+<!-- ================= 复习路径 ================= -->
+<h2 class="sec" id="plan"><span class="idx">方法</span>复习路径</h2>
+
+<section class="chapter">
+  <div class="ch-head"><span class="ch-num">三步</span><h2>从“会算”到“会想”</h2></div>
+
+  <h3>第一步：把计算练成条件反射（第 2、3 章）</h3>
+  <ul class="plain">
+    <li>每天 10 道有理数混合运算 + 5 道整式化简，限时完成，错题只记“错在哪一步”（符号 / 括号 / 顺序）。</li>
+    <li>所有错误按三类归档：<b>符号错、顺序错、审题错</b>。一周后回看，看哪类最多就专攻哪类。</li>
+  </ul>
+
+  <h3>第二步：把方程练成流程（第 4 章）</h3>
+  <ul class="plain">
+    <li>先做 20 道纯解方程（含分母、含括号、含小数系数），要求步骤写全、检验必做。</li>
+    <li>再做应用题：同一道题试着用不同方式设未知数（直接设 / 间接设），比较哪种式子更简单。</li>
+    <li>整理一张“等量关系卡片”，只写关系不写答案，考前默写。</li>
+  </ul>
+
+  <h3>第三步：把图形看成推理（第 5、6 章）</h3>
+  <ul class="plain">
+    <li>动手做：拿纸板剪 11 种正方体展开图，折一遍，比看十遍图有用。</li>
+    <li>三视图每天画 2 个简单组合体，坚持一周，方向感就稳定了。</li>
+    <li>几何题必须写“因为……所以……”，用符号语言代替“看图就知道”。</li>
+  </ul>
+
+  <h3>自测清单（能全部打勾即可过关）</h3>
+  <ul class="plain">
+    <li>能说出有理数的两种分类方式，并区分有理数与无理数。</li>
+    <li>能手算 (−3)<sup>2</sup> 与 −3<sup>2</sup>，并解释差别。</li>
+    <li>能快速判断两个单项式是不是同类项。</li>
+    <li>能默写解一元一次方程的五个步骤及依据。</li>
+    <li>能说出正方体展开图的 11 种类型与判断口诀。</li>
+    <li>能画出一个简单几何体的三视图，并说出“长对正、高平齐、宽相等”。</li>
+    <li>能写出“两点确定一条直线”“两点之间线段最短”两个基本事实，并举出各一个应用。</li>
+  </ul>
+</section>
+
+<footer>
+  <p>苏科版数学七年级上册 · 思维导图与知识点总结 · 单文件离线版（无外部依赖，可直接打印）。</p>
+  <p>章节结构按通行版本编排，若你的教材为新修订版，小节编号可能不同，知识点与考法一致。建议对照目录核对一遍。</p>
+</footer>
+
+</main>
+</div>
+
+<script>
+/* 思维导图分支折叠：无动画，尊重 motion: off */
+document.querySelectorAll('.branch').forEach(function (branch) {
+  var head = branch.querySelector('.branch-head');
+  var toggle = branch.querySelector('.toggle');
+  head.addEventListener('click', function () {
+    var collapsed = branch.classList.toggle('collapsed');
+    toggle.textContent = collapsed ? '展开' : '折叠';
+    head.setAttribute('aria-expanded', String(!collapsed));
+  });
+  head.setAttribute('role', 'button');
+  head.setAttribute('tabindex', '0');
+  head.setAttribute('aria-expanded', 'true');
+  head.addEventListener('keydown', function (e) {
+    if (e.key === 'Enter' || e.key === ' ') { e.preventDefault(); head.click(); }
+  });
+});
+
+/* 侧栏高亮当前章节 */
+(function () {
+  var links = Array.prototype.slice.call(document.querySelectorAll('.toc a'));
+  var targets = links.map(function (a) { return document.querySelector(a.getAttribute('href')); });
+  if (!('IntersectionObserver' in window)) return;
+  var io = new IntersectionObserver(function (entries) {
+    entries.forEach(function (entry) {
+      if (!entry.isIntersecting) return;
+      var id = '#' + entry.target.id;
+      links.forEach(function (a) { a.classList.toggle('active', a.getAttribute('href') === id); });
+    });
+  }, { rootMargin: '0px 0px -70% 0px', threshold: 0 });
+  targets.forEach(function (t) { if (t) io.observe(t); });
+})();
+</script>
+</body>
+</html>

@@ -5,7 +5,7 @@ import type { Interface } from 'node:readline/promises';
 import { dirname, extname, join } from 'node:path';
 import { collectContinuation } from './continuation.ts';
 import type { AppConfig } from '../config/config.ts';
-import { bananaHome, formatPreferences } from '../config/config.ts';
+import { bananaHome, formatPreferences, resolveProvider } from '../config/config.ts';
 import { runTurn } from '../agent/loop.ts';
 import { compactMessages, estimateTokens } from '../agent/context.ts';
 import { createProvider } from '../providers/index.ts';
@@ -428,6 +428,21 @@ export async function startRepl(options: ReplOptions): Promise<{ hadError: boole
           facts: session.facts,
           unknowns: session.unknowns,
           search: config.search,
+          nativeSearch: (() => {
+            try {
+              const resolved = resolveProvider(config.current, config);
+              if (!resolved.apiKey) return undefined;
+              return {
+                provider: config.current,
+                protocol: resolved.config.protocol,
+                baseUrl: resolved.config.baseUrl,
+                apiKey: resolved.apiKey,
+                model: resolved.config.model,
+              };
+            } catch {
+              return undefined;
+            }
+          })(),
           budget: config.budget,
           uiGuard: config.uiGuard,
           onBudget: (info) => {

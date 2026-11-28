@@ -340,6 +340,9 @@ export class GuiState {
 
     if (patch.search) {
       const search = { ...this.config.search, ...patch.search };
+      if (search.mode !== 'auto' && search.mode !== 'native' && search.mode !== 'api') {
+        throw new Error('搜索模式只能是 auto / native / api。');
+      }
       if (search.provider !== 'auto' && search.provider !== 'tavily' && search.provider !== 'brave' && search.provider !== 'free') {
         throw new Error('搜索 provider 只能是 auto / tavily / brave / free。');
       }
@@ -361,6 +364,7 @@ export class GuiState {
       if (patch.search.clearBrave) delete this.config.search.braveKey;
       this.config.search = {
         ...this.config.search,
+        mode: search.mode,
         provider: search.provider,
         deep: typeof search.deep === 'boolean' ? search.deep : this.config.search.deep,
         deepPages:
@@ -528,6 +532,7 @@ export class GuiState {
       providers: publicProviders,
       permissions: { ...this.config.permissions },
       search: {
+        mode: this.config.search.mode,
         provider: this.config.search.provider,
         deep: this.config.search.deep,
         deepPages: this.config.search.deepPages,

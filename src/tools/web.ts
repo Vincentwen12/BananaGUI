@@ -239,6 +239,234 @@ async function searchBrave(
   }));
 }
 
+/* ---------- 官方内置搜索 ---------- */
+
+type NativeKind = 'openai' | 'anthropic' | 'gemini' | 'qwen';
+
+function nativeKind(config: NonNullable<ToolContext['nativeSearch']>): NativeKind | null {
+  if (config.provider === 'openai') return 'openai';
+  if (config.provider === 'anthropic' || config.protocol === 'anthropic') return 'anthropic';
+  if (config.provider === 'gemini') return 'gemini';
+  if (config.provider === 'qwen') return 'qwen';
+  return null;
+}
+
+function dedupeHits(hits: SearchHit[]): SearchHit[] {
+  const seen = new Set<string>();
+  const out: SearchHit[] = [];
+  for (const hit of hits) {
+    if (!hit.url || seen.has(hit.url)) continue;
+    seen.add(hit.url);
+    out.push(hit);
+  }
+  return out;
+}
+
+async function searchOpenAI(
+  query: string,
+  count: number,
+  ctx: ToolContext,
+  config: NonNullable<ToolContext['nativeSearch']>,
+  options: SearchOptions,
+): Promise<SearchHit[]> {
+  const base = config.baseUrl.replace(/\/+$/, '');
+  const response = await fetchWithTimeout(
+    `${base}/responses`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${config.apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        input: scopedQuery(query, options.site),
+        tools: [{ type: 'web_search' }],
+      }),
+    },
+    ctx,
+    SEARCH_TIMEOUT_MS,
+  );
+  if (!response.ok) throw new Error(`OpenAI 搜索 HTTP ${response.status}`);
+  const payload = (await response.json()) as {
+    output?: Array<Record<string, unknown>>;
+  };
+  const hits: SearchHit[] = [];
+  for (const item of payload.output ?? []) {
+    const action = item['action'] as Record<string, unknown> | undefined;
+    const sources = Array.isArray(action?.['sources']) ? (action!['sources'] as Array<Record<string, unknown>>) : [];
+    for (const source of sources) {
+      hits.push({
+        title: String(source['title'] ?? source['url'] ?? ''),
+        url: String(source['url'] ?? ''),
+        snippet: '',
+      });
+    }
+    if (item['type'] !== 'message') continue;
+    const content = Array.isArray(item['content']) ? (item['content'] as Array<Record<string, unknown>>) : [];
+    for (const part of content) {
+      if (part['type'] !== 'output_text') continue;
+      const text = String(part['text'] ?? '');
+      const annotations = Array.isArray(part['annotations'])
+        ? (part['annotations'] as Array<Record<string, unknown>>)
+        : [];
+      for (const annotation of annotations) {
+        if (annotation['type'] !== 'url_citation') continue;
+        const start = Number(annotation['start_index'] ?? 0);
+        const end = Number(annotation['end_index'] ?? start + 240);
+        hits.push({
+          title: String(annotation['title'] ?? annotation['url'] ?? ''),
+          url: String(annotation['url'] ?? ''),
+          snippet: text.slice(start, Math.min(end, start + 500)).trim(),
+        });
+      }
+      if (!annotations.length && text) {
+        hits.push({ title: query, url: '', snippet: text.slice(0, 500) });
+      }
+    }
+  }
+  return dedupeHits(hits).slice(0, count);
+}
+
+async function searchAnthropic(
+  query: string,
+  count: number,
+  ctx: ToolContext,
+  config: NonNullable<ToolContext['nativeSearch']>,
+  _options: SearchOptions,
+): Promise<SearchHit[]> {
+  const base = config.baseUrl.replace(/\/+$/, '');
+  const root = /\/v1$/.test(base) ? base : `${base}/v1`;
+  const response = await fetchWithTimeout(
+    `${root}/messages`,
+    {
+      method: 'POST',
+      headers: {
+        'x-api-key': config.apiKey,
+        'anthropic-version': '2023-06-01',
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: query }],
+        tools: [{ type: 'web_search_20250305', name: 'web_search', max_uses: 5 }],
+      }),
+    },
+    ctx,
+    SEARCH_TIMEOUT_MS,
+  );
+  if (!response.ok) throw new Error(`Anthropic 搜索 HTTP ${response.status}`);
+  const payload = (await response.json()) as {
+    content?: Array<Record<string, unknown>>;
+  };
+  const hits: SearchHit[] = [];
+  let latestText = '';
+  for (const block of payload.content ?? []) {
+    if (block['type'] === 'text') {
+      latestText = String(block['text'] ?? '');
+      continue;
+    }
+    if (block['type'] !== 'web_search_tool_result') continue;
+    const results = Array.isArray(block['content']) ? (block['content'] as Array<Record<string, unknown>>) : [];
+    for (const result of results) {
+      if (result['type'] !== 'web_search_result') continue;
+      hits.push({
+        title: String(result['title'] ?? result['url'] ?? ''),
+        url: String(result['url'] ?? ''),
+        snippet: `${String(result['page_age'] ?? '')} ${latestText}`.trim().slice(0, 500),
+      });
+    }
+  }
+  return dedupeHits(hits).slice(0, count);
+}
+
+async function searchGemini(
+  query: string,
+  count: number,
+  ctx: ToolContext,
+  config: NonNullable<ToolContext['nativeSearch']>,
+  options: SearchOptions,
+): Promise<SearchHit[]> {
+  const base = config.baseUrl.replace(/\/+$/, '').replace(/\/openai$/, '');
+  const response = await fetchWithTimeout(
+    `${base}/models/${encodeURIComponent(config.model)}:generateContent?key=${encodeURIComponent(config.apiKey)}`,
+    {
+      method: 'POST',
+      headers: { 'content-type': 'application/json' },
+      body: JSON.stringify({
+        contents: [{ role: 'user', parts: [{ text: scopedQuery(query, options.site) }] }],
+        tools: [{ google_search: {} }],
+      }),
+    },
+    ctx,
+    SEARCH_TIMEOUT_MS,
+  );
+  if (!response.ok) throw new Error(`Gemini 搜索 HTTP ${response.status}`);
+  const payload = (await response.json()) as {
+    candidates?: Array<{
+      content?: { parts?: Array<{ text?: string }> };
+      groundingMetadata?: {
+        groundingChunks?: Array<{ web?: { uri?: string; title?: string } }>;
+        groundingSupports?: Array<{ segment?: { text?: string } }>;
+      };
+    }>;
+  };
+  const candidate = payload.candidates?.[0];
+  const text = (candidate?.content?.parts ?? []).map((part) => part.text ?? '').join('\n');
+  const chunks = candidate?.groundingMetadata?.groundingChunks ?? [];
+  const supports = candidate?.groundingMetadata?.groundingSupports ?? [];
+  return dedupeHits(
+    chunks.map((chunk, index) => ({
+      title: chunk.web?.title ?? chunk.web?.uri ?? '',
+      url: chunk.web?.uri ?? '',
+      snippet: String(supports[index]?.segment?.text ?? text).slice(0, 500),
+    })),
+  ).slice(0, count);
+}
+
+async function searchQwen(
+  query: string,
+  count: number,
+  ctx: ToolContext,
+  config: NonNullable<ToolContext['nativeSearch']>,
+  options: SearchOptions,
+): Promise<SearchHit[]> {
+  const base = config.baseUrl.replace(/\/+$/, '');
+  const response = await fetchWithTimeout(
+    `${base}/chat/completions`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${config.apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [{ role: 'user', content: scopedQuery(query, options.site) }],
+        enable_search: true,
+        search_options: { forced_search: true, search_strategy: 'pro' },
+        stream: false,
+      }),
+    },
+    ctx,
+    SEARCH_TIMEOUT_MS,
+  );
+  if (!response.ok) throw new Error(`Qwen 搜索 HTTP ${response.status}`);
+  const payload = (await response.json()) as {
+    search_info?: { search_results?: Array<Record<string, unknown>> };
+    choices?: Array<{ message?: { annotations?: Array<Record<string, unknown>> } }>;
+  };
+  const raw = payload.search_info?.search_results ?? payload.choices?.[0]?.message?.annotations ?? [];
+  return dedupeHits(
+    raw.map((item) => ({
+      title: String(item['title'] ?? item['site_name'] ?? item['url'] ?? ''),
+      url: String(item['url'] ?? item['link'] ?? ''),
+      snippet: String(item['snippet'] ?? item['content'] ?? item['text'] ?? '').slice(0, 500),
+    })),
+  ).slice(0, count);
+}
+
 async function searchBing(query: string, count: number, ctx: ToolContext, options: SearchOptions): Promise<SearchHit[]> {
   const params = new URLSearchParams({
     q: scopedQuery(query, options.site),
@@ -519,6 +747,7 @@ async function attachDeepContent(
 function pickSettings(ctx: ToolContext): SearchConfig {
   return (
     ctx.search ?? {
+      mode: 'auto',
       provider: 'auto',
       deep: false,
       deepPages: 3,
@@ -541,8 +770,9 @@ export const webSearchTool: Tool = {
   name: 'web_search',
   description: [
     '联网搜索，返回标题、链接和摘要。',
-    '默认优先英文/技术源，并同时合并 Bing 与 DuckDuckGo 的结果；配置 TAVILY_API_KEY / BRAVE_API_KEY 会自动升级到搜索 API。',
-    'depth=deep 时会自动读取前几页正文，适合查文档、对比方案；日常事实核对用默认的 quick 即可。',
+    '默认优先使用当前 provider 的官方内置搜索（OpenAI / Claude / Gemini / Qwen）；',
+    '官方不可用时降级到 Tavily / Brave，需要先在设置里配置 Key。',
+    'depth=deep 时会读取前几页正文，适合查文档、对比方案；日常事实核对用默认的 quick 即可。',
     '搜不到就换关键词再试，别靠猜。',
   ].join(''),
   parameters: {
@@ -593,17 +823,43 @@ export const webSearchTool: Tool = {
     const tavilyKey = searchKey(settings.tavilyKey, ['TAVILY_API_KEY', 'BANANA_TAVILY_KEY']);
     const braveKey = searchKey(settings.braveKey, ['BRAVE_API_KEY', 'BANANA_BRAVE_KEY']);
     const provider = settings.provider ?? 'auto';
+    const mode = settings.mode ?? 'auto';
+    const nativeConfig = ctx.nativeSearch;
+    const kind = nativeConfig ? nativeKind(nativeConfig) : null;
 
-    if (provider === 'tavily' && !tavilyKey) {
+    if (mode === 'native' && (!nativeConfig || !kind)) {
+      return fail(
+        `当前 provider${nativeConfig ? ` ${nativeConfig.provider}` : ''} 不支持官方内置搜索。请先把搜索方式改成「自动」，或配置 Tavily / Brave。`,
+      );
+    }
+    if (mode !== 'native' && provider === 'tavily' && !tavilyKey) {
       return fail('已选择 Tavily，但没有配置 Key。请在设置 → 联网搜索里填写，或设置 TAVILY_API_KEY。');
     }
-    if (provider === 'brave' && !braveKey) {
+    if (mode !== 'native' && provider === 'brave' && !braveKey) {
       return fail('已选择 Brave，但没有配置 Key。请在设置 → 联网搜索里填写，或设置 BRAVE_API_KEY。');
     }
 
     try {
       const engines: EngineResult[] = [];
       const problems: string[] = [];
+
+      const tryNative = async (): Promise<void> => {
+        if (!nativeConfig || !kind) return;
+        try {
+          const hits =
+            kind === 'openai'
+              ? await searchOpenAI(query, count, ctx, nativeConfig, options)
+              : kind === 'anthropic'
+                ? await searchAnthropic(query, count, ctx, nativeConfig, options)
+                : kind === 'gemini'
+                  ? await searchGemini(query, count, ctx, nativeConfig, options)
+                  : await searchQwen(query, count, ctx, nativeConfig, options);
+          if (hits.length) engines.push({ engine: `官方 · ${nativeConfig.provider}`, hits });
+          else problems.push(`官方搜索: 没有结果`);
+        } catch (error) {
+          problems.push(`官方搜索: ${(error as Error).message}`);
+        }
+      };
 
       const tryApi = async (name: 'Tavily' | 'Brave'): Promise<void> => {
         try {
@@ -618,18 +874,23 @@ export const webSearchTool: Tool = {
         }
       };
 
-      if (provider === 'tavily' || (provider === 'auto' && tavilyKey)) await tryApi('Tavily');
-      if (!engines.length && (provider === 'brave' || (provider === 'auto' && braveKey))) await tryApi('Brave');
-      if (!engines.length && (provider === 'free' || provider === 'auto')) {
-        try {
-          engines.push(...(await searchFree(query, count, ctx, options)));
-        } catch (error) {
-          problems.push((error as Error).message);
+      if (mode !== 'api') await tryNative();
+      if (!engines.length && mode !== 'native') {
+        if (provider === 'tavily' || (provider === 'auto' && tavilyKey)) await tryApi('Tavily');
+        if (!engines.length && (provider === 'brave' || (provider === 'auto' && braveKey))) await tryApi('Brave');
+        if (!engines.length && (provider === 'free' || provider === 'auto')) {
+          try {
+            engines.push(...(await searchFree(query, count, ctx, options)));
+          } catch (error) {
+            problems.push((error as Error).message);
+          }
         }
       }
 
       if (!engines.length) {
-        return fail(`搜索失败: ${problems.join('; ') || '没有可用的搜索源'}`);
+        const reason = problems.join('; ') || '没有可用的搜索源';
+        if (mode === 'native') return fail(`官方内置搜索失败: ${reason}`);
+        return fail(`搜索失败: ${reason}。可在设置 → 联网搜索里配置 Tavily / Brave。`);
       }
       if (problems.length) ctx.log(`搜索降级: ${problems.join('; ')}`);
 
@@ -638,7 +899,7 @@ export const webSearchTool: Tool = {
         count,
       );
       // 关键词可能太窄：去掉引号之类的修饰再试一次，只限免费源。
-      if (!hits.length && provider !== 'tavily' && provider !== 'brave') {
+      if (!hits.length && provider !== 'tavily' && provider !== 'brave' && mode !== 'native') {
         const simplified = query.replace(/["'“”‘’]/g, ' ').replace(/\s+/g, ' ').trim();
         if (simplified && simplified !== query) {
           try {
@@ -668,10 +929,10 @@ export const webSearchTool: Tool = {
           return lines.join('\n');
         })
         .join('\n');
-      const mode = options.deep ? ` · 深度 ${hits.slice(0, Math.min(hits.length, Math.max(1, Number(settings.deepPages) || 3))).length} 页${failedPages ? `（${failedPages} 页失败）` : ''}` : '';
+      const depthLabel = options.deep ? ` · 深度 ${hits.slice(0, Math.min(hits.length, Math.max(1, Number(settings.deepPages) || 3))).length} 页${failedPages ? `（${failedPages} 页失败）` : ''}` : '';
       const footer = options.deep && failedPages ? `\n\n注：有 ${failedPages} 个页面正文没取到，以摘要为准。` : '';
       return ok(
-        `搜索 "${query}" 的结果（${engineNames}${language === 'zh' ? ' · 中文优先' : ' · 英文/技术优先'}${mode}）:\n${body}${footer}`,
+        `搜索 "${query}" 的结果（${engineNames}${language === 'zh' ? ' · 中文优先' : ' · 英文/技术优先'}${depthLabel}）:\n${body}${footer}`,
         `web_search: ${hits.length} 条结果${options.deep ? ' · 深度搜索' : ''}`,
       );
     } catch (error) {

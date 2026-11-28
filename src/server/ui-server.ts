@@ -18,6 +18,7 @@ import { allTools, type Tool } from '../tools/index.ts';
 import { loadPluginTools } from '../tools/plugins.ts';
 import { version } from '../cli/ui.ts';
 import { GuiState } from './state.ts';
+import { discoverModels } from './models.ts';
 import { runGuiTurn, type TurnPayload } from './turns.ts';
 import { filePreview, fileTree, listFiles } from './files.ts';
 import { attachTerminal } from './terminal.ts';
@@ -480,6 +481,12 @@ export async function startUiServer(options: UiServerOptions = {}): Promise<UiSe
       await state.trustCurrentWorkspace();
       await refreshAll();
       sendJson(response, 200, { info: state.publicInfo(isDesktop), session: state.session });
+      return;
+    }
+    if (method === 'GET' && path === '/api/models') {
+      const url = new URL(request.url ?? '/', 'http://127.0.0.1');
+      const providers = await discoverModels(state.config, url.searchParams.get('refresh') === '1');
+      sendJson(response, 200, { providers, fetchedAt: new Date().toISOString() });
       return;
     }
     if (method === 'POST' && path === '/api/settings') {

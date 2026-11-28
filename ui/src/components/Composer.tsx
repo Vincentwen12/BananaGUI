@@ -1,4 +1,4 @@
-import { For, Show, createEffect, createMemo, createSignal, onCleanup } from 'solid-js';
+import { For, Show, createEffect, createMemo, createSignal, onCleanup, onMount } from 'solid-js';
 import { Icon } from './Icon';
 import type { AppState } from '../state/app';
 import { api } from '../lib/api';
@@ -14,12 +14,47 @@ export function Composer(props: { app: AppState }) {
   const { state, t } = props.app;
   let textarea: HTMLTextAreaElement | undefined;
   let fileInput: HTMLInputElement | undefined;
+  let modelPop: HTMLDivElement | undefined;
   let timer: number | undefined;
 
   const [mention, setMention] = createSignal<{ start: number; query: string } | null>(null);
   const [fileHits, setFileHits] = createSignal<Array<{ path: string; isDirectory: boolean }>>([]);
   const [index, setIndex] = createSignal(0);
   const [dragging, setDragging] = createSignal(false);
+  const [modelOpen, setModelOpen] = createSignal(false);
+  const [modelQuery, setModelQuery] = createSignal('');
+  const [showAll, setShowAll] = createSignal(false);
+
+  const catalog = () => props.app.state.models?.providers ?? [];
+  const modelGroups = createMemo(() => {
+    const needle = modelQuery().trim().toLowerCase();
+    return catalog()
+      .map((provider) => {
+        const matched = needle
+          ? provider.models.filter(
+              (model) =>
+                model.id.toLowerCase().includes(needle) ||
+                model.label.toLowerCase().includes(needle) ||
+                provider.label.toLowerCase().includes(needle),
+            )
+          : provider.models;
+        return { ...provider, shown: showAll() || needle ? matched : matched.slice(0, 5), total: matched.length };
+      })
+      .filter((provider) => provider.shown.length > 0);
+  });
+  const totalModels = () => catalog().reduce((sum, provider) => sum + provider.models.length, 0);
+
+  onMount(() => {
+    const onPointer = (event: PointerEvent) => {
+      if (!modelOpen()) return;
+      const target = event.target as Node | null;
+      if (modelPop && target && !modelPop.contains(target) && !(target as HTMLElement).closest?.('.model-switch')) {
+        setModelOpen(false);
+      }
+    };
+    document.addEventListener('pointerdown', onPointer);
+    onCleanup(() => document.removeEventListener('pointerdown', onPointer));
+  });
 
   const commands = createMemo<PopItem[]>(() => {
     const value = state.draft;
@@ -127,6 +162,11 @@ export function Composer(props: { app: AppState }) {
   }
 
   function onKeydown(event: KeyboardEvent) {
+    if (modelOpen() && event.key === 'Escape') {
+      event.preventDefault();
+      setModelOpen(false);
+      return;
+    }
     if (popOpen()) {
       if (event.key === 'ArrowDown') {
         event.preventDefault();
@@ -295,8 +335,13 @@ export function Composer(props: { app: AppState }) {
             <button
               type="button"
               class="chip model"
-              title={`${state.info?.currentProvider ?? ''} / ${state.info?.model ?? ''} · ← → 切换，点击打开设置`}
-              onClick={() => props.app.openSettings()}
+              title={`${state.info?.currentProvider ?? ''} / ${state.info?.model ?? ''} · 点击选择模型`}
+              aria-expanded={modelOpen()}
+              onClick={() => {
+                setModelOpen((open) => !open);
+                setModelQuery('');
+                void props.app.loadModels();
+              }}
               onKeyDown={(event) => {
                 if (event.key === 'ArrowLeft') {
                   event.preventDefault();
@@ -319,6 +364,93 @@ export function Composer(props: { app: AppState }) {
               <Icon name="chevronRight" />
             </button>
           </div>
+          <Show when={modelOpen()}>
+            <div class="model-pop" ref={modelPop} role="dialog" aria-label="选择模型">
+              <div class="model-pop-head">
+                <span>选择模型</span>
+                <span class="spacer" />
+                <button
+                  class="model-pop-refresh"
+                  type="button"
+                  title="刷新模型列表"
+                  onClick={() => void props.app.loadModels(true)}
+                >
+                  {props.app.state.modelsLoading ? '刷新中…' : '刷新'}
+                </button>
+              </div>
+              <input
+                class="model-search"
+                type="search"
+                placeholder="搜索模型"
+                value={modelQuery()}
+                onInput={(event) => setModelQuery(event.currentTarget.value)}
+              />
+              <div class="model-pop-list">
+                <Show
+                  when={modelGroups().length}
+                  fallback={
+                    <div class="model-empty">
+                      {props.app.state.modelsLoading ? '正在获取模型…' : '还没有可用模型，先到设置里填 API Key'}
+                    </div>
+                  }
+                >
+                  <For each={modelGroups()}>
+                    {(provider) => (
+                      <div class="model-group">
+                        <div class="model-group-head">
+                          <span>{provider.label}</span>
+                          <span class="model-group-source">{provider.source === 'live' ? '官方' : '兜底'}</span>
+                        </div>
+                        <For each={provider.shown}>
+                          {(model) => (
+                            <button
+                              type="button"
+                              class={`model-item${
+                                state.info?.currentProvider === provider.name && state.info?.model === model.id
+                                  ? ' active'
+                                  : ''
+                              }`}
+                              onClick={() => {
+                                setModelOpen(false);
+                                void props.app.setModel(provider.name, model.id);
+                              }}
+                            >
+                              <span class="model-item-id">{model.id}</span>
+                              <Show
+                                when={
+                                  state.info?.currentProvider === provider.name &&
+                                  state.info?.model === model.id
+                                }
+                              >
+                                <span class="model-item-check">当前</span>
+                              </Show>
+                            </button>
+                          )}
+                        </For>
+                      </div>
+                    )}
+                  </For>
+                </Show>
+              </div>
+              <div class="model-pop-foot">
+                <Show when={totalModels() > 5 && !modelQuery()}>
+                  <button type="button" class="model-more" onClick={() => setShowAll((value) => !value)}>
+                    {showAll() ? '收起' : `显示全部 ${totalModels()}`}
+                  </button>
+                </Show>
+                <button
+                  type="button"
+                  class="model-more"
+                  onClick={() => {
+                    setModelOpen(false);
+                    props.app.openSettings();
+                  }}
+                >
+                  管理 API Key
+                </button>
+              </div>
+            </div>
+          </Show>
           <Show
             when={state.running}
             fallback={

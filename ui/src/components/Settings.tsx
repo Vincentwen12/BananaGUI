@@ -35,7 +35,8 @@ export function Settings(props: { app: AppState }) {
     apiKeyEnv: '',
     clearKey: false,
     permissions: { shell: 'ask', write: 'ask', network: 'allow' } as Record<string, string>,
-    searchProvider: 'off',
+    searchMode: 'auto',
+    searchProvider: 'auto',
     searchDeep: false,
     searchPages: 3,
     searchLanguage: 'zh',
@@ -71,7 +72,11 @@ export function Settings(props: { app: AppState }) {
         write: info.permissions?.write ?? 'ask',
         network: info.permissions?.network ?? 'allow',
       },
-      searchProvider: info.search?.provider ?? 'off',
+      searchMode: info.search?.mode === 'native' || info.search?.mode === 'api' ? info.search.mode : 'auto',
+      searchProvider:
+        info.search?.provider === 'tavily' || info.search?.provider === 'brave'
+          ? info.search.provider
+          : 'auto',
       searchDeep: Boolean(info.search?.deep),
       searchPages: info.search?.deepPages ?? 3,
       searchLanguage: info.search?.language ?? 'zh',
@@ -117,6 +122,7 @@ export function Settings(props: { app: AppState }) {
       },
       permissions: { ...draft.permissions },
       search: {
+        mode: draft.searchMode,
         provider: draft.searchProvider,
         deep: draft.searchDeep,
         deepPages: Number(draft.searchPages) || 3,
@@ -316,13 +322,25 @@ export function Settings(props: { app: AppState }) {
           <Show when={section() === 'search'}>
             <div class="settings-section">
               <h3>{t().settingsSearch}</h3>
-              <SettingRow title="搜索服务" hint={state.info?.search?.hasTavily || state.info?.search?.hasBrave ? '已检测到 key' : '需要填写 key'}>
+              <SettingRow title="搜索方式" hint="自动：官方内置优先，失败再降级第三方">
+                <select class="select" value={draft.searchMode} onChange={(event) => setDraft('searchMode', event.currentTarget.value)}>
+                  <option value="auto">自动</option>
+                  <option value="native">只用官方内置</option>
+                  <option value="api">只用搜索 API</option>
+                </select>
+              </SettingRow>
+              <SettingRow title="第三方搜索源" hint="官方内置不可用时使用；Tavily / Brave 需要 Key">
                 <select class="select" value={draft.searchProvider} onChange={(event) => setDraft('searchProvider', event.currentTarget.value)}>
-                  <option value="off">关闭</option>
+                  <option value="auto">自动</option>
                   <option value="tavily">Tavily</option>
                   <option value="brave">Brave</option>
                 </select>
               </SettingRow>
+              <p class="settings-desc">
+                {['openai', 'anthropic', 'gemini', 'qwen'].includes(state.info?.currentProvider ?? '')
+                  ? '当前模型支持官方内置搜索，按次计费。'
+                  : '当前模型没有官方搜索，会自动降级到 Brave / Tavily，都没有时使用免费源。'}
+              </p>
               <SettingRow title="深度搜索">
                 <Switch checked={draft.searchDeep} onChange={(value) => setDraft('searchDeep', value)} />
               </SettingRow>

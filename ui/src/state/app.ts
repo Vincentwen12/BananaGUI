@@ -4,6 +4,7 @@ import {
   api,
   connect,
   type Info,
+  type ModelCatalog,
   type Session,
   type SessionMessage,
   type SessionSummary,
@@ -105,6 +106,8 @@ export function createAppState() {
 
   const [state, setState] = createStore({
     info: null as Info | null,
+    models: null as ModelCatalog | null,
+    modelsLoading: false,
     sessions: [] as SessionSummary[],
     session: null as Session | null,
     messages: [] as SessionMessage[],
@@ -265,9 +268,25 @@ export function createAppState() {
     try {
       const data = await api.bootstrap();
       applyBootstrap(data);
+      void loadModels();
     } catch (error) {
       setState({ booting: false, status: error instanceof Error ? error.message : String(error) });
       throw error;
+    }
+  }
+
+  async function loadModels(force = false) {
+    if (state.modelsLoading) return;
+    const fetched = state.models ? Date.parse(state.models.fetchedAt) : 0;
+    if (!force && Number.isFinite(fetched) && Date.now() - fetched < 10 * 60 * 1000) return;
+    setState('modelsLoading', true);
+    try {
+      const data = await api.models(force);
+      setState('models', data);
+    } catch {
+      // 模型列表失败不影响聊天，保留上次结果或内置兜底
+    } finally {
+      setState('modelsLoading', false);
     }
   }
 
@@ -677,29 +696,50 @@ export function createAppState() {
     }
   }
 
-  async function cycleModel(direction: 1 | -1) {
-    const providers = (state.info?.providers ?? []).filter((item) => item.hasKey);
-    if (providers.length < 2) {
-      toast('没有其他已配置的模型', 'warn');
-      return;
+  function modelChoices() {
+    const catalog = state.models?.providers ?? [];
+    if (catalog.length) {
+      return catalog.flatMap((provider) =>
+        provider.models.slice(0, 5).map((model) => ({
+          provider: provider.name,
+          model: model.id,
+          label: `${provider.label} · ${model.id}`,
+        })),
+      );
     }
+    return (state.info?.providers ?? [])
+      .filter((item) => item.hasKey)
+      .map((item) => ({ provider: item.name, model: item.model, label: `${item.name} · ${item.model}` }));
+  }
+
+  async function setModel(provider: string, model: string) {
     if (state.commandBusy) return;
-    const current = providers.findIndex((item) => item.name === state.info?.currentProvider);
-    const next = providers[(Math.max(0, current) + direction + providers.length) % providers.length]!;
-    if (!next || next.name === state.info?.currentProvider) return;
+    if (provider === state.info?.currentProvider && model === state.info?.model) return;
     setState('commandBusy', true);
     try {
-      const data = await api.settings({
-        current: next.name,
-        provider: { name: next.name, model: next.model },
-      });
+      const data = await api.settings({ current: provider, provider: { name: provider, model } });
       setState({ info: data.info, session: data.session, status: t().ready });
-      toast(`模型：${next.name} / ${next.model}`, 'success');
+      toast(`模型：${model}`, 'success');
     } catch (error) {
       toast(error instanceof Error ? error.message : String(error), 'error');
     } finally {
       setState('commandBusy', false);
     }
+  }
+
+  async function cycleModel(direction: 1 | -1) {
+    const options = modelChoices();
+    if (options.length < 2) {
+      toast('没有其他可用模型', 'warn');
+      return;
+    }
+    if (state.commandBusy) return;
+    const current = options.findIndex(
+      (item) => item.provider === state.info?.currentProvider && item.model === state.info?.model,
+    );
+    const next = options[(Math.max(0, current) + direction + options.length) % options.length]!;
+    if (!next) return;
+    await setModel(next.provider, next.model);
   }
 
   function setReasoning(level: 'fast' | 'standard' | 'deep') {
@@ -796,6 +836,7 @@ export function createAppState() {
     try {
       const data = await api.settings(patch);
       setState({ info: data.info, session: data.session });
+      void loadModels(true);
       if (message) toast(message, 'success');
       return true;
     } catch (error) {
@@ -1058,6 +1099,9 @@ export function createAppState() {
     answerPrompt,
     refresh,
     refreshSession,
+    loadModels,
+    modelChoices,
+    setModel,
     pick,
     newSession,
     renameSession,

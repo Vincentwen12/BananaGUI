@@ -35,9 +35,12 @@ export interface Permissions {
 }
 
 export type SearchProvider = 'auto' | 'tavily' | 'brave' | 'free';
+export type SearchMode = 'auto' | 'native' | 'api';
 export type SearchLanguage = 'en' | 'auto' | 'zh';
 
 export interface SearchConfig {
+  /** auto：官方内置优先，失败再升级到搜索 API；native：只用官方内置；api：只用 Tavily/Brave。 */
+  mode: SearchMode;
   /** auto：有 Key 就用 API，没有就抓免费源；free：强制只用免费源。 */
   provider: SearchProvider;
   tavilyKey?: string;
@@ -288,6 +291,7 @@ function defaultConfig(workspace: string): AppConfig {
     verifyCommands: ['npm test', 'npm run build'],
     uiGuard: 'enforce',
     search: {
+      mode: 'auto',
       provider: 'auto',
       deep: false,
       deepPages: 3,
@@ -410,6 +414,8 @@ export function sanitizeProjectConfig(patch: ConfigFile): ConfigFile {
   }
   if (patch.search && typeof patch.search === 'object') {
     const search: Partial<SearchConfig> = {};
+    const mode = patch.search.mode;
+    if (mode === 'auto' || mode === 'native' || mode === 'api') search.mode = mode;
     const provider = patch.search.provider;
     if (provider === 'auto' || provider === 'tavily' || provider === 'brave' || provider === 'free') {
       search.provider = provider;

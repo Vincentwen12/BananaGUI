@@ -67,6 +67,7 @@ export interface GuiInfo {
   providers: PublicProvider[];
   permissions: AppConfig['permissions'];
   search: {
+    mode: string;
     provider: string;
     deep: boolean;
     deepPages: number;

@@ -1,6 +1,7 @@
 import type { Permissions, SearchConfig } from '../config/config.ts';
 import { isContextOverflowError } from '../providers/http.ts';
 import type { MessageAttachment, Provider, ToolCall, UMessage, Usage } from '../providers/types.ts';
+import type { NativeSearchConfig } from '../tools/types.ts';
 import type { ReasoningLevel } from '../providers/reasoning.ts';
 import {
   type ApprovalKind,
@@ -47,6 +48,8 @@ export interface AgentDeps {
   reasoning?: ReasoningLevel;
   /** 联网搜索配置；不传时工具退回环境变量和免费源。 */
   search?: SearchConfig;
+  /** 当前 provider 的官方联网搜索能力（由调用方解析 Key 后传入）。 */
+  nativeSearch?: NativeSearchConfig;
   /** 本轮预算；超出后在下一次模型调用前停下。 */
   budget?: Budget;
   /** UI 质量门禁：off 不检查，warn 提示，enforce 阻止交付。 */
@@ -172,6 +175,7 @@ export async function runTurn(
     unknowns,
     recordChange: deps.recordChange,
     search: deps.search,
+    nativeSearch: deps.nativeSearch,
   };
 
   const tryCompact = async (aggressive: boolean): Promise<boolean> => {

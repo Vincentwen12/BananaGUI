@@ -151,7 +151,8 @@ export function ChatThread(props: { app: AppState }) {
   const { state, t } = props.app;
   let thread: HTMLDivElement | undefined;
   let inner: HTMLDivElement | undefined;
-  let stick = true;
+  let pinned = true;
+  let frame = 0;
   const [showJump, setShowJump] = createSignal(false);
 
   const messages = () => props.app.visibleMessages();
@@ -159,21 +160,37 @@ export function ChatThread(props: { app: AppState }) {
 
   function nearBottom() {
     if (!thread) return true;
-    return thread.scrollHeight - thread.scrollTop - thread.clientHeight < 140;
+    return thread.scrollHeight - thread.scrollTop - thread.clientHeight < 48;
   }
 
   function toBottom(smooth = false) {
-    thread?.scrollTo({ top: thread.scrollHeight, behavior: smooth ? 'smooth' : 'auto' });
-    stick = true;
+    pinned = true;
     setShowJump(false);
+    if (!thread) return;
+    if (smooth) {
+      thread.scrollTo({ top: thread.scrollHeight, behavior: 'smooth' });
+      return;
+    }
+    thread.scrollTop = thread.scrollHeight;
+  }
+
+  function scheduleFollow() {
+    if (!pinned) return;
+    cancelAnimationFrame(frame);
+    frame = requestAnimationFrame(() => {
+      if (pinned) toBottom();
+    });
+  }
+
+  function release() {
+    if (!pinned) return;
+    pinned = false;
+    setShowJump(true);
   }
 
   createEffect(() => {
     props.app.scrollTick();
-    const near = nearBottom();
-    stick = near;
-    if (near) requestAnimationFrame(() => toBottom());
-    else setShowJump(true);
+    if (pinned) scheduleFollow();
   });
 
   createEffect(() => {
@@ -184,10 +201,13 @@ export function ChatThread(props: { app: AppState }) {
   onMount(() => {
     if (!inner) return;
     const observer = new ResizeObserver(() => {
-      if (stick) requestAnimationFrame(() => toBottom());
+      if (pinned) scheduleFollow();
     });
     observer.observe(inner);
-    onCleanup(() => observer.disconnect());
+    onCleanup(() => {
+      observer.disconnect();
+      cancelAnimationFrame(frame);
+    });
   });
 
   const starters = () =>
@@ -198,10 +218,23 @@ export function ChatThread(props: { app: AppState }) {
       <div
         class="thread"
         ref={thread}
+        onWheel={(event) => {
+          if (event.deltaY < 0) release();
+        }}
+        onTouchMove={() => {
+          if (!nearBottom()) release();
+        }}
+        onKeyDown={(event) => {
+          if (['PageUp', 'Home', 'ArrowUp'].includes(event.key)) release();
+        }}
         onScroll={() => {
-          const near = nearBottom();
-          stick = near;
-          setShowJump(!near);
+          if (nearBottom()) {
+            pinned = true;
+            setShowJump(false);
+          } else {
+            pinned = false;
+            setShowJump(true);
+          }
           props.app.setState('threadScrolled', (thread?.scrollTop ?? 0) > 4);
         }}
         aria-live="polite"

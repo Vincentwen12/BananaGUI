@@ -87,7 +87,7 @@ export interface Info {
   providerError?: string | null;
   providers: PublicProvider[];
   permissions?: Record<string, string>;
-  search?: { provider?: string; deep?: boolean; deepPages?: number; language?: string; hasTavily?: boolean; hasBrave?: boolean };
+  search?: { mode?: string; provider?: string; deep?: boolean; deepPages?: number; language?: string; hasTavily?: boolean; hasBrave?: boolean };
   showReasoning?: boolean;
   allowOutsideWorkspace?: boolean;
   maxSteps?: number;
@@ -107,6 +107,23 @@ export interface Bootstrap {
   info: Info;
   sessions: SessionSummary[];
   session: Session;
+}
+
+export interface ModelOption {
+  id: string;
+  label: string;
+}
+
+export interface ProviderModels {
+  name: string;
+  label: string;
+  models: ModelOption[];
+  source: 'live' | 'fallback';
+}
+
+export interface ModelCatalog {
+  providers: ProviderModels[];
+  fetchedAt: string;
 }
 
 export type WsEvent = Record<string, unknown> & { type: string };
@@ -132,6 +149,7 @@ const post = <T>(path: string, body: unknown = {}) =>
 
 export const api = {
   bootstrap: () => request<Bootstrap>('/api/bootstrap'),
+  models: (refresh = false) => request<ModelCatalog>(`/api/models${refresh ? '?refresh=1' : ''}`),
   health: () => request<{ ok: boolean; version: string }>('/api/health'),
   sessions: () => request<{ sessions: SessionSummary[]; session: Session }>('/api/sessions'),
   session: (id: string) => request<{ session: Session }>(`/api/sessions/${encodeURIComponent(id)}`),
