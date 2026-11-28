@@ -13,6 +13,8 @@
 
 终端里的多 provider AI agent，附带一个本地图形界面。能读写文件、跑命令、搜代码、上网查资料；多轮对话自动保存，随时切换历史会话。
 
+仓库：<https://github.com/Vincentwen12/BananaGUI> · 问题反馈：<https://github.com/Vincentwen12/BananaGUI/issues>
+
 ## 30 秒看懂
 
 > GUI / Review 为真实运行截图；CLI 为示意图。
@@ -34,7 +36,7 @@
   | |_) | (_| | | | | (_| | |_) | (_| | | | |
   |____/ \__,_|_| |_|\__,_|_.__/ \__,_|_| |_|
 
-          BananaCLI v0.11.0 · 终端 + 图形界面
+          BananaCLI v0.11.1 · 终端 + 图形界面
 ```
 
 - **无前端框架依赖**：CLI 只用 Node 内置模块；运行时依赖 `ws`（GUI/终端 WebSocket）和 `@lydell/node-pty`（预编译原生模块）。
@@ -60,7 +62,16 @@ npm install -g @vincentbanana/banana-gui && banana-gui   # 或装独立 GUI 包
 
 图形界面与终端共用同一套内核（agent 循环、工具、权限、斜杠命令），配置也共用 `~/.banana/config.json`。界面支持中文 / English，在设置 → 外观里切换。
 
-界面提供：会话管理与导出（Markdown / JSON）、`/` 命令面板、`@` 文件补全、工作区文件面板、工具输出详情、Plan/Build 切换、任务栏、三态主题、API Key 和搜索设置、内嵌终端。
+界面提供：会话管理与导出（Markdown / JSON）、`/` 命令面板、`@` 文件补全、工作区文件面板、工具输出详情、Plan/Build 切换、任务栏、三态主题、API Key 和搜索设置、内置终端、内置浏览器、服务端消息队列、附件导入，以及图片 / 音频 / 视频预览。
+
+桌面版使用原生网页视图，可播放网页视频和登录站点：
+
+```bash
+npm install -g @vincentbanana/banana-gui
+banana-gui-desktop
+```
+
+仓库地址：<https://github.com/Vincentwen12/BananaGUI>
 
 窗口和样式遵守同一套规则：黑白暖中性 + 香蕉黄 `#dcde8d`，自绘 SVG 图标，不用渐变、霓虹、玻璃拟态和 emoji。
 

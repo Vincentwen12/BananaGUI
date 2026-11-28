@@ -15,6 +15,8 @@ English | [中文](README.md)
 
 A multi-provider AI agent for the terminal, with a local GUI. It can read and write files, run commands, search code, and browse the web. Conversations are saved automatically and can be resumed at any time.
 
+Repository: <https://github.com/Vincentwen12/BananaGUI> · Issues: <https://github.com/Vincentwen12/BananaGUI/issues>
+
 ## 30-second overview
 
 > GUI / Review are real screenshots from a running `banana --ui`; CLI is schematic.
@@ -36,7 +38,7 @@ A multi-provider AI agent for the terminal, with a local GUI. It can read and wr
   | |_) | (_| | | | | (_| | |_) | (_| | | | |
   |____/ \__,_|_| |_|\__,_|_.__/ \__,_|_| |_|
 
-          BananaCLI v0.11.0 · terminal + GUI
+          BananaCLI v0.11.1 · terminal + GUI
 ```
 
 - **No frontend framework**: the CLI uses Node built-ins only; runtime dependencies are `ws` and `@lydell/node-pty` (prebuilt native module).
@@ -62,7 +64,16 @@ npm install -g @vincentbanana/banana-gui && banana-gui   # or install the standa
 
 The GUI shares the same core (agent loop, tools, permissions, slash commands) and the same `~/.banana/config.json`. The interface supports Chinese and English via Settings → Appearance.
 
-It includes session management and export (Markdown / JSON), a `/` command palette, `@` file completion, a workspace file panel, tool output details, Plan/Build switching, a task dock, three theme modes, API key and search settings, and an embedded terminal.
+It includes session management and export (Markdown / JSON), a `/` command palette, `@` file completion, a workspace file panel, tool output details, Plan/Build switching, a task dock, three theme modes, API key and search settings, an embedded terminal, a built-in browser, a server-side message queue, file attachments, and image / audio / video preview.
+
+The desktop build uses a native webview, so web video and site logins work:
+
+```bash
+npm install -g @vincentbanana/banana-gui
+banana-gui-desktop
+```
+
+Repository: <https://github.com/Vincentwen12/BananaGUI>
 
 The look follows the same rules: warm black/white neutrals with banana yellow `#dcde8d`, hand-drawn SVG icons, and no gradients, neon, glassmorphism, or emoji.
 
