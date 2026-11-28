@@ -241,14 +241,32 @@ async function searchBrave(
 
 /* ---------- 官方内置搜索 ---------- */
 
-type NativeKind = 'openai' | 'anthropic' | 'gemini' | 'qwen' | 'deepseek';
+type NativeKind = 'openai' | 'anthropic' | 'gemini' | 'qwen' | 'deepseek' | 'moonshot' | 'openrouter' | 'ollama';
 
 function nativeKind(config: NonNullable<ToolContext['nativeSearch']>): NativeKind | null {
+  const host = (() => {
+    try {
+      return new URL(config.baseUrl).hostname.toLowerCase();
+    } catch {
+      return '';
+    }
+  })();
+  if (host.includes('openrouter.ai')) return 'openrouter';
+  if (host.includes('moonshot.')) return 'moonshot';
+  if (host.includes('deepseek.com')) return 'deepseek';
+  if (host.includes('dashscope') || host.includes('aliyuncs.com')) return 'qwen';
+  if (host.includes('generativelanguage.googleapis.com')) return 'gemini';
+  if (host.includes('api.openai.com')) return 'openai';
+  if (host.includes('api.anthropic.com')) return 'anthropic';
+  if (host.includes('ollama.com')) return 'ollama';
   if (config.provider === 'openai') return 'openai';
   if (config.provider === 'anthropic' || config.protocol === 'anthropic') return 'anthropic';
   if (config.provider === 'gemini') return 'gemini';
   if (config.provider === 'qwen') return 'qwen';
-  if (config.provider === 'deepseek' || /deepseek\.com/i.test(config.baseUrl)) return 'deepseek';
+  if (config.provider === 'deepseek') return 'deepseek';
+  if (config.provider === 'moonshot') return 'moonshot';
+  if (config.provider === 'openrouter') return 'openrouter';
+  if (config.provider === 'ollama' && process.env['OLLAMA_API_KEY']) return 'ollama';
   return null;
 }
 
@@ -460,6 +478,138 @@ async function searchDeepSeek(
       title: String(item['title'] ?? item['url'] ?? ''),
       url: String(item['url'] ?? ''),
       snippet: String(item['summary'] ?? item['snippet'] ?? item['content'] ?? '').slice(0, 500),
+    })),
+  ).slice(0, count);
+}
+
+async function searchMoonshot(
+  query: string,
+  count: number,
+  ctx: ToolContext,
+  config: NonNullable<ToolContext['nativeSearch']>,
+  options: SearchOptions,
+): Promise<SearchHit[]> {
+  const base = config.baseUrl.replace(/\/+$/, '');
+  const body: Record<string, unknown> = {
+    text_query: scopedQuery(query, options.site),
+    limit: Math.min(Math.max(count, 1), 20),
+    timeout_seconds: 30,
+  };
+  if (options.site) body.sites = [options.site];
+  const response = await fetchWithTimeout(
+    `${base}/tools/search`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${config.apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify(body),
+    },
+    ctx,
+    SEARCH_TIMEOUT_MS,
+  );
+  if (!response.ok) throw new Error(`Kimi 搜索 HTTP ${response.status}`);
+  const payload = (await response.json()) as {
+    search_results?: Array<Record<string, unknown>>;
+  };
+  return dedupeHits(
+    (payload.search_results ?? []).map((item) => {
+      const chunks = Array.isArray(item['chunks']) ? (item['chunks'] as Array<Record<string, unknown>>) : [];
+      return {
+        title: String(item['title'] ?? item['url'] ?? ''),
+        url: String(item['url'] ?? ''),
+        snippet: String(item['snippet'] ?? chunks[0]?.['text'] ?? '').slice(0, 500),
+      };
+    }),
+  ).slice(0, count);
+}
+
+async function searchOpenRouter(
+  query: string,
+  count: number,
+  ctx: ToolContext,
+  config: NonNullable<ToolContext['nativeSearch']>,
+  options: SearchOptions,
+): Promise<SearchHit[]> {
+  const base = config.baseUrl.replace(/\/+$/, '');
+  const response = await fetchWithTimeout(
+    `${base}/chat/completions`,
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${config.apiKey}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({
+        model: config.model,
+        messages: [{ role: 'user', content: scopedQuery(query, options.site) }],
+        plugins: [{ id: 'web', max_results: Math.min(Math.max(count, 1), 10) }],
+        stream: false,
+      }),
+    },
+    ctx,
+    SEARCH_TIMEOUT_MS,
+  );
+  if (!response.ok) throw new Error(`OpenRouter 搜索 HTTP ${response.status}`);
+  const payload = (await response.json()) as {
+    choices?: Array<{
+      message?: {
+        content?: string;
+        annotations?: Array<Record<string, unknown>>;
+      };
+    }>;
+  };
+  const message = payload.choices?.[0]?.message;
+  const annotations = message?.annotations ?? [];
+  if (!annotations.length) {
+    return message?.content
+      ? [{ title: query, url: '', snippet: message.content.slice(0, 500) }]
+      : [];
+  }
+  return dedupeHits(
+    annotations.map((item) => {
+      const citation = (item['url_citation'] ?? item['citation'] ?? item) as Record<string, unknown>;
+      return {
+        title: String(citation['title'] ?? citation['url'] ?? ''),
+        url: String(citation['url'] ?? ''),
+        snippet: String(citation['content'] ?? citation['text'] ?? '').slice(0, 500),
+      };
+    }),
+  ).slice(0, count);
+}
+
+async function searchOllama(
+  query: string,
+  count: number,
+  ctx: ToolContext,
+  _config: NonNullable<ToolContext['nativeSearch']>,
+  _options: SearchOptions,
+): Promise<SearchHit[]> {
+  const key = process.env['OLLAMA_API_KEY']?.trim();
+  if (!key) throw new Error('Ollama 搜索需要 OLLAMA_API_KEY');
+  const response = await fetchWithTimeout(
+    'https://ollama.com/api/web_search',
+    {
+      method: 'POST',
+      headers: {
+        authorization: `Bearer ${key}`,
+        'content-type': 'application/json',
+      },
+      body: JSON.stringify({ query, max_results: Math.min(Math.max(count, 1), 10) }),
+    },
+    ctx,
+    SEARCH_TIMEOUT_MS,
+  );
+  if (!response.ok) throw new Error(`Ollama 搜索 HTTP ${response.status}`);
+  const payload = (await response.json()) as {
+    results?: Array<{ title?: string; url?: string; content?: string }>;
+  };
+  return dedupeHits(
+    (payload.results ?? []).map((item) => ({
+      title: item.title ?? item.url ?? '',
+      url: item.url ?? '',
+      snippet: String(item.content ?? '').slice(0, 500),
     })),
   ).slice(0, count);
 }
@@ -809,7 +959,7 @@ export const webSearchTool: Tool = {
   name: 'web_search',
   description: [
     '联网搜索，返回标题、链接和摘要。',
-    '默认优先使用当前 provider 的官方内置搜索（OpenAI / DeepSeek / Claude / Gemini / Qwen）；',
+    '默认优先使用当前 provider 的官方内置搜索（OpenAI / DeepSeek / Kimi / Claude / Gemini / Qwen / OpenRouter）；',
     '官方不可用时降级到 Tavily / Brave，需要先在设置里配置 Key。',
     'depth=deep 时会读取前几页正文，适合查文档、对比方案；日常事实核对用默认的 quick 即可。',
     '搜不到就换关键词再试，别靠猜。',
@@ -894,7 +1044,13 @@ export const webSearchTool: Tool = {
                   ? await searchGemini(query, count, ctx, nativeConfig, options)
                   : kind === 'deepseek'
                     ? await searchDeepSeek(query, count, ctx, nativeConfig, options)
-                    : await searchQwen(query, count, ctx, nativeConfig, options);
+                    : kind === 'moonshot'
+                      ? await searchMoonshot(query, count, ctx, nativeConfig, options)
+                      : kind === 'openrouter'
+                        ? await searchOpenRouter(query, count, ctx, nativeConfig, options)
+                        : kind === 'ollama'
+                          ? await searchOllama(query, count, ctx, nativeConfig, options)
+                          : await searchQwen(query, count, ctx, nativeConfig, options);
           if (hits.length) engines.push({ engine: `官方 · ${nativeConfig.provider}`, hits });
           else problems.push(`官方搜索: 没有结果`);
         } catch (error) {
