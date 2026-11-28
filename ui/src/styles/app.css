@@ -617,6 +617,14 @@
 }
 
 @media (max-width: 840px) {
+  .dock-rail {
+    display: none;
+  }
+
+  .terminal-quick {
+    display: none;
+  }
+
   .sidebar {
     position: absolute;
     top: 0;
