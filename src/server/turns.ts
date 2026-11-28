@@ -3,6 +3,7 @@ import { join } from 'node:path';
 import { bananaHome, formatPreferences, resolveProvider } from '../config/config.ts';
 import { runTurn } from '../agent/loop.ts';
 import type { UMessage } from '../providers/types.ts';
+import type { MessageAttachment } from '../providers/types.ts';
 import { estimateTokens } from '../agent/context.ts';
 import { estimateCost, resolvePricing } from '../providers/pricing.ts';
 import { BackupStore, newTurnId } from '../session/backups.ts';
@@ -17,6 +18,8 @@ import type { ServerEvent } from './protocol.ts';
 export interface TurnPayload {
   input?: string;
   images?: string[];
+  attachments?: Array<Omit<MessageAttachment, 'path'> & { path?: string }>;
+  attachmentContext?: string;
   mode?: 'plan' | 'build';
   reasoning?: 'fast' | 'standard' | 'deep';
 }
@@ -72,6 +75,28 @@ function validateImages(images: string[] | undefined): string[] | undefined {
     if (bytes > MAX_IMAGE_BYTES) throw new Error(`图片 ${(bytes / 1024 / 1024).toFixed(1)}MB，超过 4MB 上限。`);
   }
   return images;
+}
+
+function validateAttachments(
+  raw: Array<Omit<MessageAttachment, 'path'> & { path?: string }> | undefined,
+): MessageAttachment[] | undefined {
+  if (!raw?.length) return undefined;
+  const out: MessageAttachment[] = [];
+  for (const item of raw.slice(0, 10)) {
+    if (!item || typeof item !== 'object') continue;
+    const name = typeof item.name === 'string' ? item.name.trim().slice(0, 200) : '';
+    if (!name) continue;
+    out.push({
+      name,
+      path: typeof item.path === 'string' ? item.path.slice(0, 500) : name,
+      ...(typeof item.mime === 'string' ? { mime: item.mime.slice(0, 120) } : {}),
+      ...(typeof item.size === 'number' ? { size: item.size } : {}),
+      ...(item.kind === 'image' || item.kind === 'text' || item.kind === 'pdf' || item.kind === 'binary'
+        ? { kind: item.kind as MessageAttachment['kind'] }
+        : {}),
+    });
+  }
+  return out.length ? out : undefined;
 }
 
 function selectedInput(input: Record<string, unknown>): Record<string, unknown> {
@@ -165,7 +190,12 @@ export async function runGuiTurn(
   const input = String(payload.input ?? '').trim();
   if (input.length > MAX_INPUT_CHARS) throw new Error('输入超过 200,000 字符，请拆分后重试。');
   const images = validateImages(payload.images);
-  if (!input && !images?.length) throw new Error('输入不能为空。');
+  const attachments = validateAttachments(payload.attachments);
+  const attachmentContext =
+    typeof payload.attachmentContext === 'string' && payload.attachmentContext.trim()
+      ? payload.attachmentContext.slice(0, 200_000)
+      : undefined;
+  if (!input && !images?.length && !attachments?.length) throw new Error('输入不能为空。');
   const provider = state.provider;
   if (!provider) {
     throw new Error(state.providerError || '当前 provider 缺少 API key，请先在设置里配置。');
@@ -223,6 +253,9 @@ export async function runGuiTurn(
     mode: state.session.mode,
     reasoning: state.session.reasoning,
     title: state.session.title,
+    input,
+    images,
+    attachments,
   });
 
   let result: Awaited<ReturnType<typeof runTurn>>;
@@ -322,6 +355,8 @@ export async function runGuiTurn(
       state.session.messages,
       input,
       images,
+      attachments,
+      attachmentContext,
     );
   } catch (error) {
     controller.abort();

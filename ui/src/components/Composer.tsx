@@ -14,6 +14,7 @@ export function Composer(props: { app: AppState }) {
   const { state, t } = props.app;
   let textarea: HTMLTextAreaElement | undefined;
   let fileInput: HTMLInputElement | undefined;
+  let docInput: HTMLInputElement | undefined;
   let modelPop: HTMLDivElement | undefined;
   let timer: number | undefined;
 
@@ -43,6 +44,13 @@ export function Composer(props: { app: AppState }) {
       .filter((provider) => provider.shown.length > 0);
   });
   const totalModels = () => catalog().reduce((sum, provider) => sum + provider.models.length, 0);
+  const currentModelLabel = () => {
+    const info = props.app.state.info;
+    const found = catalog()
+      .flatMap((provider) => provider.models)
+      .find((model) => model.id === info?.model);
+    return found?.label ?? info?.model ?? '模型';
+  };
 
   onMount(() => {
     const onPointer = (event: PointerEvent) => {
@@ -250,16 +258,56 @@ export function Composer(props: { app: AppState }) {
         onDrop={(event) => {
           event.preventDefault();
           setDragging(false);
-          if (event.dataTransfer?.files.length) void props.app.addImages(event.dataTransfer.files);
+          if (event.dataTransfer?.files.length) void props.app.addFiles(event.dataTransfer.files);
         }}
       >
-        <Show when={state.images.length}>
+        <Show when={state.queue.length}>
+          <div class="queue-panel">
+            <div class="queue-head">
+              <span>队列 · {state.queue.length}</span>
+              <span class="spacer" />
+              <button type="button" class="queue-clear" onClick={() => props.app.clearQueue()}>
+                清空
+              </button>
+            </div>
+            <For each={state.queue}>
+              {(item, index) => (
+                <div class="queue-item">
+                  <span class="queue-index">{index() + 1}</span>
+                  <span class="queue-text">{item.text || `${item.images.length + (item.attachments?.length ?? 0)} 个附件`}</span>
+                  <button
+                    type="button"
+                    class="queue-remove"
+                    aria-label="移出队列"
+                    onClick={() => props.app.removeQueued(item.id)}
+                  >
+                    <Icon name="close" />
+                  </button>
+                </div>
+              )}
+            </For>
+          </div>
+        </Show>
+
+        <Show when={state.images.length || state.files.length}>
           <div class="attachments-tray">
             <For each={state.images}>
               {(image) => (
                 <div class="attachment">
                   <img src={image.dataUrl} alt={image.name ?? ''} />
                   <button type="button" aria-label="移除图片" onClick={() => props.app.removeImage(image.id)}>
+                    <Icon name="close" />
+                  </button>
+                </div>
+              )}
+            </For>
+            <For each={state.files}>
+              {(file) => (
+                <div class="file-chip" title={file.name}>
+                  <Icon name="file" />
+                  <span class="file-chip-name">{file.name}</span>
+                  <span class="file-chip-size">{Math.max(1, Math.round(file.size / 1024))}KB</span>
+                  <button type="button" aria-label="移除文件" onClick={() => props.app.removeFile(file.id)}>
                     <Icon name="close" />
                   </button>
                 </div>
@@ -281,7 +329,7 @@ export function Composer(props: { app: AppState }) {
             const files = Array.from(event.clipboardData?.files ?? []);
             if (files.length) {
               event.preventDefault();
-              void props.app.addImages(files);
+              void props.app.addFiles(files);
             }
           }}
         />
@@ -305,6 +353,26 @@ export function Composer(props: { app: AppState }) {
             onChange={(event) => {
               const files = event.currentTarget.files;
               if (files) void props.app.addImages(files);
+              event.currentTarget.value = '';
+            }}
+          />
+          <button
+            type="button"
+            class="chip square"
+            title="导入文件（文本 / 代码）"
+            aria-label="导入文件"
+            onClick={() => docInput?.click()}
+          >
+            <Icon name="clip" />
+          </button>
+          <input
+            ref={docInput}
+            type="file"
+            multiple
+            hidden
+            onChange={(event) => {
+              const files = event.currentTarget.files;
+              if (files) void props.app.addFiles(files);
               event.currentTarget.value = '';
             }}
           />
@@ -352,7 +420,7 @@ export function Composer(props: { app: AppState }) {
                 }
               }}
             >
-              {state.info?.providerError ? '模型不可用' : state.info?.model ?? '模型'}
+              {state.info?.providerError ? '模型不可用' : currentModelLabel()}
             </button>
             <button
               type="button"
@@ -410,12 +478,13 @@ export function Composer(props: { app: AppState }) {
                                   ? ' active'
                                   : ''
                               }`}
+                              title={model.id}
                               onClick={() => {
                                 setModelOpen(false);
                                 void props.app.setModel(provider.name, model.id);
                               }}
                             >
-                              <span class="model-item-id">{model.id}</span>
+                              <span class="model-item-id">{model.label}</span>
                               <Show
                                 when={
                                   state.info?.currentProvider === provider.name &&
@@ -459,12 +528,17 @@ export function Composer(props: { app: AppState }) {
                 class="send-btn"
                 title={t().send}
                 aria-label={t().send}
-                disabled={!state.draft.trim() && !state.images.length}
+                disabled={!state.draft.trim() && !state.images.length && !state.files.length}
               >
                 <Icon name="send" />
               </button>
             }
           >
+            <Show when={state.draft.trim() || state.images.length || state.files.length}>
+              <button type="submit" class="send-btn queue" title="加入队列" aria-label="加入队列">
+                <Icon name="plus" />
+              </button>
+            </Show>
             <button type="button" class="send-btn stop" title={t().stop} aria-label={t().stop} onClick={() => props.app.stop()}>
               <Icon name="stop" />
             </button>

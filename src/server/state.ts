@@ -38,6 +38,17 @@ export interface ActiveTurn {
   owner: WebSocket | null;
 }
 
+export interface QueuedTurn {
+  id: string;
+  input: string;
+  images?: string[];
+  attachments?: Array<{ name: string; path?: string; mime?: string; size?: number; kind?: 'image' | 'text' | 'pdf' | 'binary' }>;
+  attachmentContext?: string;
+  mode?: 'plan' | 'build';
+  reasoning?: 'fast' | 'standard' | 'deep';
+  createdAt: string;
+}
+
 export interface PendingApproval {
   id: string;
   kind: 'shell' | 'write' | 'network';
@@ -78,6 +89,8 @@ export class GuiState {
   disabledTools = new Set<string>();
   readonly clients = new Set<WebSocket>();
   activeTurn: ActiveTurn | null = null;
+  queue: QueuedTurn[] = [];
+  queueRunning = false;
   readonly pendingApprovals = new Map<string, PendingApproval>();
 
   constructor(options: GuiStateOptions) {
@@ -169,6 +182,7 @@ export class GuiState {
 
   async activateSession(id: string): Promise<Session> {
     if (this.activeTurn) throw new Error('当前回合还在运行，先停止再切换对话。');
+    this.queue = [];
     const next = await this.store.load(id);
     if (!next) throw new Error(`找不到对话 ${id}。`);
     const workspace = next.workspace || this.config.workspace;
@@ -184,6 +198,7 @@ export class GuiState {
   }
 
   async createSession(title = '新对话'): Promise<Session> {
+    this.queue = [];
     const session = this.store.create(cleanTitle(title) || '新对话');
     session.workspace = this.session.workspace || this.config.workspace;
     session.mode = 'build';
@@ -229,6 +244,45 @@ export class GuiState {
     await trustProject(this.config.workspace);
     await this.appFolderReload(this.config.workspace, this.session);
     await this.store.save(this.session);
+  }
+
+  enqueueTurn(payload: {
+    input?: string;
+    images?: string[];
+    attachments?: Array<{ name: string; path?: string; mime?: string; size?: number; kind?: 'image' | 'text' | 'pdf' | 'binary' }>;
+    attachmentContext?: string;
+    mode?: 'plan' | 'build';
+    reasoning?: 'fast' | 'standard' | 'deep';
+  }): QueuedTurn {
+    if (this.queue.length >= 20) throw new Error('队列最多 20 条，先等当前任务处理。');
+    const input = String(payload.input ?? '').trim();
+    const images = payload.images?.length ? payload.images : undefined;
+    const attachments = payload.attachments?.length ? payload.attachments : undefined;
+    if (!input && !images && !attachments) throw new Error('输入不能为空。');
+    const item: QueuedTurn = {
+      id: `q_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+      input,
+      images,
+      attachments,
+      attachmentContext: payload.attachmentContext,
+      mode: payload.mode,
+      reasoning: payload.reasoning,
+      createdAt: new Date().toISOString(),
+    };
+    this.queue.push(item);
+    return item;
+  }
+
+  shiftTurn(): QueuedTurn | undefined {
+    return this.queue.shift();
+  }
+
+  removeQueued(id: string): void {
+    this.queue = this.queue.filter((item) => item.id !== id);
+  }
+
+  clearQueue(): void {
+    this.queue = [];
   }
 
   async saveSession(): Promise<void> {
@@ -562,6 +616,7 @@ export class GuiState {
       info: this.publicInfo(isDesktop),
       sessions: await this.sessionSummaries(),
       session: this.session,
+      queue: this.queue,
       ...(this.config.agentDoc ? { agentDoc: this.config.agentDoc } : {}),
     };
   }

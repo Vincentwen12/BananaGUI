@@ -497,6 +497,82 @@
   box-shadow: 0 0 0 3px color-mix(in srgb, var(--focus) 12%, transparent);
 }
 
+/* ---------- Queue ---------- */
+.queue-panel {
+  max-height: 180px;
+  margin: 8px 8px 0;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  overflow: auto;
+}
+
+.queue-head {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 6px 10px;
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+
+.queue-clear {
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+
+.queue-clear:hover {
+  color: var(--text);
+}
+
+.queue-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 5px 10px;
+  border-top: 1px solid var(--line);
+  font-size: var(--text-sm);
+}
+
+.queue-index {
+  color: var(--text-3);
+  font-family: var(--mono);
+  font-size: var(--text-xs);
+}
+
+.queue-text {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--text-2);
+}
+
+.queue-remove {
+  display: grid;
+  place-items: center;
+  width: 20px;
+  height: 20px;
+  border-radius: var(--radius);
+  color: var(--text-3);
+}
+
+.queue-remove:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.queue-remove svg {
+  width: 12px;
+  height: 12px;
+}
+
+.send-btn.queue {
+  background: var(--text);
+  color: var(--bg);
+}
+
 .composer.drag {
   border-color: var(--focus);
   background: var(--info-bg);
@@ -788,6 +864,80 @@
   padding: 10px 12px 0;
 }
 
+.file-chip {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  max-width: 220px;
+  height: 32px;
+  padding: 0 8px;
+  border: 1px solid var(--line);
+  border-radius: var(--radius-md);
+  background: var(--panel-2);
+  color: var(--text-2);
+  font-size: var(--text-xs);
+}
+
+.file-chip svg {
+  width: 13px;
+  height: 13px;
+  flex: none;
+}
+
+.file-chip-name {
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-chip-size {
+  color: var(--text-3);
+  flex: none;
+}
+
+.file-chip button {
+  display: grid;
+  place-items: center;
+  width: 16px;
+  height: 16px;
+  border-radius: 50%;
+  color: var(--text-3);
+  flex: none;
+}
+
+.file-chip button:hover {
+  background: var(--hover);
+  color: var(--text);
+}
+
+.file-chip button svg {
+  width: 10px;
+  height: 10px;
+}
+
+.msg-files {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.msg-file {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  padding: 2px 7px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--text-3);
+  font-size: var(--text-xs);
+}
+
+.msg-file svg {
+  width: 11px;
+  height: 11px;
+}
+
 .attachment {
   position: relative;
   width: 58px;
@@ -1061,14 +1211,27 @@
 }
 
 .terminal-host {
+  box-sizing: border-box;
+  width: 100%;
   height: 100%;
   min-height: 0;
-  padding: 6px;
+  padding: 6px 4px 0 8px;
   background: var(--terminal-bg);
+  overflow: hidden;
 }
 
 .terminal-host .xterm {
   height: 100%;
+  background: var(--terminal-bg);
+}
+
+.terminal-host .xterm-screen,
+.terminal-host .xterm-viewport {
+  background: var(--terminal-bg);
+}
+
+.terminal-host .xterm-viewport {
+  overflow-x: hidden !important;
 }
 
 .dock-list {

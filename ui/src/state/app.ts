@@ -16,13 +16,20 @@ import { buildTimeline, groupSessions, toolSummary } from '../lib/format';
 import { dictionaries, type Lang } from '../lib/i18n';
 import { hasSeenGuide } from '../lib/guide';
 
-export type DockTab = 'terminal' | 'files' | 'tasks' | 'verify' | 'info';
+export type DockTab = 'terminal' | 'browser' | 'files' | 'tasks' | 'verify' | 'info';
 export type ThemeMode = 'light' | 'dark' | 'system';
 
 export interface UiImage {
   id: string;
   dataUrl: string;
   name?: string;
+}
+
+export interface UiFile {
+  id: string;
+  name: string;
+  size: number;
+  text: string;
 }
 
 export interface Toast {
@@ -111,6 +118,16 @@ export function createAppState() {
     sessions: [] as SessionSummary[],
     session: null as Session | null,
     messages: [] as SessionMessage[],
+    files: [] as UiFile[],
+    queue: [] as Array<{
+      id: string;
+      text: string;
+      images: string[];
+      attachments?: Array<{ name: string; mime?: string; size?: number; kind?: string }>;
+      attachmentContext?: string;
+      mode: 'plan' | 'build';
+      reasoning: 'fast' | 'standard' | 'deep';
+    }>,
     booting: true,
     running: false,
     online: false,
@@ -134,7 +151,10 @@ export function createAppState() {
         ? readNumber('banana-dock', 1) === 1
         : false,
     dockTab: 'terminal' as DockTab,
-    dockWidth: readNumber('banana-dock-width', 360),
+    dockWidth: (() => {
+      const width = readNumber('banana-dock-width', 520);
+      return width <= 380 ? 520 : Math.min(width, 1000);
+    })(),
     sidebarOpen: true,
     trustOpen: false,
     confirm: null as ConfirmRequest | null,
@@ -253,6 +273,16 @@ export function createAppState() {
       sessions: data.sessions,
       session: data.session,
       messages: data.session.messages ?? [],
+      queue: (data.queue ?? []).map((item) => ({
+        id: item.id,
+        text: item.input,
+        images: item.images ?? [],
+        attachments: item.attachments,
+        attachmentContext: item.attachmentContext,
+        mode: item.mode === 'plan' ? 'plan' : 'build',
+        reasoning:
+          item.reasoning === 'fast' || item.reasoning === 'deep' ? item.reasoning : 'standard',
+      })),
       booting: false,
       status: t().ready,
     });
@@ -322,7 +352,8 @@ export function createAppState() {
     if (state.running) return;
     try {
       const data = await api.activate(id);
-      setState({ session: data.session, messages: data.session.messages ?? [], paletteOpen: false });
+      setState({ session: data.session, messages: data.session.messages ?? [], paletteOpen: false, images: [], files: [] });
+      clearQueue();
       if (window.innerWidth <= 840) setState('sidebarOpen', false);
     } catch (error) {
       toast(error instanceof Error ? error.message : String(error), 'error');
@@ -335,6 +366,9 @@ export function createAppState() {
       const data = await api.create({ title });
       setState('session', data.session);
       setState('messages', []);
+      setState('images', []);
+      setState('files', []);
+      clearQueue();
       await refresh();
       setState({ pluginsOpen: false });
       if (window.innerWidth <= 840) setState('sidebarOpen', false);
@@ -494,10 +528,32 @@ export function createAppState() {
         updateAssistant(turnId, (message) => ({ ...message, reasoning: `${message.reasoning ?? ''}${delta}` }));
         break;
       }
-      case 'turn_start':
+      case 'turn_start': {
+        const input = typeof event.input === 'string' ? event.input : '';
+        const images = Array.isArray(event.images)
+          ? (event.images as string[]).filter((item) => typeof item === 'string')
+          : [];
+        const attachments = Array.isArray(event.attachments)
+          ? (event.attachments as Array<{ name?: string; kind?: string }>)
+          : [];
+        if (input || images.length || attachments.length) {
+          const last = state.messages[state.messages.length - 1];
+          if (!last || last.role !== 'user' || last.content !== input) {
+            setState('messages', (list) => [
+              ...list,
+              {
+                role: 'user',
+                content: input,
+                images: images.length ? images : undefined,
+                attachments: attachments.length ? attachments : undefined,
+              },
+            ]);
+          }
+        }
         setState({ running: true, status: '正在处理' });
         ensureAssistant(turnId);
         break;
+      }
       case 'step':
         setState({ running: true, status: `第 ${String(event.step ?? '')} 步` });
         break;
@@ -596,6 +652,27 @@ export function createAppState() {
       case 'sessions':
         if (Array.isArray(event.sessions)) setState('sessions', event.sessions as SessionSummary[]);
         break;
+      case 'queue':
+        if (Array.isArray(event.queue)) {
+          setState(
+            'queue',
+            (event.queue as Array<Record<string, unknown>>).map((item) => ({
+              id: String(item['id'] ?? ''),
+              text: String(item['input'] ?? ''),
+              images: Array.isArray(item['images']) ? (item['images'] as string[]) : [],
+              attachments: Array.isArray(item['attachments'])
+                ? (item['attachments'] as Array<{ name?: string; kind?: string }>)
+                : undefined,
+              attachmentContext: typeof item['attachmentContext'] === 'string' ? item['attachmentContext'] : undefined,
+              mode: item['mode'] === 'plan' ? ('plan' as const) : ('build' as const),
+              reasoning:
+                item['reasoning'] === 'fast' || item['reasoning'] === 'deep'
+                  ? (item['reasoning'] as 'fast' | 'deep')
+                  : ('standard' as const),
+            })),
+          );
+        }
+        break;
       case 'info':
         if (event.info && typeof event.info === 'object') {
           const info = event.info as Info;
@@ -626,41 +703,50 @@ export function createAppState() {
     },
   });
 
-  async function send() {
-    if (state.running) {
-      socket?.send({ type: 'abort' });
-      setState('status', '正在停止…');
-      return;
-    }
-    const value = state.draft.trim();
-    if (!value && !state.images.length) return;
-    if (value.startsWith('/')) {
-      setState('draft', '');
-      await executeCommand(value);
-      return;
-    }
-    const images = state.images.map((image) => image.dataUrl);
+  function attachmentPayload() {
+    if (!state.files.length) return { attachments: undefined, context: undefined };
+    const attachments = state.files.map((file) => ({ name: file.name, size: file.size, kind: 'text' as const }));
+    const context = state.files
+      .map((file) => `--- 文件：${file.name} ---\n${file.text}`)
+      .join('\n\n');
+    return { attachments, context };
+  }
+
+  function dispatchTurn(item: {
+    text: string;
+    images: string[];
+    attachments?: Array<{ name: string; mime?: string; size?: number; kind?: string }>;
+    attachmentContext?: string;
+    mode: 'plan' | 'build';
+    reasoning: 'fast' | 'standard' | 'deep';
+  }) {
     const ok = socket?.send({
       type: 'turn',
-      input: value,
-      images: images.length ? images : undefined,
-      mode: state.session?.mode ?? 'build',
-      reasoning: state.session?.reasoning ?? 'standard',
+      input: item.text,
+      images: item.images.length ? item.images : undefined,
+      attachments: item.attachments?.length ? item.attachments : undefined,
+      attachmentContext: item.attachmentContext,
+      mode: item.mode,
+      reasoning: item.reasoning,
     });
     if (!ok) {
       toast(t().connectionLost, 'error');
-      return;
+      return false;
     }
     setState('messages', (list) => [
       ...list,
-      { role: 'user', content: value, images: images.length ? images : undefined },
+      {
+        role: 'user',
+        content: item.text,
+        images: item.images.length ? item.images : undefined,
+        attachments: item.attachments?.length ? item.attachments : undefined,
+      },
     ]);
-    // 首次发送后才把对话放进侧栏列表。
     const current = state.session;
     if (current) {
       setState('sessions', (list) => {
-        if (list.some((item) => item.id === current.id)) return list;
-        const flat = value.replace(/\s+/g, ' ').trim();
+        if (list.some((entry) => entry.id === current.id)) return list;
+        const flat = item.text.replace(/\s+/g, ' ').trim();
         return [
           {
             id: current.id,
@@ -675,15 +761,88 @@ export function createAppState() {
         ];
       });
     }
-    setState({ draft: '', images: [], running: true, status: '正在处理' });
+    setState({ draft: '', images: [], files: [], running: true, status: '正在处理' });
     setScrollTick((n) => n + 1);
     setFocusTick((n) => n + 1);
+    return true;
+  }
+
+  function enqueueTurn() {
+    const value = state.draft.trim();
+    if (!value && !state.images.length && !state.files.length) return;
+    const images = state.images.map((image) => image.dataUrl);
+    const { attachments, context } = attachmentPayload();
+    const mode = state.session?.mode ?? 'build';
+    const reasoning = state.session?.reasoning ?? 'standard';
+    const ok = socket?.send({
+      type: 'enqueue',
+      input: value,
+      images: images.length ? images : undefined,
+      attachments,
+      attachmentContext: context,
+      mode,
+      reasoning,
+    });
+    if (!ok) {
+      toast(t().connectionLost, 'error');
+      return;
+    }
+    setState('queue', (queue) => [
+      ...queue,
+      {
+        id: `q_${Date.now().toString(36)}_${Math.random().toString(36).slice(2, 6)}`,
+        text: value,
+        images,
+        attachments,
+        attachmentContext: context,
+        mode,
+        reasoning,
+      },
+    ]);
+    setState({ draft: '', images: [], files: [], status: `已加入队列` });
+    setFocusTick((n) => n + 1);
+  }
+
+  function removeQueued(id: string) {
+    socket?.send({ type: 'queue_remove', id });
+    setState('queue', (queue) => queue.filter((item) => item.id !== id));
+  }
+
+  function clearQueue() {
+    socket?.send({ type: 'queue_clear' });
+    setState('queue', []);
+  }
+
+  async function send() {
+    const value = state.draft.trim();
+    if (!value && !state.images.length && !state.files.length) return;
+    if (value.startsWith('/') && !state.running) {
+      setState('draft', '');
+      await executeCommand(value);
+      return;
+    }
+    if (state.running) {
+      enqueueTurn();
+      return;
+    }
+    const images = state.images.map((image) => image.dataUrl);
+    const { attachments, context } = attachmentPayload();
+    dispatchTurn({
+      text: value,
+      images,
+      attachments,
+      attachmentContext: context,
+      mode: state.session?.mode ?? 'build',
+      reasoning: state.session?.reasoning ?? 'standard',
+    });
   }
 
   function stop() {
     if (!state.running) return;
     socket?.send({ type: 'abort' });
     setState('status', '正在停止…');
+    if (state.queue.length) toast('已停止，队列已清空', 'warn');
+    clearQueue();
   }
 
   async function setMode(mode: 'plan' | 'build') {
@@ -951,6 +1110,36 @@ export function createAppState() {
     }
   }
 
+  async function addFiles(files: FileList | File[]) {
+    for (const file of Array.from(files)) {
+      if (/^image\//.test(file.type)) {
+        await addImages([file]);
+        continue;
+      }
+      if (file.size > 300 * 1024) {
+        toast(`文件 ${file.name} 超过 300KB`, 'error');
+        continue;
+      }
+      const text = await file.text().catch(() => '');
+      if (!text) {
+        toast(`读不了 ${file.name}`, 'error');
+        continue;
+      }
+      if (text.includes('\u0000')) {
+        toast(`${file.name} 看起来是二进制文件，暂不支持`, 'error');
+        continue;
+      }
+      setState('files', (list) => [
+        ...list,
+        { id: crypto.randomUUID(), name: file.name, size: file.size, text },
+      ]);
+    }
+  }
+
+  function removeFile(id: string) {
+    setState('files', (list) => list.filter((item) => item.id !== id));
+  }
+
   function removeImage(id: string) {
     setState('images', (list) => list.filter((item) => item.id !== id));
   }
@@ -1115,6 +1304,9 @@ export function createAppState() {
     focusComposer,
     send,
     stop,
+    enqueueTurn,
+    removeQueued,
+    clearQueue,
     setMode,
     setReasoning,
     cycleModel,
@@ -1136,7 +1328,9 @@ export function createAppState() {
     runReview,
     switchPhase,
     addImages,
+    addFiles,
     removeImage,
+    removeFile,
     openSettings,
     openGuide,
     openPlugins,

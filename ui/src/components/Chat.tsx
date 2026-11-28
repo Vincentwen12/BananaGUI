@@ -134,6 +134,18 @@ function Message(props: { app: AppState; message: SessionMessage; live: boolean;
             </For>
           </div>
         </Show>
+        <Show when={props.message.attachments?.length}>
+          <div class="msg-files">
+            <For each={props.message.attachments}>
+              {(file) => (
+                <span class="msg-file">
+                  <Icon name="file" />
+                  {file.name}
+                </span>
+              )}
+            </For>
+          </div>
+        </Show>
         <div class="bubble">{props.message.content}</div>
       </article>
     </Show>

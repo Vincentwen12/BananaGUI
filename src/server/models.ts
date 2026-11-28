@@ -44,7 +44,32 @@ function localBaseUrl(baseUrl: string): boolean {
   return /^https?:\/\/(127\.0\.0\.1|localhost)/.test(baseUrl);
 }
 
+const NAME_OVERRIDES: Record<string, string> = {
+  'deepseek-flash': 'DeepSeek V4.1 Flash 1017',
+  'deepseek-v4-pro': 'DeepSeek V4 Pro',
+  'gpt-6.2-astra': 'GPT-6.2 Astra',
+  'gpt-6.2-sol': 'GPT-6.2 Sol',
+  'gpt-6.1-terra': 'GPT-6.1 Terra',
+  'gpt-6-luna': 'GPT-6 Luna',
+  'gpt-6-astra': 'GPT-6 Astra',
+  'gpt-6-sol': 'GPT-6 Sol',
+  'gemini-4-neon': 'Gemini 4 Neon',
+  'gemini-4-carbon': 'Gemini 4 Carbon',
+  'gemini-4-hydrogen': 'Gemini 4 Hydrogen',
+  'gemini-4-argon': 'Gemini 4 Argon',
+  'gemini-3.8-flash': 'Gemini 3.8 Flash',
+  'kimi-k3.1-pro': 'Kimi K3.1 Pro',
+  'kimi-k3.1-pro-highspeed': 'Kimi K3.1 Pro Highspeed',
+  'kimi-k3': 'Kimi K3',
+  'qwen4-max': 'Qwen4 Max',
+  'qwen3.8-max': 'Qwen3.8 Max',
+  'qwen3.8-max-0902': 'Qwen3.8 Max 0902',
+  'qwen3.8-flash': 'Qwen3.8 Flash',
+  'qwen-plus': 'Qwen Plus',
+};
+
 function cleanLabel(id: string): string {
+  if (NAME_OVERRIDES[id]) return NAME_OVERRIDES[id]!;
   return id
     .replace(/:free$/, '')
     .split('/')

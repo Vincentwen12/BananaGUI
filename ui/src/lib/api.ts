@@ -107,6 +107,16 @@ export interface Bootstrap {
   info: Info;
   sessions: SessionSummary[];
   session: Session;
+  queue?: Array<{
+    id: string;
+    input: string;
+    images?: string[];
+    attachments?: Array<{ name: string; mime?: string; size?: number; kind?: string }>;
+    attachmentContext?: string;
+    mode?: string;
+    reasoning?: string;
+    createdAt: string;
+  }>;
 }
 
 export interface ModelOption {
@@ -211,6 +221,7 @@ export function connect(
 
   const open = () => {
     if (closed) return;
+    if (socket && (socket.readyState === WebSocket.CONNECTING || socket.readyState === WebSocket.OPEN)) return;
     try {
       socket = new WebSocket(`ws://${location.host}/ws`);
     } catch {
@@ -247,8 +258,26 @@ export function connect(
     if (closed) return;
     const delay = Math.min(10_000, 600 * 2 ** retry);
     retry += 1;
+    window.clearTimeout(timer);
     timer = window.setTimeout(open, delay);
   };
+
+  const ensure = () => {
+    if (closed) return;
+    if (!socket || socket.readyState === WebSocket.CLOSED) {
+      window.clearTimeout(timer);
+      retry = 0;
+      open();
+    }
+  };
+
+  const onOnline = () => ensure();
+  const onVisible = () => {
+    if (document.visibilityState === 'visible') ensure();
+  };
+  window.addEventListener('online', onOnline);
+  document.addEventListener('visibilitychange', onVisible);
+  const watchdog = window.setInterval(ensure, 15_000);
 
   open();
 
@@ -265,6 +294,9 @@ export function connect(
     close() {
       closed = true;
       window.clearTimeout(timer);
+      window.clearInterval(watchdog);
+      window.removeEventListener('online', onOnline);
+      document.removeEventListener('visibilitychange', onVisible);
       socket?.close();
     },
   };

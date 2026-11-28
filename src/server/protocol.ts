@@ -95,6 +95,16 @@ export interface Bootstrap {
   info: GuiInfo;
   sessions: SessionSummary[];
   session: Session;
+  queue?: Array<{
+    id: string;
+    input: string;
+    images?: string[];
+    attachments?: Array<{ name: string; mime?: string; size?: number; kind?: string }>;
+    attachmentContext?: string;
+    mode?: string;
+    reasoning?: string;
+    createdAt: string;
+  }>;
   agentDoc?: string;
 }
 

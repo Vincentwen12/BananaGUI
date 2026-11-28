@@ -2,11 +2,27 @@ import { spawn, type ChildProcessWithoutNullStreams } from 'node:child_process';
 import type { WebSocket } from 'ws';
 import type { GuiState } from './state.ts';
 
-function shellCommand(): { file: string; args: string[] } {
+interface ShellSpec {
+  file: string;
+  args: string[];
+  newline: string;
+  env?: Record<string, string>;
+}
+
+function shellCommand(shell?: string): ShellSpec {
+  const id = (shell ?? '').toLowerCase();
+  const unixLine = id === 'wsl' || id === 'bash' || id === 'zsh' || process.platform !== 'win32';
+  const newline = unixLine ? '\n' : '\r\n';
   if (process.platform === 'win32') {
-    return { file: process.env['COMSPEC'] || 'cmd.exe', args: ['/Q', '/K'] };
+    if (id === 'powershell') return { file: 'powershell.exe', args: ['-NoLogo', '-NoProfile', '-Command', '-'], newline };
+    if (id === 'pwsh') return { file: 'pwsh.exe', args: ['-NoLogo', '-NoProfile', '-Command', '-'], newline };
+    if (id === 'wsl') return { file: 'wsl.exe', args: ['bash', '-i'], newline, env: { WSL_UTF8: '1' } };
+    if (id === 'bash') return { file: 'bash.exe', args: ['-i'], newline };
+    return { file: process.env['COMSPEC'] || 'cmd.exe', args: ['/Q', '/K', 'chcp 65001>nul'], newline: '\r\n' };
   }
-  return { file: process.env['SHELL'] || '/bin/sh', args: ['-i'] };
+  if (id === 'bash') return { file: '/bin/bash', args: ['-i'], newline };
+  if (id === 'zsh') return { file: '/bin/zsh', args: ['-i'], newline };
+  return { file: process.env['SHELL'] || '/bin/sh', args: ['-i'], newline };
 }
 
 /**
@@ -14,18 +30,18 @@ function shellCommand(): { file: string; args: string[] } {
  * 不依赖原生 PTY，避免 Windows conpty 加载失败时把整个服务进程带崩。
  * 交互能力足够跑命令、看输出；需要完整 PTY 时可在后续版本加开关。
  */
-export async function attachTerminal(ws: WebSocket, state: GuiState): Promise<void> {
+export async function attachTerminal(ws: WebSocket, state: GuiState, shellId?: string): Promise<void> {
   const send = (event: Record<string, unknown>): void => {
     if (ws.readyState === 1) ws.send(JSON.stringify(event));
   };
-  const shell = shellCommand();
+  const shell = shellCommand(shellId);
   let child: ChildProcessWithoutNullStreams | null = null;
   let closed = false;
 
   try {
     child = spawn(shell.file, shell.args, {
       cwd: state.config.workspace,
-      env: { ...process.env, TERM: 'xterm-256color', NO_COLOR: '1' },
+      env: { ...process.env, TERM: 'xterm-256color', NO_COLOR: '1', ...(shell.env ?? {}) },
       windowsHide: true,
       stdio: ['pipe', 'pipe', 'pipe'],
     });
@@ -64,8 +80,21 @@ export async function attachTerminal(ws: WebSocket, state: GuiState): Promise<vo
   });
   send({
     type: 'output',
-    data: '\x1b[2mBananaGUI 兼容终端（无 PTY）。输入命令后回车执行。\x1b[0m\r\n',
+    data: '\x1b[2mBananaGUI 兼容终端（行编辑模式）。输入命令后回车执行。\x1b[0m\r\n',
   });
+
+  // 没有 PTY 时 shell 不会做行编辑：这里自己缓存一行，处理退格和粘贴。
+  let line = '';
+  const sendLine = (): void => {
+    try {
+      processRef.stdin.write(`${line}${shell.newline}`);
+    } catch {
+      send({ type: 'error', message: '终端输入通道已关闭。' });
+      return;
+    }
+    send({ type: 'output', data: '\r\n' });
+    line = '';
+  };
 
   ws.on('message', (raw) => {
     let message: { type?: string; data?: unknown };
@@ -76,19 +105,30 @@ export async function attachTerminal(ws: WebSocket, state: GuiState): Promise<vo
     }
     if (message.type === 'input' && typeof message.data === 'string') {
       const data = message.data;
-      try {
-        // Windows 管道里的 cmd.exe 需要 \r\n；xterm 的 Enter 只发 \r。
-        const writeData =
-          process.platform === 'win32' ? data.replace(/\r(?!\n)/g, '\r\n') : data;
-        processRef.stdin.write(writeData);
-      } catch {
-        send({ type: 'error', message: '终端输入通道已关闭。' });
-        return;
+      // 方向键、功能键这类转义序列在无 PTY 模式里没有意义，直接忽略。
+      if (data.startsWith('\x1b')) return;
+      for (const char of data.replace(/\r\n/g, '\n')) {
+        if (char === '\n' || char === '\r') {
+          sendLine();
+          continue;
+        }
+        if (char === '\u0003') {
+          line = '';
+          send({ type: 'output', data: '^C\r\n' });
+          continue;
+        }
+        if (char === '\u007f' || char === '\b') {
+          if (line) {
+            line = line.slice(0, -1);
+            send({ type: 'output', data: '\b \b' });
+          }
+          continue;
+        }
+        if (char === '\t') continue;
+        if (char < ' ') continue;
+        line += char;
+        send({ type: 'output', data: char });
       }
-      // 兼容终端没有本地回显，手动把可打印字符和换行回显给 xterm。
-      if (data === '\r' || data === '\n') send({ type: 'output', data: '\r\n' });
-      else if (data === '\u007f') send({ type: 'output', data: '\b \b' });
-      else if (!data.startsWith('\x1b')) send({ type: 'output', data });
     } else if (message.type === 'resize') {
       // 兼容模式不支持 PTY resize
     } else if (message.type === 'ping') {

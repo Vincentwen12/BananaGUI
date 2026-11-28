@@ -20,7 +20,7 @@ import { version } from '../cli/ui.ts';
 import { GuiState } from './state.ts';
 import { discoverModels } from './models.ts';
 import { runGuiTurn, type TurnPayload } from './turns.ts';
-import { filePreview, fileTree, listFiles } from './files.ts';
+import { filePreview, fileTree, listFiles, safePath } from './files.ts';
 import { attachTerminal } from './terminal.ts';
 import type { ServerEvent, SettingsPatch } from './protocol.ts';
 
@@ -311,6 +311,43 @@ export async function startUiServer(options: UiServerOptions = {}): Promise<UiSe
     sendSession();
   };
 
+  const sendQueue = (): void => {
+    broadcast({ type: 'queue', queue: state.queue });
+  };
+
+  const pumpQueue = async (owner: WebSocket | null): Promise<void> => {
+    if (state.queueRunning) return;
+    state.queueRunning = true;
+    try {
+      while (state.queue.length) {
+        const next = state.shiftTurn();
+        if (!next) break;
+        sendQueue();
+        const liveOwner = owner && owner.readyState === 1 ? owner : null;
+        try {
+          await runGuiTurn(
+            { state, broadcast, abortAll: () => {} },
+            {
+              input: next.input,
+              images: next.images,
+              attachments: next.attachments,
+              attachmentContext: next.attachmentContext,
+              mode: next.mode,
+              reasoning: next.reasoning,
+            },
+            liveOwner,
+          );
+        } catch {
+          // runGuiTurn 已经广播了 turn_end 错误
+        }
+        await refreshAll();
+      }
+    } finally {
+      state.queueRunning = false;
+      sendQueue();
+    }
+  };
+
   const guardIdle = (): void => {
     if (state.activeTurn) throw new HttpError(409, '当前回合还在运行，先停止。');
   };
@@ -489,6 +526,53 @@ export async function startUiServer(options: UiServerOptions = {}): Promise<UiSe
       sendJson(response, 200, { providers, fetchedAt: new Date().toISOString() });
       return;
     }
+    if (method === 'GET' && path === '/api/browser') {
+      const target = url.searchParams.get('url') ?? '';
+      let parsed: URL;
+      try {
+        parsed = new URL(target);
+      } catch {
+        throw new HttpError(400, '无效的网址。');
+      }
+      if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') {
+        throw new HttpError(400, '只支持 http/https。');
+      }
+      let upstream: Response;
+      try {
+        upstream = await fetch(parsed.href, {
+          redirect: 'follow',
+          headers: { 'user-agent': 'Mozilla/5.0 BananaGUI', 'accept-language': 'zh-CN,zh;q=0.9,en;q=0.7' },
+          signal: AbortSignal.timeout(20_000),
+        });
+      } catch (error) {
+        throw new HttpError(502, `网页加载失败：${(error as Error).message}`);
+      }
+      if (!upstream.ok) throw new HttpError(502, `网页返回 HTTP ${upstream.status}`);
+      const kind = upstream.headers.get('content-type') ?? '';
+      if (!kind.includes('text/html')) throw new HttpError(415, '兼容模式只支持 HTML 页面。');
+      const length = Number(upstream.headers.get('content-length') ?? 0);
+      if (length > 8 * 1024 * 1024) throw new HttpError(413, '网页过大。');
+      let html = await upstream.text();
+      if (html.length > 8 * 1024 * 1024) throw new HttpError(413, '网页过大。');
+      html = html.replace(/<meta[^>]+http-equiv=["']?content-security-policy["']?[^>]*>/gi, '');
+      if (url.searchParams.get('light') !== '0') {
+        // 轻量模式：去掉脚本、内联事件和广告 iframe，避免重站把整个界面拖卡。
+        html = html
+          .replace(/<script\b[^>]*>[\s\S]*?<\/script>/gi, '')
+          .replace(/<script\b[^>]*\/?>/gi, '')
+          .replace(/<iframe\b[^>]*>[\s\S]*?<\/iframe>/gi, '')
+          .replace(/\son[a-z]+\s*=\s*("[^"]*"|'[^']*'|[^\s>]+)/gi, '');
+      }
+      const finalUrl = upstream.url || parsed.href;
+      const base = finalUrl.replace(/"/g, '&quot;');
+      const inject = `<base href="${base}"><script>(function(){const b=document.querySelector('base');const base=b?b.href:location.href;function p(u){try{const a=new URL(u,base);if(a.protocol!=='http:'&&a.protocol!=='https:')return u;return '/api/browser?url='+encodeURIComponent(a.href)}catch{return u}}function go(u){try{parent.postMessage({type:'banana-browser-nav',url:new URL(u,base).href},'*')}catch(e){}location.href=p(u)}document.addEventListener('click',function(e){const a=e.target&&e.target.closest?e.target.closest('a'):null;if(!a)return;const h=a.getAttribute('href');if(!h||h.startsWith('#')||h.startsWith('javascript:')||h.startsWith('mailto:'))return;e.preventDefault();go(a.href)},true);document.addEventListener('submit',function(e){const f=e.target;if(!f||!f.tagName||f.tagName!=='FORM')return;const m=(f.getAttribute('method')||'get').toLowerCase();if(m!=='get')return;e.preventDefault();const u=new URL(f.getAttribute('action')||base,base);try{new FormData(f).forEach(function(v,k){if(typeof v==='string')u.searchParams.set(k,v)})}catch(err){}go(u.href)},true)})();</script>`;
+      html = /<head[^>]*>/i.test(html) ? html.replace(/<head[^>]*>/i, (tag) => `${tag}${inject}`) : `${inject}${html}`;
+      // 代理页需要加载外部资源，不能套用 BananaUI 自己的 CSP。
+      response.removeHeader('content-security-policy');
+      response.writeHead(200, { 'content-type': 'text/html; charset=utf-8', 'cache-control': 'no-store' });
+      response.end(html);
+      return;
+    }
     if (method === 'POST' && path === '/api/settings') {
       const body = (await readJson(request)) as SettingsPatch;
       await state.saveSettings(body);
@@ -623,6 +707,70 @@ export async function startUiServer(options: UiServerOptions = {}): Promise<UiSe
       }
       return;
     }
+    if (method === 'GET' && path === '/api/file/raw') {
+      const requested = url.searchParams.get('path');
+      if (!requested) throw new HttpError(400, '缺少 path。');
+      let absolute: string;
+      try {
+        absolute = safePath(state.config.workspace, requested);
+      } catch (error) {
+        throw new HttpError(400, error instanceof Error ? error.message : String(error));
+      }
+      if (!existsSync(absolute) || !statSync(absolute).isFile()) throw new HttpError(404, '文件不存在。');
+      const size = statSync(absolute).size;
+      const ext = extname(absolute).toLowerCase();
+      const mime =
+        ext === '.mp4'
+          ? 'video/mp4'
+          : ext === '.webm'
+            ? 'video/webm'
+            : ext === '.ogg' || ext === '.ogv'
+              ? 'video/ogg'
+              : ext === '.mp3'
+                ? 'audio/mpeg'
+                : ext === '.wav'
+                  ? 'audio/wav'
+                  : ext === '.m4a'
+                    ? 'audio/mp4'
+                    : ext === '.png'
+                      ? 'image/png'
+                      : ext === '.jpg' || ext === '.jpeg'
+                        ? 'image/jpeg'
+                        : ext === '.gif'
+                          ? 'image/gif'
+                          : ext === '.webp'
+                            ? 'image/webp'
+                            : ext === '.svg'
+                              ? 'image/svg+xml'
+                              : 'application/octet-stream';
+      const range = request.headers.range;
+      if (range) {
+        const match = /^bytes=(\d*)-(\d*)$/.exec(range);
+        if (match) {
+          const start = match[1] ? Number(match[1]) : 0;
+          const end = match[2] ? Math.min(Number(match[2]), size - 1) : size - 1;
+          if (start <= end && start < size) {
+            response.writeHead(206, {
+              'content-type': mime,
+              'content-length': end - start + 1,
+              'content-range': `bytes ${start}-${end}/${size}`,
+              'accept-ranges': 'bytes',
+              'cache-control': 'no-store',
+            });
+            createReadStream(absolute, { start, end }).pipe(response);
+            return;
+          }
+        }
+      }
+      response.writeHead(200, {
+        'content-type': mime,
+        'content-length': size,
+        'accept-ranges': 'bytes',
+        'cache-control': 'no-store',
+      });
+      createReadStream(absolute).pipe(response);
+      return;
+    }
     if (method === 'GET' && path === '/api/file') {
       const requested = url.searchParams.get('path');
       if (!requested) throw new HttpError(400, '缺少 path。');
@@ -755,7 +903,7 @@ export async function startUiServer(options: UiServerOptions = {}): Promise<UiSe
     }
     wss.handleUpgrade(request, socket, head, (ws) => {
       if (url.pathname === '/terminal') {
-        void attachTerminal(ws, state);
+        void attachTerminal(ws, state, url.searchParams.get('shell') ?? undefined);
         return;
       }
       wss.emit('connection', ws, request);
@@ -785,25 +933,57 @@ export async function startUiServer(options: UiServerOptions = {}): Promise<UiSe
         try {
           const type = String(message['type'] ?? '');
           if (type === 'turn') {
-            await runGuiTurn(
-              { state, broadcast, abortAll: () => {} },
-              {
-                input: typeof message['input'] === 'string' ? message['input'] : '',
-                images: Array.isArray(message['images'])
-                  ? message['images'].filter((item): item is string => typeof item === 'string')
+            const payload: TurnPayload = {
+              input: typeof message['input'] === 'string' ? message['input'] : '',
+              images: Array.isArray(message['images'])
+                ? message['images'].filter((item): item is string => typeof item === 'string')
+                : undefined,
+              attachments: Array.isArray(message['attachments'])
+                ? (message['attachments'] as TurnPayload['attachments'])
+                : undefined,
+              attachmentContext:
+                typeof message['attachmentContext'] === 'string' ? message['attachmentContext'] : undefined,
+              mode: message['mode'] === 'plan' || message['mode'] === 'build' ? message['mode'] : undefined,
+              reasoning:
+                message['reasoning'] === 'fast' ||
+                message['reasoning'] === 'standard' ||
+                message['reasoning'] === 'deep'
+                  ? message['reasoning']
                   : undefined,
-                mode: message['mode'] === 'plan' || message['mode'] === 'build' ? message['mode'] : undefined,
-                reasoning:
-                  message['reasoning'] === 'fast' ||
-                  message['reasoning'] === 'standard' ||
-                  message['reasoning'] === 'deep'
-                    ? message['reasoning']
-                    : undefined,
-              } satisfies TurnPayload,
-              socket,
-            );
-            await refreshAll();
+            };
+            state.enqueueTurn(payload);
+            sendQueue();
+            void pumpQueue(socket);
+          } else if (type === 'enqueue') {
+            state.enqueueTurn({
+              input: typeof message['input'] === 'string' ? message['input'] : '',
+              images: Array.isArray(message['images'])
+                ? message['images'].filter((item): item is string => typeof item === 'string')
+                : undefined,
+              attachments: Array.isArray(message['attachments'])
+                ? (message['attachments'] as TurnPayload['attachments'])
+                : undefined,
+              attachmentContext:
+                typeof message['attachmentContext'] === 'string' ? message['attachmentContext'] : undefined,
+              mode: message['mode'] === 'plan' || message['mode'] === 'build' ? message['mode'] : undefined,
+              reasoning:
+                message['reasoning'] === 'fast' ||
+                message['reasoning'] === 'standard' ||
+                message['reasoning'] === 'deep'
+                  ? message['reasoning']
+                  : undefined,
+            });
+            sendQueue();
+            void pumpQueue(socket);
+          } else if (type === 'queue_remove') {
+            state.removeQueued(String(message['id'] ?? ''));
+            sendQueue();
+          } else if (type === 'queue_clear') {
+            state.clearQueue();
+            sendQueue();
           } else if (type === 'abort') {
+            state.clearQueue();
+            sendQueue();
             if (state.activeTurn) {
               state.activeTurn.controller.abort();
               for (const approval of [...state.pendingApprovals.values()]) approval.resolve(false);

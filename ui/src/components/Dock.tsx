@@ -4,7 +4,7 @@ import type { AppState, DockTab } from '../state/app';
 import { api } from '../lib/api';
 import { formatBytes, formatCount, formatDuration, shortPath } from '../lib/format';
 
-function TerminalDock() {
+function TerminalDock(props: { shell: string }) {
   let host: HTMLDivElement | undefined;
   let socket: WebSocket | null = null;
 
@@ -16,7 +16,7 @@ function TerminalDock() {
     }
     const term = new Terminal({
       cursorBlink: true,
-      fontSize: 12,
+      fontSize: 13,
       fontFamily: "'Geist Mono', Consolas, monospace",
       lineHeight: 1.35,
       scrollback: 4000,
@@ -37,19 +37,44 @@ function TerminalDock() {
     });
     term.open(host);
     try {
-      const fit = window.FitAddon ? new window.FitAddon() : null;
-      if (fit) {
-        term.loadAddon?.(fit);
-        fit.fit();
-        const observer = new ResizeObserver(() => fit.fit());
-        observer.observe(host);
-        onCleanup(() => observer.disconnect());
-      }
+      let cellW = 0;
+      let cellH = 0;
+      const refit = () => {
+        try {
+          const screen = host!.querySelector('.xterm-screen');
+          if (screen && term.cols > 0 && term.rows > 0) {
+            cellW = screen.clientWidth / term.cols;
+            cellH = screen.clientHeight / term.rows;
+          }
+          if (!cellW || !cellH) {
+            const measure = host!.querySelector('.xterm-char-measure-element');
+            const rect = measure?.getBoundingClientRect();
+            cellW = rect && rect.width > 0 ? rect.width / 32 : 7.8;
+            cellH = rect && rect.height > 0 ? rect.height : 17;
+          }
+          const cols = Math.max(20, Math.floor((host!.clientWidth - 12) / cellW));
+          const rows = Math.max(5, Math.floor((host!.clientHeight - 12) / cellH));
+          term.resize(cols, rows);
+        } catch {
+          /* ignore */
+        }
+      };
+      refit();
+      requestAnimationFrame(refit);
+      window.setTimeout(refit, 200);
+      const observer = new ResizeObserver(() => refit());
+      observer.observe(host);
+      if (host.parentElement) observer.observe(host.parentElement);
+      window.addEventListener('resize', refit);
+      onCleanup(() => {
+        observer.disconnect();
+        window.removeEventListener('resize', refit);
+      });
     } catch {
       /* ignore */
     }
 
-    socket = new WebSocket(`ws://${location.host}/terminal`);
+    socket = new WebSocket(`ws://${location.host}/terminal?shell=${encodeURIComponent(props.shell)}`);
     socket.addEventListener('open', () => {
       if (!document.querySelector('.overlay')) term.focus?.();
     });
@@ -131,11 +156,277 @@ function FileNode(props: { app: AppState; item: { name: string; path: string; ty
   );
 }
 
+function BrowserDock() {
+  let frame: HTMLIFrameElement | undefined;
+  let webhost: HTMLDivElement | undefined;
+  let webview: HTMLElement & { src?: string; reload?: () => void } | undefined;
+  const isElectron = /Electron/i.test(navigator.userAgent);
+  const saved = (() => {
+    try {
+      return localStorage.getItem('banana-browser-url') ?? 'http://localhost:3000';
+    } catch {
+      return 'http://localhost:3000';
+    }
+  })();
+  const [input, setInput] = createSignal(saved);
+  const [url, setUrl] = createSignal(saved);
+  const [entries, setEntries] = createSignal<string[]>([saved]);
+  const [index, setIndex] = createSignal(0);
+  const [compat, setCompat] = createSignal(
+    (() => {
+      try {
+        return localStorage.getItem('banana-browser-compat') !== '0';
+      } catch {
+        return true;
+      }
+    })(),
+  );
+  const [light, setLight] = createSignal(
+    (() => {
+      try {
+        return localStorage.getItem('banana-browser-light') !== '0';
+      } catch {
+        return true;
+      }
+    })(),
+  );
+
+  const proxySrc = (target: string) =>
+    `/api/browser?light=${light() ? '1' : '0'}&url=${encodeURIComponent(target)}`;
+
+  const frameSrc = () => (compat() ? proxySrc(url()) : url());
+
+  const setLightMode = (value: boolean) => {
+    setLight(value);
+    try {
+      localStorage.setItem('banana-browser-light', value ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const setCompatMode = (value: boolean) => {
+    setCompat(value);
+    try {
+      localStorage.setItem('banana-browser-compat', value ? '1' : '0');
+    } catch {
+      /* ignore */
+    }
+  };
+
+  const remember = (next: string) => {
+    setInput(next);
+    setUrl(next);
+    try {
+      localStorage.setItem('banana-browser-url', next);
+    } catch {
+      /* ignore */
+    }
+    const list = [...entries().slice(0, index() + 1), next];
+    setEntries(list);
+    setIndex(list.length - 1);
+  };
+
+  const applyUrl = (next: string, push: boolean) => {
+    if (push) remember(next);
+    else {
+      setInput(next);
+      setUrl(next);
+    }
+    if (webview) {
+      if (webview.getAttribute('src') !== next) webview.setAttribute('src', next);
+      return;
+    }
+    if (frame) frame.src = compat() ? proxySrc(next) : next;
+  };
+
+  const go = () => {
+    let next = input().trim();
+    if (!next) return;
+    if (!/^[a-z]+:\/\//i.test(next)) next = `http://${next}`;
+    applyUrl(next, true);
+  };
+
+  const back = () => {
+    if (index() <= 0) return;
+    const next = entries()[index() - 1]!;
+    setIndex(index() - 1);
+    applyUrl(next, false);
+  };
+
+  const forward = () => {
+    if (index() >= entries().length - 1) return;
+    const next = entries()[index() + 1]!;
+    setIndex(index() + 1);
+    applyUrl(next, false);
+  };
+
+  onMount(() => {
+    if (isElectron && webhost) {
+      const view = document.createElement('webview') as unknown as HTMLElement & {
+        src: string;
+        reload: () => void;
+      };
+      view.setAttribute('src', url());
+      view.setAttribute('allowpopups', '');
+      view.className = 'browser-frame';
+      webhost.appendChild(view);
+      webview = view;
+      const onNavigate = (event: Event) => {
+        const detail = event as unknown as { url?: string };
+        if (detail.url && /^https?:/i.test(detail.url)) remember(detail.url);
+      };
+      view.addEventListener('did-navigate', onNavigate);
+      view.addEventListener('did-navigate-in-page', onNavigate);
+      onCleanup(() => {
+        view.removeEventListener('did-navigate', onNavigate);
+        view.removeEventListener('did-navigate-in-page', onNavigate);
+        view.remove();
+        webview = undefined;
+      });
+    }
+    const onMessage = (event: MessageEvent) => {
+      if (!frame || event.source !== frame.contentWindow) return;
+      const data = event.data as { type?: string; url?: string } | null;
+      if (!data || data.type !== 'banana-browser-nav' || typeof data.url !== 'string') return;
+      if (!/^https?:/i.test(data.url)) return;
+      if (data.url === url()) return;
+      const next = data.url;
+      setInput(next);
+      setUrl(next);
+      try {
+        localStorage.setItem('banana-browser-url', next);
+      } catch {
+        /* ignore */
+      }
+      const list = [...entries().slice(0, index() + 1), next];
+      setEntries(list);
+      setIndex(list.length - 1);
+    };
+    window.addEventListener('message', onMessage);
+    onCleanup(() => window.removeEventListener('message', onMessage));
+  });
+
+  const reload = () => {
+    if (webview) {
+      webview.reload?.();
+      return;
+    }
+    if (!frame) return;
+    frame.src = frameSrc();
+  };
+
+  return (
+    <div class="browser-dock">
+      <div class="browser-bar">
+        <button
+          type="button"
+          class="browser-btn"
+          title="后退"
+          aria-label="后退"
+          disabled={index() <= 0}
+          onClick={back}
+        >
+          <Icon name="chevronLeft" />
+        </button>
+        <button
+          type="button"
+          class="browser-btn"
+          title="前进"
+          aria-label="前进"
+          disabled={index() >= entries().length - 1}
+          onClick={forward}
+        >
+          <Icon name="chevronRight" />
+        </button>
+        <button type="button" class="browser-btn" title="刷新" aria-label="刷新" onClick={reload}>
+          <Icon name="refresh" />
+        </button>
+        <input
+          class="browser-url"
+          value={input()}
+          spellcheck={false}
+          onInput={(event) => setInput(event.currentTarget.value)}
+          onKeyDown={(event) => {
+            if (event.key === 'Enter') {
+              event.preventDefault();
+              go();
+            }
+          }}
+        />
+        <button type="button" class="browser-btn" title="打开" onClick={go}>
+          打开
+        </button>
+        <Show when={!isElectron}>
+          <label class="browser-toggle" title="兼容模式：通过本地服务代理，绕过禁止嵌入的限制">
+            <input
+              type="checkbox"
+              checked={compat()}
+              onChange={(event) => {
+                setCompatMode(event.currentTarget.checked);
+                reload();
+              }}
+            />
+            兼容
+          </label>
+          <label class="browser-toggle" title="轻量模式：禁用网页脚本和广告 iframe，访问更流畅">
+            <input
+              type="checkbox"
+              checked={light()}
+              onChange={(event) => {
+                setLightMode(event.currentTarget.checked);
+                reload();
+              }}
+            />
+            轻量
+          </label>
+        </Show>
+        <button
+          type="button"
+          class="browser-btn"
+          title="在外部浏览器打开"
+          aria-label="在外部浏览器打开"
+          onClick={() => window.open(url(), '_blank', 'noopener')}
+        >
+          <Icon name="external" />
+        </button>
+      </div>
+      <Show
+        when={isElectron}
+        fallback={
+          <iframe
+            ref={frame}
+            class="browser-frame"
+            title="内置浏览器"
+            src={frameSrc()}
+            sandbox="allow-scripts allow-same-origin allow-forms allow-popups allow-downloads allow-modals"
+          />
+        }
+      >
+        <div class="browser-frame browser-webview" ref={webhost} />
+      </Show>
+      <div class="browser-hint">
+        {isElectron
+          ? '桌面模式使用原生网页视图，支持视频、登录和完整脚本。'
+          : '网页模式受浏览器安全限制；视频站点建议在桌面版或系统浏览器打开。'}
+      </div>
+    </div>
+  );
+}
+
+function mediaKind(path: string): 'video' | 'audio' | 'image' | null {
+  const ext = path.toLowerCase().split('.').pop() ?? '';
+  if (['mp4', 'webm', 'ogv', 'ogg', 'mov', 'm4v'].includes(ext)) return 'video';
+  if (['mp3', 'wav', 'm4a', 'aac', 'oga'].includes(ext)) return 'audio';
+  if (['png', 'jpg', 'jpeg', 'gif', 'webp', 'svg', 'avif'].includes(ext)) return 'image';
+  return null;
+}
+
 function FilesDock(props: { app: AppState }) {
   const { state, t } = props.app;
   onMount(() => void props.app.loadFiles());
   return (
-    <>
+    <div class="files-dock">
       <div class="tree">
         <Show when={state.fileItems.length} fallback={<div class="empty-dock">目录为空</div>}>
           <For each={state.fileItems}>{(item) => <FileNode app={props.app} item={item} />}</For>
@@ -143,7 +434,7 @@ function FilesDock(props: { app: AppState }) {
       </div>
       <Show when={state.filePreview}>
         {(file) => (
-          <div class="file-preview" style={{ 'border-top': '1px solid var(--line)' }}>
+          <div class="file-preview">
             <div class="file-preview-head">
               <Icon name="file" />
               <span>{shortPath(file().path, 3)}</span>
@@ -154,18 +445,34 @@ function FilesDock(props: { app: AppState }) {
               </button>
             </div>
             <Show
-              when={!file().binary}
-              fallback={<div class="empty-dock">{t().binaryFile}</div>}
+              when={mediaKind(file().path)}
+              fallback={
+                <Show
+                  when={!file().binary}
+                  fallback={<div class="empty-dock">{t().binaryFile}</div>}
+                >
+                  <pre>{file().content}</pre>
+                  <Show when={file().truncated}>
+                    <div class="empty-dock">{t().truncated}</div>
+                  </Show>
+                </Show>
+              }
             >
-              <pre>{file().content}</pre>
-              <Show when={file().truncated}>
-                <div class="empty-dock">{t().truncated}</div>
-              </Show>
+              {(kind) => {
+                const src = `/api/file/raw?path=${encodeURIComponent(file().path)}`;
+                return kind() === 'video' ? (
+                  <video class="file-media" controls src={src} />
+                ) : kind() === 'audio' ? (
+                  <audio class="file-audio" controls src={src} />
+                ) : (
+                  <img class="file-media" src={src} alt={file().path} />
+                );
+              }}
             </Show>
           </div>
         )}
       </Show>
-    </>
+    </div>
   );
 }
 
@@ -304,16 +611,43 @@ function InfoDock(props: { app: AppState }) {
   );
 }
 
-const TABS: Array<{ id: DockTab; key: 'terminal' | 'files' | 'tasks' | 'verify' | 'info' }> = [
+const TABS: Array<{ id: DockTab; key: 'terminal' | 'browser' | 'files' | 'tasks' | 'verify' | 'info' }> = [
   { id: 'terminal', key: 'terminal' },
+  { id: 'browser', key: 'browser' },
   { id: 'files', key: 'files' },
   { id: 'tasks', key: 'tasks' },
   { id: 'verify', key: 'verify' },
   { id: 'info', key: 'info' },
 ];
 
+const SHELLS = [
+  { id: 'cmd', label: 'CMD' },
+  { id: 'powershell', label: 'PowerShell' },
+  { id: 'pwsh', label: 'PowerShell 7' },
+  { id: 'wsl', label: 'WSL' },
+  { id: 'bash', label: 'Git Bash' },
+];
+
+function readShell(): string {
+  try {
+    return localStorage.getItem('banana-terminal-shell') ?? 'cmd';
+  } catch {
+    return 'cmd';
+  }
+}
+
 export function Dock(props: { app: AppState }) {
   const { state, t } = props.app;
+  const [shell, setShell] = createSignal(readShell());
+
+  const changeShell = (value: string) => {
+    setShell(value);
+    try {
+      localStorage.setItem('banana-terminal-shell', value);
+    } catch {
+      /* ignore */
+    }
+  };
 
   function startResize(event: PointerEvent) {
     if (window.innerWidth <= 1180) return;
@@ -321,7 +655,7 @@ export function Dock(props: { app: AppState }) {
     const startX = event.clientX;
     const startWidth = state.dockWidth;
     const move = (moveEvent: PointerEvent) => {
-      const next = Math.min(620, Math.max(300, startWidth - (moveEvent.clientX - startX)));
+      const next = Math.min(1000, Math.max(400, startWidth - (moveEvent.clientX - startX)));
       props.app.setState('dockWidth', next);
     };
     const end = () => {
@@ -365,7 +699,20 @@ export function Dock(props: { app: AppState }) {
         </div>
         <div class="dock-body">
           <Show when={state.dockTab === 'terminal'}>
-            <TerminalDock />
+            <div class="terminal-pane">
+              <div class="terminal-bar">
+                <select class="select sm" value={shell()} onChange={(event) => changeShell(event.currentTarget.value)}>
+                  <For each={SHELLS}>{(item) => <option value={item.id}>{item.label}</option>}</For>
+                </select>
+                <span class="terminal-hint">行编辑兼容模式</span>
+              </div>
+              <Show when={shell()} keyed>
+                {(value) => <TerminalDock shell={value} />}
+              </Show>
+            </div>
+          </Show>
+          <Show when={state.dockTab === 'browser'}>
+            <BrowserDock />
           </Show>
           <Show when={state.dockTab === 'files'}>
             <FilesDock app={props.app} />
