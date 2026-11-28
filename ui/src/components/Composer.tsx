@@ -151,7 +151,7 @@ export function Composer(props: { app: AppState }) {
         return;
       }
     }
-    if (event.key === 'Enter' && !event.shiftKey && !event.nativeEvent.isComposing) {
+    if (event.key === 'Enter' && !event.shiftKey && !event.isComposing) {
       event.preventDefault();
       void props.app.send();
     }

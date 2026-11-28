@@ -25,6 +25,7 @@ export function Settings(props: { app: AppState }) {
   const [saving, setSaving] = createSignal(false);
   const [testing, setTesting] = createSignal(false);
   const [testDetail, setTestDetail] = createSignal('');
+  let importInput: HTMLInputElement | undefined;
 
   const [draft, setDraft] = createStore({
     provider: '',
@@ -211,6 +212,32 @@ export function Settings(props: { app: AppState }) {
               </SettingRow>
               <SettingRow title={t().showReasoning} hint="关闭后不再显示模型的思考过程">
                 <Switch checked={draft.showReasoning} onChange={(value) => setDraft('showReasoning', value)} />
+              </SettingRow>
+              <SettingRow title={t().data} hint={t().dataHint}>
+                <div class="setting-actions">
+                  <button class="btn" type="button" onClick={() => importInput?.click()}>
+                    {t().import}
+                  </button>
+                  <button class="btn" type="button" onClick={() => props.app.exportSession('md')}>
+                    {t().exportMd}
+                  </button>
+                </div>
+                <input
+                  ref={importInput}
+                  type="file"
+                  accept="application/json,.json"
+                  hidden
+                  onChange={(event) => {
+                    const file = event.currentTarget.files?.[0];
+                    if (file) void props.app.importSession(file);
+                    event.currentTarget.value = '';
+                  }}
+                />
+              </SettingRow>
+              <SettingRow title={t().guide} hint={t().guideIntro}>
+                <button class="btn" type="button" onClick={() => props.app.openGuide()}>
+                  {t().guideTitle}
+                </button>
               </SettingRow>
             </div>
           </Show>

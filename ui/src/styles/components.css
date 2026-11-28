@@ -713,6 +713,13 @@
   font-size: var(--text-xs);
 }
 
+.setting-actions {
+  display: flex;
+  flex-wrap: wrap;
+  justify-content: flex-end;
+  gap: 8px;
+}
+
 .setting-row .setting-control {
   display: flex;
   align-items: center;

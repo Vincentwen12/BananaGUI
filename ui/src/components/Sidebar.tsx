@@ -5,7 +5,6 @@ import { shortPath } from '../lib/format';
 
 export function Sidebar(props: { app: AppState }) {
   const { state, t } = props.app;
-  let importInput: HTMLInputElement | undefined;
   const [collapsed, setCollapsed] = createSignal<Record<string, boolean>>({});
 
   const isCollapsed = (workspace: string) => collapsed()[workspace] === true;
@@ -46,10 +45,6 @@ export function Sidebar(props: { app: AppState }) {
         <button class="side-btn" type="button" onClick={() => props.app.openPlugins()}>
           <Icon name="plugin" />
           {t().plugins}
-        </button>
-        <button class="side-btn" type="button" onClick={() => props.app.openGuide()}>
-          <Icon name="info" />
-          {t().guide}
         </button>
       </div>
 
@@ -121,27 +116,6 @@ export function Sidebar(props: { app: AppState }) {
           <Icon name="settings" />
           {t().settings}
         </button>
-        <span class="spacer" />
-        <button class="icon-btn sm" type="button" title={t().theme} onClick={() => props.app.toggleTheme()}>
-          <Icon name={props.app.themeMode() === 'dark' ? 'sun' : 'moon'} />
-        </button>
-        <button class="icon-btn sm" type="button" title={t().exportMd} onClick={() => props.app.exportSession('md')}>
-          <Icon name="download" />
-        </button>
-        <button class="icon-btn sm" type="button" title={t().import} onClick={() => importInput?.click()}>
-          <Icon name="upload" />
-        </button>
-        <input
-          ref={importInput}
-          type="file"
-          accept="application/json,.json"
-          hidden
-          onChange={(event) => {
-            const file = event.currentTarget.files?.[0];
-            if (file) void props.app.importSession(file);
-            event.currentTarget.value = '';
-          }}
-        />
       </div>
     </aside>
   );
